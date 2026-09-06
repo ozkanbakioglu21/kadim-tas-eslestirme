@@ -122,9 +122,6 @@ export default function App() {
         {mode === "endless" && hud && (
           <div className="mode-info">Round {hud.endlessRound}</div>
         )}
-        {mode === "puzzle" && hud && (
-          <div className="mode-info">{hud.validMoves} geçerli hamle</div>
-        )}
         <button className="btn tbtn" onClick={() => gameRef.current?.newGame()}>Yeni Oyun</button>
         <button className="btn tbtn power-btn" onClick={() => gameRef.current?.undo()}><span>⏪</span><span>Geri</span></button>
         <button className="btn tbtn power-btn" onClick={() => gameRef.current?.hint()}><span>👁️</span><span>İpucu</span></button>
