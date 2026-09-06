@@ -410,3 +410,94 @@ body,
     display: none !important;
   }
 }
+
+/* ---- Oyun Modu Secim Menusu ---- */
+.mode-menu {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+}
+.mode-title {
+  font-size: clamp(28px, 8vw, 48px);
+  font-weight: 800;
+  color: #ffd75e;
+  text-shadow: 0 4px 20px rgba(255,215,94,0.4);
+  text-align: center;
+}
+.mode-subtitle {
+  font-size: clamp(14px, 3vw, 18px);
+  color: #8ab4c8;
+  margin-bottom: 10px;
+}
+.mode-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  max-width: 500px;
+}
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 20px;
+  min-width: 120px;
+  background: linear-gradient(145deg, #1c3a4c, #142a38);
+  border: 2px solid rgba(212,175,55,0.3);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.mode-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(212,175,55,0.7);
+  box-shadow: 0 8px 24px rgba(212,175,55,0.2);
+}
+.mode-card:active {
+  transform: scale(0.96);
+}
+.mode-icon {
+  font-size: 32px;
+}
+.mode-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f5ecd8;
+}
+.mode-desc {
+  font-size: 11px;
+  color: #8ab4c8;
+}
+.race-timer {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  font-size: 20px;
+  font-weight: 800;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  font-family: Georgia, serif;
+}
+
+@media (max-width: 560px) {
+  .mode-card {
+    min-width: 100px;
+    padding: 12px 14px;
+  }
+  .mode-icon {
+    font-size: 26px;
+  }
+  .mode-name {
+    font-size: 14px;
+  }
+  .race-timer {
+    font-size: 16px;
+  }
+}

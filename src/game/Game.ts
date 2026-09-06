@@ -32,6 +32,8 @@ export interface Tile {
   sy: number; // ekran y merkez
 }
 
+export type GameMode = "classic" | "zen" | "race" | "puzzle" | "endless";
+
 export interface HudState {
   remaining: number;
   total: number;
@@ -48,6 +50,8 @@ export interface HudState {
   fates: string[];
   shuffles: number;
   cleanWin: boolean;
+  mode: GameMode;
+  raceTimeLeft: number;
 }
 
 // Göktürk rünleri (Orhun alfabesi) — arka plan motifleri için.
@@ -449,8 +453,13 @@ export class Game {
   private achievements: Set<string> = new Set();
   private showAchievement = "";
   private achievementTimer = 0;
+  private gameMode: GameMode = "classic";
+  private raceTimeLeft = 60;
+  private raceDuration = 60;
 
   onHud?: (h: HudState) => void;
+  setMode(mode: GameMode): void { this.gameMode = mode; this.newGame(); }
+  getMode(): GameMode { return this.gameMode; }
 
   /** Ses motoruna erişim (mute butonu icin). */
   getSound() { return SoundEngine; }
@@ -837,6 +846,7 @@ export class Game {
     this.mistParticles = [];
     this.showAchievement = "";
     this.achievementTimer = 0;
+    this.raceTimeLeft = this.raceDuration;
     this.flash = 0;
     this.wonAt = 0;
     this.fates = this.rollFates();
@@ -1055,10 +1065,13 @@ export class Game {
       }
       this.breakPair(pairIdx, lastIdx);
     } else if (this.tray.length >= this.maxTray()) {
-      // Hazne doldu: oyuncu kaybeder.
-      this.lost = true;
-      this.sfx("lose");
-      this.unlockAchievement("first_loss");
+      if (this.gameMode === "zen") {
+        this.tray.shift();
+      } else {
+        this.lost = true;
+        this.sfx("lose");
+        this.unlockAchievement("first_loss");
+      }
     } else {
       this.sfx("tileclick");
       this.streak = 0;
@@ -1139,7 +1152,17 @@ export class Game {
   };
   private update(dt: number): void {
     this.time += dt;
-    if (!this.won && !this.lost) this.seconds += dt;
+    if (!this.won && !this.lost) {
+      this.seconds += dt;
+      if (this.gameMode === "race") {
+        this.raceTimeLeft -= dt;
+        if (this.raceTimeLeft <= 0) {
+          this.raceTimeLeft = 0;
+          this.lost = true;
+          this.sfx("lose");
+        }
+      }
+    }
     // Gun/gece donusu
     this.dayPhase = (this.time % this.DAY_CYCLE) / this.DAY_CYCLE;
     if (this.comboTimer > 0) {
@@ -1675,6 +1698,8 @@ export class Game {
       fates: this.fates,
       shuffles: this.maxShuffles - this.shuffleCount,
       cleanWin: this.won && this.shuffleCount === 0,
+      mode: this.gameMode,
+      raceTimeLeft: this.raceTimeLeft,
     });
   }
 
