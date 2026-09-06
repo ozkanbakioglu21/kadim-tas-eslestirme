@@ -119,12 +119,19 @@ export default function App() {
             ))}
           </div>
         )}
+        {mode === "endless" && hud && (
+          <div className="mode-info">Round {hud.endlessRound}</div>
+        )}
+        {mode === "puzzle" && hud && (
+          <div className="mode-info">{hud.validMoves} geçerli hamle</div>
+        )}
         <button className="btn tbtn" onClick={() => gameRef.current?.newGame()}>Yeni Oyun</button>
         <button className="btn tbtn power-btn" onClick={() => gameRef.current?.undo()}><span>⏪</span><span>Geri</span></button>
         <button className="btn tbtn power-btn" onClick={() => gameRef.current?.hint()}><span>👁️</span><span>İpucu</span></button>
-        <button className="btn tbtn power-btn" disabled={!hud || hud.shuffles <= 0} onClick={() => gameRef.current?.shuffle()}>
+        <button className="btn tbtn power-btn" disabled={mode !== "zen" && (!hud || hud.shuffles <= 0)} onClick={() => gameRef.current?.shuffle()}>
           <span>🔀</span><span>Karıştır</span>
-          {hud && hud.shuffles > 0 && <span className="badge">{hud.shuffles}</span>}
+          {mode !== "zen" && hud && hud.shuffles > 0 && <span className="badge">{hud.shuffles}</span>}
+          {mode === "zen" && <span className="badge">∞</span>}
         </button>
         <button className="btn tbtn" onClick={() => setShowMenu(true)}>☰ Menü</button>
       </div>

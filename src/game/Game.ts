@@ -52,6 +52,8 @@ export interface HudState {
   cleanWin: boolean;
   mode: GameMode;
   raceTimeLeft: number;
+  validMoves: number;
+  endlessRound: number;
 }
 
 // Göktürk rünleri (Orhun alfabesi) — arka plan motifleri için.
@@ -456,6 +458,8 @@ export class Game {
   private gameMode: GameMode = "classic";
   private raceTimeLeft = 60;
   private raceDuration = 60;
+  private endlessRound = 1;
+  private validMoveCount = 0;
 
   onHud?: (h: HudState) => void;
   setMode(mode: GameMode): void { this.gameMode = mode; this.newGame(); }
@@ -851,6 +855,7 @@ export class Game {
     this.wonAt = 0;
     this.fates = this.rollFates();
     this.motto = MOTTOS[Math.floor(Math.random() * MOTTOS.length)];
+    this.endlessRound = 1;
     this.buildLayout();
     this.emitHud();
   }
@@ -1401,6 +1406,13 @@ export class Game {
     this.comboTimer = this.comboDuration();
     const totalMult = this.timeBonusMult * this.streakMult;
     this.score += Math.round(100 * (1 + (this.combo - 1) * 0.15) * this.combo * this.scoreMult() * totalMult);
+    // Race mode: her eslesmede +5sn bonus
+    if (this.gameMode === "race") {
+      this.raceTimeLeft = Math.min(this.raceTimeLeft + 5, this.raceDuration + 30);
+      const tileA = eA ? this.tiles.find((t) => t.id === eA.id) : null;
+      const tileB = eB ? this.tiles.find((t) => t.id === eB.id) : null;
+      this.floats.push({ x: (tileA?.sx ?? tileB?.sx ?? CANVAS_W / 2), y: (tileA?.sy ?? tileB?.sy ?? CANVAS_H / 2) - 30, life: 1.0, max: 1.0, text: "+5sn!", color: "#44ff88" });
+    }
     for (const e of [eA, eB]) {
       if (!e) continue;
       const bt = this.tiles.find((tt) => tt.id === e.id);
@@ -1420,11 +1432,13 @@ export class Game {
     // Endless mode: tum taslar bitince yenile
     if (this.gameMode === "endless" && this.tiles.every((t) => t.removed)) {
       setTimeout(() => {
+        this.endlessRound++;
         this.tiles = [];
         this.tray = [];
         this.history = [];
         this.countdownTiles.clear();
         this.currentLevel = null;
+        this.selectedId = null;
         this.buildLayout();
         this.emitHud();
       }, 800);
@@ -1433,7 +1447,7 @@ export class Game {
   }
 
   shuffle(): void {
-    if (this.shuffleCount >= this.maxShuffles || this.won || this.lost) return;
+    if ((this.shuffleCount >= this.maxShuffles && this.gameMode !== "zen") || this.won || this.lost) return;
     const remaining = this.tiles.filter((t) => !t.removed);
     const syms = remaining.map((t) => t.symbol);
     for (let i = syms.length - 1; i > 0; i--) {
@@ -1690,18 +1704,30 @@ export class Game {
   private emitHud(): void {
     const remaining = this.tiles.filter((t) => !t.removed).length;
     let stuck = false;
+    // Puzzle modu: gecerli hamle sayisini hesapla
+    this.validMoveCount = 0;
+    const usable = (t: Tile) => !t.removed && this.isOpen(t) && this.sideFree(t);
+    const openTiles = this.tiles.filter(usable);
+    const seen = new Map<string, number>();
+    for (const o of openTiles) {
+      const mk = matchKey(o.symbol);
+      seen.set(mk, (seen.get(mk) ?? 0) + 1);
+    }
+    for (const count of seen.values()) {
+      if (count >= 2) this.validMoveCount += Math.floor(count / 2);
+    }
     if (remaining > 0) {
       // Çözülebilir mi? (basit: açık eşleşme var mı)
       const opens = this.tiles.filter((t) => this.isOpen(t));
-      const seen = new Set<string>();
+      const seenSet = new Set<string>();
       stuck = true;
       for (const o of opens) {
         const mk = matchKey(o.symbol);
-        if (seen.has(mk)) {
+        if (seenSet.has(mk)) {
           stuck = false;
           break;
         }
-        seen.add(mk);
+        seenSet.add(mk);
       }
     }
     this.onHud?.({
@@ -1722,6 +1748,8 @@ export class Game {
       cleanWin: this.won && this.shuffleCount === 0,
       mode: this.gameMode,
       raceTimeLeft: this.raceTimeLeft,
+      validMoves: this.validMoveCount,
+      endlessRound: this.endlessRound,
     });
   }
 

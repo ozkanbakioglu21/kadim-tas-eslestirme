@@ -504,3 +504,12 @@ body,
     font-size: 16px;
   }
 }
+.mode-info {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffd75e;
+  padding: 4px 10px;
+  background: rgba(212,175,55,0.12);
+  border: 1px solid rgba(212,175,55,0.3);
+  border-radius: 8px;
+}
