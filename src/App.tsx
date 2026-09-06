@@ -6,7 +6,7 @@ const MODES: Array<{ id: GameMode; name: string; icon: string; desc: string }> =
   { id: "zen", name: "Zen", icon: "🧘", desc: "Sınırsız rahat oyun" },
   { id: "race", name: "Yarış", icon: "⏱️", desc: "60sn'de max skor" },
   { id: "puzzle", name: "Bulmaca", icon: "🧩", desc: "Sadece doğru hamleler" },
-  { id: "endless", name: "Sonsuz", icon: "♾️", desc: "Bitmeyen oyun" },
+  { id: "endless", name: "Kolay", icon: "♾️", desc: "Sınırsız, rahat oyun" },
 ];
 
 export default function App() {
