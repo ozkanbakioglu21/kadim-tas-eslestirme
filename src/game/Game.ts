@@ -54,6 +54,7 @@ export interface HudState {
   raceTimeLeft: number;
   validMoves: number;
   endlessRound: number;
+  modeLevel: number;
 }
 
 // Göktürk rünleri (Orhun alfabesi) — arka plan motifleri için.
@@ -393,6 +394,7 @@ export class Game {
   private time = 0;
   private score = 0;
   private modeScores: Record<GameMode, number> = { classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0 };
+  private modeLevels: Record<GameMode, number> = { classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0 };
   private combo = 0;
   private comboTimer = 0;
   private fates: string[] = [];
@@ -599,16 +601,17 @@ export class Game {
   private level(): { name: string; cells: Array<[number, number]>; bg: [string, string] } {
     if (!this.currentLevel) {
       // Her oyunda farkli bir rastgele dizilim + rastgele gecmis/bg.
-      const cells = randomShape(this.levelIndex, Math.floor(Math.random() * 100000) + 1);
+      const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
+      const cells = randomShape(diff, Math.floor(Math.random() * 100000) + 1);
       const special = this.specialArt();
       const mixedBg = ["#2f3b1c", "#4a5b2a"] as [string, string];
-      const bg = special === "mixed" ? mixedBg : RANDOM_BG[this.levelIndex % RANDOM_BG.length];
+      const bg = special === "mixed" ? mixedBg : RANDOM_BG[diff % RANDOM_BG.length];
       const name =
-        this.levelIndex < LEVELS.length
-          ? LEVELS[this.levelIndex].name
+        diff < LEVELS.length
+          ? LEVELS[diff].name
           : special === "mixed"
             ? "Vahşi Bozkır"
-            : `Rastgele #${this.levelIndex + 1}`;
+            : `Rastgele #${diff + 1}`;
       this.currentLevel = { name, cells, bg };
     }
     return this.currentLevel;
@@ -653,7 +656,8 @@ export class Game {
       layers = [cells.slice(), rect(4, 9, 1, 6), rect(5, 8, 2, 5), rect(6, 7, 3, 4), [[6, 3]]];
     } else {
       // Kademeli platform derinligi: kenar 1 kat, orta 2 kat, merkez kule 2-4 kat.
-      const coreDepth = this.levelIndex >= 49 ? 4 : this.levelIndex >= 9 ? 3 : 2;
+      const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
+      const coreDepth = diff >= 49 ? 4 : diff >= 9 ? 3 : 2;
       const cMn = Math.max(0, Math.floor((cols + 1) / 3));
       const cMx = Math.min(cols, cols - 1 - Math.floor((cols + 1) / 3));
       const rMn = Math.max(0, Math.floor((rows + 1) / 3));
@@ -1097,6 +1101,7 @@ export class Game {
     if (this.gameMode !== "endless" && this.tiles.every((t) => t.removed)) {
       this.won = true;
       this.wonAt = this.time;
+      this.modeLevels[this.gameMode]++;
       this.sfx("win");
       this.recordProgress();
       const cc = ["#ffd75e", "#e74c3c", "#2e8b57", "#3498db", "#e67e22", "#f8f1e0"];
@@ -1436,6 +1441,7 @@ export class Game {
     if (this.gameMode === "endless" && this.tiles.every((t) => t.removed)) {
       setTimeout(() => {
         this.endlessRound++;
+        this.modeLevels[this.gameMode]++;
         this.tiles = [];
         this.tray = [];
         this.history = [];
@@ -1754,6 +1760,7 @@ export class Game {
       raceTimeLeft: this.raceTimeLeft,
       validMoves: this.validMoveCount,
       endlessRound: this.endlessRound,
+      modeLevel: this.modeLevels[this.gameMode],
     });
   }
 
@@ -2235,11 +2242,12 @@ export class Game {
     c.fillStyle = "#31200e";
     c.fillText("Ötüken Mahjong", CANVAS_W / 2, 60);
     // Seviye: bakir kazima
+    const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
     c.font = "bold 22px Georgia";
     c.fillStyle = "rgba(20,10,4,0.5)";
-    c.fillText(`Seviye ${this.levelIndex + 1} · ${def.name}`, CANVAS_W / 2, 93);
+    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 93);
     c.fillStyle = "#c89050";
-    c.fillText(`Seviye ${this.levelIndex + 1} · ${def.name}`, CANVAS_W / 2, 92);
+    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 92);
     this.drawFates(c);
 
     // Meditasyon motosu — her yeni duvarda degisen felsefi nefes.
