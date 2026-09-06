@@ -412,15 +412,18 @@ body,
 }
 
 /* ---- Oyun Modu Secim Menusu ---- */
-.mode-menu {
-  width: 100%;
-  height: 100%;
+.mode-menu-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 20px;
   padding: 20px;
+  background: rgba(8, 24, 32, 0.94);
+  backdrop-filter: blur(6px);
 }
 .mode-title {
   font-size: clamp(28px, 8vw, 48px);

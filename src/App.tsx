@@ -17,27 +17,16 @@ export default function App() {
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(0.75);
   const [mode, setMode] = useState<GameMode>("classic");
-  const [gameReady, setGameReady] = useState(false);
-
-  const initGame = (selectedMode: GameMode) => {
-    setMode(selectedMode);
-    if (gameRef.current) {
-      gameRef.current.setMode(selectedMode);
-    }
-    setGameReady(true);
-  };
+  const [showMenu, setShowMenu] = useState(true);
 
   useEffect(() => {
-    if (!gameReady) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    if (gameRef.current) return;
     const game = new Game(canvas);
     gameRef.current = game;
     game.onHud = setHud;
     setLevelCount(game.getLevelCount());
     setMuted(game.isMuted());
-    game.setMode(mode);
     game.start();
 
     const onKey = (e: KeyboardEvent) => {
@@ -46,38 +35,30 @@ export default function App() {
       else if (e.key === "l" || e.key === "L") game.nextLevel();
       else if (e.key === "h" || e.key === "H") game.hint();
       else if (e.key === "s" || e.key === "S") game.shuffle();
-      else if (e.key === "Escape") setGameReady(false);
+      else if (e.key === "Escape") setShowMenu(true);
     };
     window.addEventListener("keydown", onKey);
     return () => {
       game.stop();
       gameRef.current = null;
-      setHud(null);
       window.removeEventListener("keydown", onKey);
     };
-  }, [gameReady]);
+  }, []);
+
+  const selectMode = (selectedMode: GameMode) => {
+    setMode(selectedMode);
+    gameRef.current?.setMode(selectedMode);
+    setShowMenu(false);
+  };
+
+  const goToMenu = () => {
+    gameRef.current?.stop();
+    gameRef.current = null;
+    setHud(null);
+    setShowMenu(true);
+  };
 
   const won = hud?.won;
-
-  if (!gameReady) {
-    return (
-      <div className="game-shell">
-        <div className="mode-menu">
-          <div className="mode-title">Ötüken Mahjong</div>
-          <div className="mode-subtitle">Oyun Modu Seç</div>
-          <div className="mode-grid">
-            {MODES.map((m) => (
-              <button key={m.id} className="mode-card" onClick={() => initGame(m.id)}>
-                <span className="mode-icon">{m.icon}</span>
-                <span className="mode-name">{m.name}</span>
-                <span className="mode-desc">{m.desc}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="game-shell">
@@ -98,6 +79,21 @@ export default function App() {
             ⏱ {Math.ceil(hud.raceTimeLeft)}sn
           </div>
         )}
+        {showMenu && (
+          <div className="mode-menu-overlay">
+            <div className="mode-title">Ötüken Mahjong</div>
+            <div className="mode-subtitle">Oyun Modu Seç</div>
+            <div className="mode-grid">
+              {MODES.map((m) => (
+                <button key={m.id} className="mode-card" onClick={() => selectMode(m.id)}>
+                  <span className="mode-icon">{m.icon}</span>
+                  <span className="mode-name">{m.name}</span>
+                  <span className="mode-desc">{m.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {won && (
           <div className="win-banner">
             <div className="win-title">Başardın!</div>
@@ -110,7 +106,7 @@ export default function App() {
             <div className="win-actions">
               {mode === "classic" && <button className="btn" onClick={() => gameRef.current?.nextLevel()}>Sonraki Seviye</button>}
               <button className="btn ghost" onClick={() => gameRef.current?.newGame()}>Tekrar Oyna</button>
-              <button className="btn ghost" onClick={() => { gameRef.current?.stop(); gameRef.current = null; setGameReady(false); setHud(null); }}>Mod Değiştir</button>
+              <button className="btn ghost" onClick={() => goToMenu()}>Mod Değiştir</button>
             </div>
           </div>
         )}
@@ -130,7 +126,7 @@ export default function App() {
           <span>🔀</span><span>Karıştır</span>
           {hud && hud.shuffles > 0 && <span className="badge">{hud.shuffles}</span>}
         </button>
-        <button className="btn tbtn" onClick={() => { gameRef.current?.stop(); gameRef.current = null; setGameReady(false); setHud(null); }}>☰ Menü</button>
+        <button className="btn tbtn" onClick={() => setShowMenu(true)}>☰ Menü</button>
       </div>
     </div>
   );
