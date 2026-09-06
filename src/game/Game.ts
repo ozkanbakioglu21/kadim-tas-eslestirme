@@ -2685,8 +2685,96 @@ export class Game {
     const bx = t.sx;
     const by = t.sy;
     const R = Math.max(4, Math.round(w * 0.125));
+    const sel = t.id === this.selectedId;
+
+    c.save();
+    c.beginPath();
+    c.roundRect(bx - w / 2, by - h / 2, w, h, R);
+    c.clip();
+
+    if (sel && open) {
+      c.translate(bx, by);
+      c.rotate(Math.sin(this.time * 0.8) * 0.06);
+      c.translate(-bx, -by);
+    }
+
     c.drawImage(this.getFaceCanvas(t.symbol, open), bx - w / 2, by - h / 2, w, h);
-    // Alinabilir taslarda yumusak altin nabiz (dinamik, govdeye kisili).
+
+    if (open) {
+      const sym = t.symbol;
+      const cx = bx;
+      const cy = by;
+
+      if (sym[0] === "b" || sym[0] === "c" || sym[0] === "w") {
+        const shimmer = 0.08 + 0.06 * Math.sin(this.time * 1.8 + t.x * 1.2 + t.y * 0.8);
+        c.globalAlpha = shimmer;
+        const sg = c.createRadialGradient(cx, cy - h * 0.1, 2, cx, cy, w * 0.45);
+        sg.addColorStop(0, "#ffffff");
+        sg.addColorStop(1, "rgba(255,255,255,0)");
+        c.fillStyle = sg;
+        c.fillRect(bx - w / 2, by - h / 2, w, h);
+        c.globalAlpha = 1;
+      }
+
+      if (["E", "S", "W", "N"].includes(sym)) {
+        c.globalAlpha = 0.12 + 0.06 * Math.sin(this.time * 1.5 + t.y);
+        c.fillStyle = "#8ab4c8";
+        c.beginPath();
+        c.arc(cx + Math.sin(this.time * 1.8 + t.x) * 4, cy, w * 0.3, 0, Math.PI * 2);
+        c.fill();
+        c.globalAlpha = 1;
+      }
+
+      if (sym === "DR" || sym === "DG" || sym === "DW") {
+        const flameColor = sym === "DR" ? "#ff4422" : sym === "DG" ? "#44ff66" : "#4488ff";
+        for (let i = 0; i < 3; i++) {
+          const ft = this.time * 3 + i * 2.1 + t.x * 0.3;
+          const fx = cx + Math.sin(ft * 1.3) * 5;
+          const fy = cy - h * 0.25 - Math.abs(Math.sin(ft)) * 10 - i * 4;
+          const fr = 2 + Math.sin(ft * 2) * 1;
+          c.globalAlpha = 0.35 + 0.15 * Math.sin(ft * 1.7);
+          c.fillStyle = flameColor;
+          c.beginPath();
+          c.arc(fx, fy, fr, 0, Math.PI * 2);
+          c.fill();
+        }
+        c.globalAlpha = 1;
+      }
+
+      if (sym[0] === "f") {
+        const bloom = 0.15 + 0.08 * Math.sin(this.time * 1.4 + t.y * 0.6);
+        c.globalAlpha = bloom;
+        const fg = c.createRadialGradient(cx, cy, 1, cx, cy, w * 0.4);
+        fg.addColorStop(0, "#ff88bb");
+        fg.addColorStop(1, "rgba(255,136,187,0)");
+        c.fillStyle = fg;
+        c.fillRect(bx - w / 2, by - h / 2, w, h);
+        c.globalAlpha = 1;
+      }
+
+      if (sym[0] === "s") {
+        const sparkT = this.time * 2 + t.x * 0.7;
+        const sparkA = 0.12 + 0.08 * Math.sin(sparkT);
+        c.globalAlpha = sparkA;
+        c.fillStyle = "#ffd75e";
+        const sx2 = cx + Math.sin(sparkT * 1.3) * 6;
+        const sy2 = cy + Math.cos(sparkT * 0.9) * 4;
+        c.beginPath();
+        for (let i = 0; i < 4; i++) {
+          const ang = (i / 4) * Math.PI * 2 + sparkT * 0.5;
+          const outerR = 4 + Math.sin(sparkT * 2 + i) * 1.5;
+          const innerR = 1.5;
+          c.lineTo(sx2 + Math.cos(ang) * outerR, sy2 + Math.sin(ang) * outerR);
+          c.lineTo(sx2 + Math.cos(ang + Math.PI / 4) * innerR, sy2 + Math.sin(ang + Math.PI / 4) * innerR);
+        }
+        c.closePath();
+        c.fill();
+        c.globalAlpha = 1;
+      }
+    }
+
+    c.restore();
+
     if (open && canTake) {
       c.save();
       c.beginPath();
