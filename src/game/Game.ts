@@ -2438,12 +2438,13 @@ export class Game {
     c.fillStyle = hg;
     c.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-    // ---- Hazne (dort taslik yuva) ----
+    // ---- Hazne (maxTray slotlu yuva) ----
     const trayY = CANVAS_H - 34;
     const trayCx = CANVAS_W / 2;
     const slotW = 72;
     const gapSlot = 10;
-    const trayW = 4 * slotW + 3 * gapSlot;
+    const traySlots = this.maxTray();
+    const trayW = traySlots * slotW + (traySlots - 1) * gapSlot;
     c.fillStyle = "rgba(10,20,30,0.35)";
     c.beginPath();
     c.roundRect(trayCx - trayW / 2 - 14, trayY - 40, trayW + 28, 66, 14);
@@ -2457,7 +2458,7 @@ export class Game {
     c.fillText("HAZNE", trayCx, trayY - 45);
     c.fillStyle = "#c89050";
     c.fillText("HAZNE", trayCx, trayY - 46);
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < traySlots; i++) {
       const sx = trayCx - trayW / 2 + i * (slotW + gapSlot);
       c.fillStyle = "rgba(255,255,255,0.06)";
       c.beginPath();
