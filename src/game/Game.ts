@@ -427,7 +427,8 @@ export class Game {
   private snowflakes: Array<{ x: number; y: number; speed: number; size: number; wobble: number; alpha: number }> = [];
   private snowAccum: Map<number, number> = new Map(); // tas id -> kar kalinligi
   private meltDrops: Array<{ x: number; y: number; vx: number; vy: number; life: number; max: number; r: number }> = [];
-  private winterMode = true;
+  private winterMode = false;
+  private rainMode = false;
 
   onHud?: (h: HudState) => void;
 
@@ -772,6 +773,10 @@ export class Game {
     this.victoryStarted = false;
     this.snowAccum.clear();
     this.meltDrops = [];
+    // Rastgele hava durumu sec: kar veya yagmur
+    const weatherRoll = Math.random();
+    this.winterMode = weatherRoll < 0.5;
+    this.rainMode = !this.winterMode;
     this.flash = 0;
     this.wonAt = 0;
     this.fates = this.rollFates();
@@ -1116,32 +1121,34 @@ export class Game {
       p.rot += p.vr * dt;
     }
     this.confetti = this.confetti.filter((p) => p.life > 0 && p.y < CANVAS_H + 40);
-    // Yagmur damlalari guncelleme
-    for (const r of this.rain) {
-      r.y += r.speed * dt;
-      r.x += 30 * dt; // hafif yatay ruzgar
-      if (r.y > CANVAS_H + 10) {
-        // Damlanin dusme noktasinda ripple olustur
-        if (r.y < CANVAS_H + 60 && Math.random() < 0.3) {
-          this.ripples.push({ x: r.x, y: CANVAS_H - 20 + Math.random() * 30, life: 1.2, max: 1.2, r: 0 });
+    // Yagmur damlalari guncelleme (sadece yagmur modunda)
+    if (this.rainMode) {
+      for (const r of this.rain) {
+        r.y += r.speed * dt;
+        r.x += 30 * dt; // hafif yatay ruzgar
+        if (r.y > CANVAS_H + 10) {
+          if (r.y < CANVAS_H + 60 && Math.random() < 0.3) {
+            this.ripples.push({ x: r.x, y: CANVAS_H - 20 + Math.random() * 30, life: 1.2, max: 1.2, r: 0 });
+          }
+          r.y = -r.len;
+          r.x = Math.random() * CANVAS_W;
         }
-        r.y = -r.len;
-        r.x = Math.random() * CANVAS_W;
       }
+      for (const rp of this.ripples) {
+        rp.life -= dt;
+        rp.r += 35 * dt;
+      }
+      this.ripples = this.ripples.filter((rp) => rp.life > 0);
     }
-    // Su birikinti dalgeleri
-    for (const rp of this.ripples) {
-      rp.life -= dt;
-      rp.r += 35 * dt;
-    }
-    this.ripples = this.ripples.filter((rp) => rp.life > 0);
-    // Kar taneleri guncelleme
-    for (const sf of this.snowflakes) {
-      sf.y += sf.speed * dt;
-      sf.x += Math.sin(this.time * 0.8 + sf.wobble) * 20 * dt;
-      if (sf.y > CANVAS_H + 10) {
-        sf.y = -10;
-        sf.x = Math.random() * CANVAS_W;
+    // Kar taneleri guncelleme (sadece kis modunda)
+    if (this.winterMode) {
+      for (const sf of this.snowflakes) {
+        sf.y += sf.speed * dt;
+        sf.x += Math.sin(this.time * 0.8 + sf.wobble) * 20 * dt;
+        if (sf.y > CANVAS_H + 10) {
+          sf.y = -10;
+          sf.x = Math.random() * CANVAS_W;
+        }
       }
     }
     // Erime su damlalari guncelleme
@@ -1884,35 +1891,39 @@ export class Game {
       c.fill();
     }
     c.globalAlpha = 1;
-    // Yagmur damlalari
-    for (const r of this.rain) {
-      c.save();
-      c.globalAlpha = r.alpha;
-      c.strokeStyle = "#8ab4c8";
-      c.lineWidth = 1.2;
-      c.beginPath();
-      c.moveTo(r.x, r.y);
-      c.lineTo(r.x - 3, r.y - r.len);
-      c.stroke();
-      c.restore();
-    }
-    // Su birikinti dalgeleri
-    for (const rp of this.ripples) {
-      const a = Math.max(0, rp.life / rp.max);
-      c.save();
-      c.globalAlpha = a * 0.35;
-      c.strokeStyle = "#6a9ab4";
-      c.lineWidth = 1.5;
-      c.beginPath();
-      c.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
-      c.stroke();
-      if (rp.r > 6) {
-        c.globalAlpha = a * 0.18;
+    // Yagmur damlali (sadece yagmur modunda)
+    if (this.rainMode) {
+      for (const r of this.rain) {
+        c.save();
+        c.globalAlpha = r.alpha;
+        c.strokeStyle = "#8ab4c8";
+        c.lineWidth = 1.2;
         c.beginPath();
-        c.arc(rp.x, rp.y, rp.r * 0.6, 0, Math.PI * 2);
+        c.moveTo(r.x, r.y);
+        c.lineTo(r.x - 3, r.y - r.len);
         c.stroke();
+        c.restore();
       }
-      c.restore();
+    }
+    // Su birikinti dalgeleri (sadece yagmur modunda)
+    if (this.rainMode) {
+      for (const rp of this.ripples) {
+        const a = Math.max(0, rp.life / rp.max);
+        c.save();
+        c.globalAlpha = a * 0.35;
+        c.strokeStyle = "#6a9ab4";
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+        c.stroke();
+        if (rp.r > 6) {
+          c.globalAlpha = a * 0.18;
+          c.beginPath();
+          c.arc(rp.x, rp.y, rp.r * 0.6, 0, Math.PI * 2);
+          c.stroke();
+        }
+        c.restore();
+      }
     }
     // Kar taneleri
     if (this.winterMode) {
