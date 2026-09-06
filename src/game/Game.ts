@@ -316,17 +316,17 @@ const RANDOM_BG: Array<[string, string]> = [
   ["#33221f", "#4a3130"],
 ];
 
-// Gun/ gece renk paletleri: [ust, alt] gradient
+// Gun/ gece renk paletleri: [ust, alt] gradient (kis teması)
 const DAY_NIGHT: Array<{ top: string; mid: string; bot: string; amb: string }> = [
-  { top: "#0a1e2a", mid: "#0d2a38", bot: "#081820", amb: "#0a1e2a" }, // 0.00 - gece
-  { top: "#0f1a30", mid: "#142840", bot: "#0a1828", amb: "#0f1a30" }, // 0.15 - gece sonu
-  { top: "#2a1a10", mid: "#4a2a18", bot: "#1a0e08", amb: "#3a2010" }, // 0.25 - sabah
-  { top: "#1a2a18", mid: "#2a4020", bot: "#0e1a10", amb: "#1a2a18" }, // 0.35 - sabah
-  { top: "#0a1e2a", mid: "#0d2a38", bot: "#081820", amb: "#0a1e2a" }, // 0.50 - gun
-  { top: "#1a2a18", mid: "#2a4020", bot: "#0e1a10", amb: "#1a2a18" }, // 0.65 - ogle
-  { top: "#3a1a10", mid: "#5a2a18", bot: "#1a0e08", amb: "#4a2010" }, // 0.75 - aksam
-  { top: "#1a1030", mid: "#2a1848", bot: "#0e0a18", amb: "#1a1030" }, // 0.85 - aksam sonu
-  { top: "#0a1e2a", mid: "#0d2a38", bot: "#081820", amb: "#0a1e2a" }, // 1.00 - gece
+  { top: "#0a1525", mid: "#0d1e30", bot: "#060e18", amb: "#0a1525" }, // 0.00 - gece (koyu lacivert)
+  { top: "#0e1828", mid: "#142538", bot: "#081220", amb: "#0e1828" }, // 0.15 - gece sonu
+  { top: "#1a1520", mid: "#2a2030", bot: "#120e18", amb: "#1a1520" }, // 0.25 - sabah (puslu)
+  { top: "#1e2528", mid: "#2a3538", bot: "#141e20", amb: "#1e2528" }, // 0.35 - sabah (soguk)
+  { top: "#151e28", mid: "#1e2a35", bot: "#0e1520", amb: "#151e28" }, // 0.50 - gun (karli)
+  { top: "#1e2528", mid: "#2a3538", bot: "#141e20", amb: "#1e2528" }, // 0.65 - ogle
+  { top: "#1a1520", mid: "#2a2030", bot: "#120e18", amb: "#1a1520" }, // 0.75 - aksam
+  { top: "#12101e", mid: "#1a1530", bot: "#0a0814", amb: "#12101e" }, // 0.85 - aksam sonu
+  { top: "#0a1525", mid: "#0d1e30", bot: "#060e18", amb: "#0a1525" }, // 1.00 - gece
 ];
 
 function lerpHex(a: string, b: string, t: number): string {
@@ -424,6 +424,10 @@ export class Game {
   private DAY_CYCLE = 90;
   private nightAlpha = 0;
   private dawnDusk = 0;
+  private snowflakes: Array<{ x: number; y: number; speed: number; size: number; wobble: number; alpha: number }> = [];
+  private snowAccum: Map<number, number> = new Map(); // tas id -> kar kalinligi
+  private meltDrops: Array<{ x: number; y: number; vx: number; vy: number; life: number; max: number; r: number }> = [];
+  private winterMode = true;
 
   onHud?: (h: HudState) => void;
 
@@ -461,6 +465,16 @@ export class Game {
         speed: 600 + Math.random() * 400,
         len: 18 + Math.random() * 24,
         alpha: 0.12 + Math.random() * 0.18,
+      });
+    }
+    for (let i = 0; i < 80; i++) {
+      this.snowflakes.push({
+        x: Math.random() * CANVAS_W,
+        y: Math.random() * CANVAS_H,
+        speed: 40 + Math.random() * 80,
+        size: 1.5 + Math.random() * 3,
+        wobble: Math.random() * Math.PI * 2,
+        alpha: 0.4 + Math.random() * 0.5,
       });
     }
     this.newGame();
@@ -756,6 +770,8 @@ export class Game {
     this.victoryTiles = [];
     this.victoryRays = [];
     this.victoryStarted = false;
+    this.snowAccum.clear();
+    this.meltDrops = [];
     this.flash = 0;
     this.wonAt = 0;
     this.fates = this.rollFates();
@@ -881,6 +897,25 @@ export class Game {
 
     // Taşı tahtadan alıp hazneye tek tek ekle.
     target.removed = true;
+    // Kış teması: erime su damlacıkları
+    if (this.winterMode) {
+      const dropCount = 6 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < dropCount; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = 60 + Math.random() * 100;
+        this.meltDrops.push({
+          x: target.sx + (Math.random() - 0.5) * this.tw * 0.6,
+          y: target.sy + (Math.random() - 0.5) * this.th * 0.3,
+          vx: Math.cos(ang) * spd * 0.4,
+          vy: -Math.abs(Math.sin(ang) * spd) - 30,
+          life: 0.8 + Math.random() * 0.5,
+          max: 1.3,
+          r: 1.5 + Math.random() * 2,
+        });
+      }
+      // Kar birikimini temizle
+      this.snowAccum.delete(target.id);
+    }
     this.tray.push({ id: target.id, symbol: target.symbol });
 
     // Haznede aynı desenden 2 varsa -> kır (eşleşme).
@@ -1100,6 +1135,23 @@ export class Game {
       rp.r += 35 * dt;
     }
     this.ripples = this.ripples.filter((rp) => rp.life > 0);
+    // Kar taneleri guncelleme
+    for (const sf of this.snowflakes) {
+      sf.y += sf.speed * dt;
+      sf.x += Math.sin(this.time * 0.8 + sf.wobble) * 20 * dt;
+      if (sf.y > CANVAS_H + 10) {
+        sf.y = -10;
+        sf.x = Math.random() * CANVAS_W;
+      }
+    }
+    // Erime su damlalari guncelleme
+    for (const md of this.meltDrops) {
+      md.vy += 400 * dt; // yerçekimi
+      md.x += md.vx * dt;
+      md.y += md.vy * dt;
+      md.life -= dt;
+    }
+    this.meltDrops = this.meltDrops.filter((md) => md.life > 0 && md.y < CANVAS_H + 20);
     // Zafer sinematik guncelleme
     if (this.victoryStarted) {
       for (const vt of this.victoryTiles) {
@@ -1811,11 +1863,11 @@ export class Game {
     // Gun/gece evre hesaplari
     this.nightAlpha = this.dayPhase < 0.3 ? 1 - this.dayPhase / 0.3 : this.dayPhase > 0.7 ? (this.dayPhase - 0.7) / 0.3 : 0;
     this.dawnDusk = this.dayPhase < 0.4 ? Math.sin(this.dayPhase / 0.4 * Math.PI) : this.dayPhase > 0.6 ? Math.sin((this.dayPhase - 0.6) / 0.4 * Math.PI) : 0;
-    // Kece dokusu: ince yatay cizgiler
+    // Kece dokusu: ince yatay cizgiler (kis tonlari)
     c.save();
     c.globalAlpha = 0.04;
     for (let i = 0; i < CANVAS_H; i += 4) {
-      c.strokeStyle = i % 8 === 0 ? "#2a4a3a" : "#1a3a4a";
+      c.strokeStyle = i % 8 === 0 ? "#2a3a4a" : "#1a2a3a";
       c.lineWidth = 0.5;
       c.beginPath();
       c.moveTo(0, i);
@@ -1860,6 +1912,38 @@ export class Game {
         c.arc(rp.x, rp.y, rp.r * 0.6, 0, Math.PI * 2);
         c.stroke();
       }
+      c.restore();
+    }
+    // Kar taneleri
+    if (this.winterMode) {
+      for (const sf of this.snowflakes) {
+        c.save();
+        c.globalAlpha = sf.alpha;
+        c.fillStyle = "#e8f0f8";
+        c.beginPath();
+        c.arc(sf.x, sf.y, sf.size, 0, Math.PI * 2);
+        c.fill();
+        // Kar tanesi parliltisi
+        c.globalAlpha = sf.alpha * 0.4;
+        c.fillStyle = "#ffffff";
+        c.beginPath();
+        c.arc(sf.x - sf.size * 0.3, sf.y - sf.size * 0.3, sf.size * 0.35, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+      }
+    }
+    // Erime su damlalari
+    for (const md of this.meltDrops) {
+      const a = Math.max(0, md.life / md.max);
+      c.save();
+      c.globalAlpha = a * 0.7;
+      const dg = c.createRadialGradient(md.x, md.y, 0, md.x, md.y, md.r);
+      dg.addColorStop(0, "rgba(140,190,220,0.8)");
+      dg.addColorStop(1, "rgba(100,160,200,0)");
+      c.fillStyle = dg;
+      c.beginPath();
+      c.arc(md.x, md.y, md.r, 0, Math.PI * 2);
+      c.fill();
       c.restore();
     }
     this.drawMotifs(c);
@@ -3019,6 +3103,47 @@ export class Game {
       c.beginPath();
       c.roundRect(x - 6, yTop - 6, w + 12, h + 12, 13);
       c.stroke();
+    }
+
+    // Kış teması: taş üstünde kar birikintisi
+    if (this.winterMode && open) {
+      let accum = this.snowAccum.get(t.id) ?? 0;
+      // Yavas birikim (time tabanli)
+      if (accum < 4) {
+        accum = Math.min(4, accum + 0.016);
+        this.snowAccum.set(t.id, accum);
+      }
+      if (accum > 0.5) {
+        c.save();
+        c.beginPath();
+        c.roundRect(x, yTop, w, h, R);
+        c.clip();
+        // Kar tabakasi (ust kisim)
+        const snowH = accum * 2.5;
+        const sg = c.createLinearGradient(x, yTop, x, yTop + snowH);
+        sg.addColorStop(0, "rgba(230,240,250,0.7)");
+        sg.addColorStop(0.5, "rgba(210,225,240,0.5)");
+        sg.addColorStop(1, "rgba(190,210,230,0)");
+        c.fillStyle = sg;
+        c.beginPath();
+        // Dalgalı kar kenarı
+        c.moveTo(x, yTop);
+        c.lineTo(x + w, yTop);
+        c.lineTo(x + w, yTop + snowH);
+        for (let i = w; i >= 0; i -= 8) {
+          const wave = Math.sin(i * 0.15 + t.x * 0.1) * 2 + Math.sin(i * 0.3 + t.y * 0.2) * 1;
+          c.lineTo(x + i, yTop + snowH + wave);
+        }
+        c.closePath();
+        c.fill();
+        // Kar parliltisi
+        c.globalAlpha = 0.3 + 0.1 * Math.sin(this.time * 1.2 + t.x * 0.5);
+        c.fillStyle = "#ffffff";
+        c.beginPath();
+        c.ellipse(x + w * 0.3, yTop + 2, w * 0.15, 1.5, 0, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+      }
     }
   }
 
