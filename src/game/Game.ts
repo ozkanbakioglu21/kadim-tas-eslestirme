@@ -392,6 +392,7 @@ export class Game {
   private pops: Array<{ x: number; y: number; life: number; max: number; symbol: string; open: boolean }> = [];
   private time = 0;
   private score = 0;
+  private modeScores: Record<GameMode, number> = { classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0 };
   private combo = 0;
   private comboTimer = 0;
   private fates: string[] = [];
@@ -804,7 +805,7 @@ export class Game {
     this.currentLevel = null;
     this.history = [];
     this.tray = [];
-    this.score = 0;
+    this.score = this.modeScores[this.gameMode];
     this.combo = 0;
     this.comboTimer = 0;
     this.shards = [];
@@ -1412,7 +1413,9 @@ export class Game {
     if (this.combo >= 3) this.flash = Math.min(0.6, 0.25 + this.combo * 0.05);
     this.comboTimer = this.comboDuration();
     const totalMult = this.timeBonusMult * this.streakMult;
-    this.score += Math.round(100 * (1 + (this.combo - 1) * 0.15) * this.combo * this.scoreMult() * totalMult);
+    const pts = Math.round(100 * (1 + (this.combo - 1) * 0.15) * this.combo * this.scoreMult() * totalMult);
+    this.score += pts;
+    this.modeScores[this.gameMode] += pts;
     for (const e of [eA, eB]) {
       if (!e) continue;
       const bt = this.tiles.find((tt) => tt.id === e.id);
