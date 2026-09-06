@@ -13,7 +13,6 @@ export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<Game | null>(null);
   const [hud, setHud] = useState<HudState | null>(null);
-  const [levelCount, setLevelCount] = useState(12);
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(0.75);
   const [mode, setMode] = useState<GameMode>("classic");
@@ -25,7 +24,6 @@ export default function App() {
     const game = new Game(canvas);
     gameRef.current = game;
     game.onHud = setHud;
-    setLevelCount(game.getLevelCount());
     setMuted(game.isMuted());
     game.start();
 
@@ -112,13 +110,6 @@ export default function App() {
         )}
       </div>
       <div className="toolbar">
-        {mode === "classic" && (
-          <div className="level-picker">
-            {Array.from({ length: levelCount }, (_, i) => (
-              <button key={i} className={`btn tbtn lvl ${hud?.level === i ? "active" : ""}`} onClick={() => gameRef.current?.goToLevel(i)}>{i + 1}</button>
-            ))}
-          </div>
-        )}
         {mode === "endless" && hud && (
           <div className="mode-info">Round {hud.endlessRound}</div>
         )}
