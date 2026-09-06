@@ -377,6 +377,11 @@ export class Game {
   private dustParticles: Array<{ x: number; y: number; vx: number; vy: number; r: number; alpha: number; ph: number }> = [];
   private floatingTexts: Array<{ x: number; y: number; life: number; max: number; text: string; color: string; size: number }> = [];
   private clickPops: Array<{ x: number; y: number; life: number; max: number; r: number }> = [];
+  private rain: Array<{ x: number; y: number; speed: number; len: number; alpha: number }> = [];
+  private ripples: Array<{ x: number; y: number; life: number; max: number; r: number }> = [];
+  private victoryTiles: Array<{ x: number; y: number; vx: number; vy: number; rot: number; vr: number; alpha: number; symbol: string }> = [];
+  private victoryRays: Array<{ angle: number; len: number; alpha: number }> = [];
+  private victoryStarted = false;
 
   onHud?: (h: HudState) => void;
 
@@ -405,6 +410,15 @@ export class Game {
         vy: 14 + Math.random() * 18,
         ph: Math.random() * 6.28,
         r: 1 + Math.random() * 1.6,
+      });
+    }
+    for (let i = 0; i < 60; i++) {
+      this.rain.push({
+        x: Math.random() * CANVAS_W,
+        y: Math.random() * CANVAS_H,
+        speed: 600 + Math.random() * 400,
+        len: 18 + Math.random() * 24,
+        alpha: 0.12 + Math.random() * 0.18,
       });
     }
     this.newGame();
@@ -697,6 +711,9 @@ export class Game {
     this.shuffleCount = 0;
     this.hintIds = [];
     this.confetti = [];
+    this.victoryTiles = [];
+    this.victoryRays = [];
+    this.victoryStarted = false;
     this.flash = 0;
     this.wonAt = 0;
     this.fates = this.rollFates();
@@ -896,6 +913,31 @@ export class Game {
           max: 9,
         });
       }
+      // Zafer sinematik: taslar yukari ucsun
+      this.victoryStarted = true;
+      this.victoryTiles = [];
+      this.victoryRays = [];
+      const syms = ["b1","c1","w1","E","S","DR","f1","s1"];
+      for (let i = 0; i < 24; i++) {
+        const sx = CANVAS_W * 0.2 + Math.random() * CANVAS_W * 0.6;
+        const sy = CANVAS_H * 0.3 + Math.random() * CANVAS_H * 0.4;
+        this.victoryTiles.push({
+          x: sx, y: sy,
+          vx: (Math.random() - 0.5) * 80,
+          vy: -120 - Math.random() * 180,
+          rot: (Math.random() - 0.5) * 0.5,
+          vr: (Math.random() - 0.5) * 4,
+          alpha: 1,
+          symbol: syms[Math.floor(Math.random() * syms.length)],
+        });
+      }
+      for (let i = 0; i < 12; i++) {
+        this.victoryRays.push({
+          angle: (i / 12) * Math.PI * 2,
+          len: 200 + Math.random() * 300,
+          alpha: 0,
+        });
+      }
       if (this.shuffleCount === 0) {
         this.score += 500;
         this.floats.push({ x: CANVAS_W / 2, y: CANVAS_H / 2 - 40, life: 1.4, max: 1.4, text: "Temiz Zafer! +500", color: "#ffd75e" });
@@ -995,6 +1037,40 @@ export class Game {
       p.rot += p.vr * dt;
     }
     this.confetti = this.confetti.filter((p) => p.life > 0 && p.y < CANVAS_H + 40);
+    // Yagmur damlalari guncelleme
+    for (const r of this.rain) {
+      r.y += r.speed * dt;
+      r.x += 30 * dt; // hafif yatay ruzgar
+      if (r.y > CANVAS_H + 10) {
+        // Damlanin dusme noktasinda ripple olustur
+        if (r.y < CANVAS_H + 60 && Math.random() < 0.3) {
+          this.ripples.push({ x: r.x, y: CANVAS_H - 20 + Math.random() * 30, life: 1.2, max: 1.2, r: 0 });
+        }
+        r.y = -r.len;
+        r.x = Math.random() * CANVAS_W;
+      }
+    }
+    // Su birikinti dalgeleri
+    for (const rp of this.ripples) {
+      rp.life -= dt;
+      rp.r += 35 * dt;
+    }
+    this.ripples = this.ripples.filter((rp) => rp.life > 0);
+    // Zafer sinematik guncelleme
+    if (this.victoryStarted) {
+      for (const vt of this.victoryTiles) {
+        vt.vy -= 120 * dt; // yukari cekilm
+        vt.vy *= 0.98;
+        vt.x += vt.vx * dt;
+        vt.y += vt.vy * dt;
+        vt.rot += vt.vr * dt;
+        vt.alpha = Math.max(0, vt.alpha - dt * 0.4);
+      }
+      this.victoryTiles = this.victoryTiles.filter((vt) => vt.alpha > 0);
+      for (const ray of this.victoryRays) {
+        ray.alpha = Math.min(0.6, ray.alpha + dt * 0.8);
+      }
+    }
     // Eslesme huzme animasyonu
     if (this.matchFx) {
       this.matchFx.timer -= dt;
@@ -1708,6 +1784,36 @@ export class Game {
       c.fill();
     }
     c.globalAlpha = 1;
+    // Yagmur damlalari
+    for (const r of this.rain) {
+      c.save();
+      c.globalAlpha = r.alpha;
+      c.strokeStyle = "#8ab4c8";
+      c.lineWidth = 1.2;
+      c.beginPath();
+      c.moveTo(r.x, r.y);
+      c.lineTo(r.x - 3, r.y - r.len);
+      c.stroke();
+      c.restore();
+    }
+    // Su birikinti dalgeleri
+    for (const rp of this.ripples) {
+      const a = Math.max(0, rp.life / rp.max);
+      c.save();
+      c.globalAlpha = a * 0.35;
+      c.strokeStyle = "#6a9ab4";
+      c.lineWidth = 1.5;
+      c.beginPath();
+      c.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+      c.stroke();
+      if (rp.r > 6) {
+        c.globalAlpha = a * 0.18;
+        c.beginPath();
+        c.arc(rp.x, rp.y, rp.r * 0.6, 0, Math.PI * 2);
+        c.stroke();
+      }
+      c.restore();
+    }
     this.drawMotifs(c);
     this.drawAmbient(c);
     // Screen shake transformu
@@ -2097,6 +2203,58 @@ export class Game {
     if (this.won) {
       c.fillStyle = "rgba(0,10,20,0.35)";
       c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      // Zafer sinematik: isik huzmeleri
+      if (this.victoryRays.length > 0) {
+        c.save();
+        c.translate(CANVAS_W / 2, CANVAS_H / 2 - 40);
+        for (const ray of this.victoryRays) {
+          c.save();
+          c.rotate(ray.angle);
+          c.globalAlpha = ray.alpha * (0.4 + 0.2 * Math.sin(this.time * 2 + ray.angle));
+          const rg = c.createLinearGradient(0, 0, 0, -ray.len);
+          rg.addColorStop(0, "rgba(255,215,94,0.5)");
+          rg.addColorStop(0.5, "rgba(255,200,60,0.2)");
+          rg.addColorStop(1, "rgba(255,180,40,0)");
+          c.fillStyle = rg;
+          c.beginPath();
+          c.moveTo(-8, 0);
+          c.lineTo(8, 0);
+          c.lineTo(2, -ray.len);
+          c.lineTo(-2, -ray.len);
+          c.closePath();
+          c.fill();
+          c.restore();
+        }
+        c.restore();
+      }
+      // Ucan taslar
+      for (const vt of this.victoryTiles) {
+        c.save();
+        c.globalAlpha = vt.alpha;
+        c.translate(vt.x, vt.y);
+        c.rotate(vt.rot);
+        const sz = 18;
+        const R = 4;
+        const fg = c.createLinearGradient(-sz/2, -sz*0.7, sz/2, sz*0.7);
+        fg.addColorStop(0, "#faf4e6");
+        fg.addColorStop(0.5, "#e0d4b8");
+        fg.addColorStop(1, "#d4c8a8");
+        c.fillStyle = fg;
+        c.beginPath();
+        c.roundRect(-sz/2, -sz*0.7, sz, sz*1.4, R);
+        c.fill();
+        c.strokeStyle = "#c8b898";
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.roundRect(-sz/2, -sz*0.7, sz, sz*1.4, R);
+        c.stroke();
+        c.fillStyle = "#4a3520";
+        c.font = `bold ${Math.round(sz * 0.6)}px ${CJK_FONT}`;
+        c.textAlign = "center";
+        c.textBaseline = "middle";
+        c.fillText(faceLabel(vt.symbol), 0, 0);
+        c.restore();
+      }
       c.textAlign = "center";
       c.textBaseline = "middle";
       const c1 = 1.70158;
