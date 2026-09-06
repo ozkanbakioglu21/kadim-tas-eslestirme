@@ -957,6 +957,15 @@ export class Game {
     }
     if (!target) return;
     if (this.freezeActive) return;
+    // Puzzle modu: sadece gecerli hamlelere izin ver
+    if (this.gameMode === "puzzle") {
+      let hasValidMove = false;
+      for (const trayItem of this.tray) {
+        if (matchKey(trayItem.symbol) === matchKey(target.symbol)) { hasValidMove = true; break; }
+      }
+      if (!hasValidMove && this.tray.length < this.maxTray() - 1) hasValidMove = true;
+      if (!hasValidMove) return;
+    }
     if (this.jokerActive && this.isOpen(target) && this.sideFree(target)) {
       this.jokerActive = false;
       target.removed = true;
@@ -1078,8 +1087,8 @@ export class Game {
       this.streakMult = 1;
     }
 
-    // Kazanma.
-    if (this.tiles.every((t) => t.removed)) {
+    // Kazanma (endless modda atla - breakPair'da yenilenir).
+    if (this.gameMode !== "endless" && this.tiles.every((t) => t.removed)) {
       this.won = true;
       this.wonAt = this.time;
       this.sfx("win");
@@ -1154,7 +1163,7 @@ export class Game {
     this.time += dt;
     if (!this.won && !this.lost) {
       this.seconds += dt;
-      if (this.gameMode === "race") {
+      if (this.gameMode === "race" && this.moves > 0) {
         this.raceTimeLeft -= dt;
         if (this.raceTimeLeft <= 0) {
           this.raceTimeLeft = 0;
@@ -1408,6 +1417,19 @@ export class Game {
         this.starRain.push({ x: Math.random() * CANVAS_W, y: -20, vy: 100 + Math.random() * 200, vx: (Math.random() - 0.5) * 60, rot: Math.random() * Math.PI * 2, vr: (Math.random() - 0.5) * 6, size: 4 + Math.random() * 6, alpha: 0.7 + Math.random() * 0.3, color: colors[Math.floor(Math.random() * colors.length)] });
       }
     }
+    // Endless mode: tum taslar bitince yenile
+    if (this.gameMode === "endless" && this.tiles.every((t) => t.removed)) {
+      setTimeout(() => {
+        this.tiles = [];
+        this.tray = [];
+        this.history = [];
+        this.countdownTiles.clear();
+        this.currentLevel = null;
+        this.buildLayout();
+        this.emitHud();
+      }, 800);
+    }
+    this.emitHud();
   }
 
   shuffle(): void {
