@@ -1413,13 +1413,6 @@ export class Game {
     this.comboTimer = this.comboDuration();
     const totalMult = this.timeBonusMult * this.streakMult;
     this.score += Math.round(100 * (1 + (this.combo - 1) * 0.15) * this.combo * this.scoreMult() * totalMult);
-    // Race mode: her eslesmede +5sn bonus
-    if (this.gameMode === "race") {
-      this.raceTimeLeft = Math.min(this.raceTimeLeft + 5, this.raceDuration + 30);
-      const tileA = eA ? this.tiles.find((t) => t.id === eA.id) : null;
-      const tileB = eB ? this.tiles.find((t) => t.id === eB.id) : null;
-      this.floats.push({ x: (tileA?.sx ?? tileB?.sx ?? CANVAS_W / 2), y: (tileA?.sy ?? tileB?.sy ?? CANVAS_H / 2) - 30, life: 1.0, max: 1.0, text: "+5sn!", color: "#44ff88" });
-    }
     for (const e of [eA, eB]) {
       if (!e) continue;
       const bt = this.tiles.find((tt) => tt.id === e.id);
