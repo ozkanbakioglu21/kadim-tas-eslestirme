@@ -316,6 +316,44 @@ const RANDOM_BG: Array<[string, string]> = [
   ["#33221f", "#4a3130"],
 ];
 
+// Gun/ gece renk paletleri: [ust, alt] gradient
+const DAY_NIGHT: Array<{ top: string; mid: string; bot: string; amb: string }> = [
+  { top: "#0a1e2a", mid: "#0d2a38", bot: "#081820", amb: "#0a1e2a" }, // 0.00 - gece
+  { top: "#0f1a30", mid: "#142840", bot: "#0a1828", amb: "#0f1a30" }, // 0.15 - gece sonu
+  { top: "#2a1a10", mid: "#4a2a18", bot: "#1a0e08", amb: "#3a2010" }, // 0.25 - sabah
+  { top: "#1a2a18", mid: "#2a4020", bot: "#0e1a10", amb: "#1a2a18" }, // 0.35 - sabah
+  { top: "#0a1e2a", mid: "#0d2a38", bot: "#081820", amb: "#0a1e2a" }, // 0.50 - gun
+  { top: "#1a2a18", mid: "#2a4020", bot: "#0e1a10", amb: "#1a2a18" }, // 0.65 - ogle
+  { top: "#3a1a10", mid: "#5a2a18", bot: "#1a0e08", amb: "#4a2010" }, // 0.75 - aksam
+  { top: "#1a1030", mid: "#2a1848", bot: "#0e0a18", amb: "#1a1030" }, // 0.85 - aksam sonu
+  { top: "#0a1e2a", mid: "#0d2a38", bot: "#081820", amb: "#0a1e2a" }, // 1.00 - gece
+];
+
+function lerpHex(a: string, b: string, t: number): string {
+  const parse = (h: string) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const [ar, ag, ab] = parse(a);
+  const [br, bg2, bb] = parse(b);
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg2 - ag) * t);
+  const bv = Math.round(ab + (bb - ab) * t);
+  return "#" + [r, g, bv].map((v) => v.toString(16).padStart(2, "0")).join("");
+}
+
+function getDayNightColors(phase: number): { top: string; mid: string; bot: string; amb: string } {
+  const idx = phase * (DAY_NIGHT.length - 1);
+  const i = Math.floor(idx);
+  const frac = idx - i;
+  if (i >= DAY_NIGHT.length - 1) return DAY_NIGHT[DAY_NIGHT.length - 1];
+  const a = DAY_NIGHT[i];
+  const b = DAY_NIGHT[i + 1];
+  return {
+    top: lerpHex(a.top, b.top, frac),
+    mid: lerpHex(a.mid, b.mid, frac),
+    bot: lerpHex(a.bot, b.bot, frac),
+    amb: lerpHex(a.amb, b.amb, frac),
+  };
+}
+
 export class Game {
   private ctx: CanvasRenderingContext2D;
   private raf = 0;
@@ -382,6 +420,10 @@ export class Game {
   private victoryTiles: Array<{ x: number; y: number; vx: number; vy: number; rot: number; vr: number; alpha: number; symbol: string }> = [];
   private victoryRays: Array<{ angle: number; len: number; alpha: number }> = [];
   private victoryStarted = false;
+  private dayPhase = 0.3;
+  private DAY_CYCLE = 90;
+  private nightAlpha = 0;
+  private dawnDusk = 0;
 
   onHud?: (h: HudState) => void;
 
@@ -957,6 +999,8 @@ export class Game {
   private update(dt: number): void {
     this.time += dt;
     if (!this.won && !this.lost) this.seconds += dt;
+    // Gun/gece donusu
+    this.dayPhase = (this.time % this.DAY_CYCLE) / this.DAY_CYCLE;
     if (this.comboTimer > 0) {
       this.comboTimer -= dt;
       if (this.comboTimer <= 0) this.combo = 0;
@@ -1475,19 +1519,19 @@ export class Game {
   private drawAmbient(c: CanvasRenderingContext2D): void {
     const t = this.time;
 
-    // Parlayan yildizlar (nefes alir).
+    // Parlayan yildizlar (gece gorunur, gun gizli).
     for (const st of this.stars) {
-      const a = (0.25 + 0.55 * (0.5 + 0.5 * Math.sin(t * st.sp + st.ph))) * 0.5;
+      const a = (0.25 + 0.55 * (0.5 + 0.5 * Math.sin(t * st.sp + st.ph))) * 0.5 * this.nightAlpha;
       c.fillStyle = "rgba(235,242,255," + a.toFixed(3) + ")";
       c.beginPath();
       c.arc(st.x, st.y, st.r, 0, Math.PI * 2);
       c.fill();
     }
 
-    // Ay: yavas nefes alan parilti + krater izleri.
+    // Ay: gece gorunur
     const mx = 590;
     const my = 128;
-    const moonA = 0.5 + 0.08 * Math.sin(t * 0.6);
+    const moonA = (0.5 + 0.08 * Math.sin(t * 0.6)) * this.nightAlpha;
     const mg = c.createRadialGradient(mx, my, 4, mx, my, 60);
     mg.addColorStop(0, "rgba(240,240,225," + (0.5 * moonA).toFixed(3) + ")");
     mg.addColorStop(0.4, "rgba(240,240,225," + (0.18 * moonA).toFixed(3) + ")");
@@ -1527,8 +1571,8 @@ export class Game {
     mist(520, 6.5, 0.5, 0.06);
     mist(610, 7.5, 0.8, 0.05);
 
-    // Ufukta sicak isik (bozkur akşamı, yavas nefes).
-    const warmA = 0.05 + 0.02 * Math.sin(t * 0.35);
+    // Ufukta sicak isik (sabah/aksam daha guclu)
+    const warmA = (0.05 + 0.02 * Math.sin(t * 0.35)) * this.dawnDusk;
     const wg = c.createLinearGradient(0, 290, 0, 580);
     wg.addColorStop(0, "rgba(255,170,80,0)");
     wg.addColorStop(0.6, "rgba(255,170,80," + warmA.toFixed(3) + ")");
@@ -1756,13 +1800,17 @@ export class Game {
   private render(): void {
     const c = this.ctx;
     const def = this.level();
-    // Arka plan: koyu yesil/mavi kece dokusu.
+    // Arka plan: gun/gece donusumlu gradient
+    const dn = getDayNightColors(this.dayPhase);
     const g = c.createLinearGradient(0, 0, 0, CANVAS_H);
-    g.addColorStop(0, "#0a1e2a");
-    g.addColorStop(0.5, "#0d2a38");
-    g.addColorStop(1, "#081820");
+    g.addColorStop(0, dn.top);
+    g.addColorStop(0.5, dn.mid);
+    g.addColorStop(1, dn.bot);
     c.fillStyle = g;
     c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    // Gun/gece evre hesaplari
+    this.nightAlpha = this.dayPhase < 0.3 ? 1 - this.dayPhase / 0.3 : this.dayPhase > 0.7 ? (this.dayPhase - 0.7) / 0.3 : 0;
+    this.dawnDusk = this.dayPhase < 0.4 ? Math.sin(this.dayPhase / 0.4 * Math.PI) : this.dayPhase > 0.6 ? Math.sin((this.dayPhase - 0.6) / 0.4 * Math.PI) : 0;
     // Kece dokusu: ince yatay cizgiler
     c.save();
     c.globalAlpha = 0.04;
@@ -1825,6 +1873,22 @@ export class Game {
     vg.addColorStop(1, "rgba(6,4,2,0.46)");
     c.fillStyle = vg;
     c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+    // Gun/gece renk sicakligi overlay
+    if (this.dawnDusk > 0.01) {
+      c.save();
+      c.globalAlpha = this.dawnDusk * 0.12;
+      c.fillStyle = "#ff9944";
+      c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      c.restore();
+    }
+    if (this.nightAlpha > 0.3) {
+      c.save();
+      c.globalAlpha = (this.nightAlpha - 0.3) * 0.15;
+      c.fillStyle = "#2244aa";
+      c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      c.restore();
+    }
 
     // Baslik: uzaya cekilmis ince bakir plak + basilmis yazi.
     const plateW = 356;
