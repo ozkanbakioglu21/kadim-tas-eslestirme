@@ -23,9 +23,8 @@ export default function App() {
     setMode(selectedMode);
     if (gameRef.current) {
       gameRef.current.setMode(selectedMode);
-      setGameReady(true);
-      return;
     }
+    setGameReady(true);
   };
 
   useEffect(() => {
