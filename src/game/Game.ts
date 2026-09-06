@@ -1164,6 +1164,7 @@ export class Game {
     this.render();
     this.raf = requestAnimationFrame(this.loop);
   };
+  private hudTimer = 0;
   private update(dt: number): void {
     this.time += dt;
     if (!this.won && !this.lost) {
@@ -1176,6 +1177,12 @@ export class Game {
           this.sfx("lose");
         }
       }
+    }
+    // HUD'u periyodik guncelle (her 0.25sn)
+    this.hudTimer += dt;
+    if (this.hudTimer >= 0.25) {
+      this.hudTimer = 0;
+      this.emitHud();
     }
     // Gun/gece donusu
     this.dayPhase = (this.time % this.DAY_CYCLE) / this.DAY_CYCLE;
