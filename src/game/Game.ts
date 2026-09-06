@@ -429,6 +429,26 @@ export class Game {
   private meltDrops: Array<{ x: number; y: number; vx: number; vy: number; life: number; max: number; r: number }> = [];
   private winterMode = false;
   private rainMode = false;
+  private lastMatchTime = 0;
+  private timeBonusMult = 1;
+  private streak = 0;
+  private streakMult = 1;
+  private jokerActive = false;
+  private jokerUsed = false;
+  private freezeActive = false;
+  private freezeTimer = 0;
+  private freezeCooldown = 0;
+  private countdownTiles: Map<number, number> = new Map();
+  private countdownMax = 10;
+  private windParticles: Array<{ x: number; y: number; vx: number; vy: number; life: number; max: number; r: number; color: string }> = [];
+  private flameTrail: Array<{ x: number; y: number; life: number; max: number; r: number }> = [];
+  private starRain: Array<{ x: number; y: number; vy: number; vx: number; rot: number; vr: number; size: number; alpha: number; color: string }> = [];
+  private gateOpen = 0;
+  private gatePhase = 0;
+  private mistParticles: Array<{ x: number; y: number; r: number; alpha: number; vx: number }> = [];
+  private achievements: Set<string> = new Set();
+  private showAchievement = "";
+  private achievementTimer = 0;
 
   onHud?: (h: HudState) => void;
 
@@ -436,6 +456,24 @@ export class Game {
   getSound() { return SoundEngine; }
   toggleMute(): boolean { return SoundEngine.toggleMute(); }
   isMuted(): boolean { return SoundEngine.isMuted(); }
+  // ---- Basari Sistemi ----
+  private ACHV_NAMES: Record<string, string> = { clean_win: "Temiz Zafer", combo5: "Kombo Ustasi", combo10: "Efsane Kombo", speed_demon: "Hizli Seytan", high_score: "Yuksek Skor", first_loss: "Ilk Yenilgi" };
+  private unlockAchievement(id: string): void { if (this.achievements.has(id)) return; this.achievements.add(id); this.showAchievement = this.ACHV_NAMES[id] ?? id; this.achievementTimer = 3; }
+  private loadAchievements(): void { try { const raw = localStorage.getItem("otuken_achievements"); if (raw) this.achievements = new Set(JSON.parse(raw)); } catch {} }
+  private saveAchievements(): void { try { localStorage.setItem("otuken_achievements", JSON.stringify([...this.achievements])); } catch {} }
+  // ---- Tema Kilitleri ----
+  private THEME_UNLOCK_LEVELS = [3, 6, 9, 12];
+  private checkThemeUnlock(): void { localStorage.setItem("otuken_themes", JSON.stringify(this.getUnlockedThemes())); }
+  private getUnlockedThemes(): number[] { try { const raw = localStorage.getItem("otuken_themes"); return raw ? JSON.parse(raw) : [0]; } catch { return [0]; } }
+  public getThemeCount(): number { return 1 + this.THEME_UNLOCK_LEVELS.filter((l) => this.levelIndex >= l).length; }
+  public isThemeUnlocked(idx: number): boolean { return this.getUnlockedThemes().includes(idx); }
+  // ---- Donma Modu ----
+  public activateFreeze(): boolean { if (this.freezeActive || this.freezeCooldown > 0 || this.won || this.lost) return false; this.freezeActive = true; this.freezeTimer = 5; this.freezeCooldown = 20; this.sfx("match"); return true; }
+  public getFreezeTimer(): number { return this.freezeTimer; }
+  public getFreezeCooldown(): number { return this.freezeCooldown; }
+  // ---- Joker ----
+  public activateJoker(): boolean { if (this.jokerUsed || this.won || this.lost) return false; this.jokerActive = true; this.jokerUsed = true; this.sfx("match"); return true; }
+  public isJokerActive(): boolean { return this.jokerActive; }
 
   constructor(private canvas: HTMLCanvasElement) {
     canvas.width = CANVAS_W;
@@ -478,6 +516,7 @@ export class Game {
         alpha: 0.4 + Math.random() * 0.5,
       });
     }
+    this.loadAchievements();
     this.newGame();
   }
 
@@ -652,6 +691,10 @@ export class Game {
     this.tiles.forEach((t, i) => this.dealDelay.set(t.id, i * 0.012));
     this.dealAt = this.time;
     this.dealRattle();
+    this.countdownTiles.clear();
+    for (const t of this.tiles) {
+      if (Math.random() < 0.2) this.countdownTiles.set(t.id, this.countdownMax);
+    }
   }
 
   /** Kaldirma sirasini simule eder: her adimda acik bir cift secip havada
@@ -773,10 +816,27 @@ export class Game {
     this.victoryStarted = false;
     this.snowAccum.clear();
     this.meltDrops = [];
-    // Rastgele hava durumu sec: kar veya yagmur
     const weatherRoll = Math.random();
     this.winterMode = weatherRoll < 0.5;
     this.rainMode = !this.winterMode;
+    this.lastMatchTime = 0;
+    this.timeBonusMult = 1;
+    this.streak = 0;
+    this.streakMult = 1;
+    this.jokerActive = false;
+    this.jokerUsed = false;
+    this.freezeActive = false;
+    this.freezeTimer = 0;
+    this.freezeCooldown = 0;
+    this.countdownTiles.clear();
+    this.windParticles = [];
+    this.flameTrail = [];
+    this.starRain = [];
+    this.gateOpen = 0;
+    this.gatePhase = 0;
+    this.mistParticles = [];
+    this.showAchievement = "";
+    this.achievementTimer = 0;
     this.flash = 0;
     this.wonAt = 0;
     this.fates = this.rollFates();
@@ -886,6 +946,14 @@ export class Game {
       }
     }
     if (!target) return;
+    if (this.freezeActive) return;
+    if (this.jokerActive && this.isOpen(target) && this.sideFree(target)) {
+      this.jokerActive = false;
+      target.removed = true;
+      this.floats.push({ x: target.sx, y: target.sy, life: 1.2, max: 1.2, text: "JOKER!", color: "#ff44aa" });
+      this.sfx("match");
+      return;
+    }
 
     // Eslesme kontrolu: haznede ayni desenden var mi?
     let matchBoardTile: Tile | null = null;
@@ -932,6 +1000,27 @@ export class Game {
         break;
       }
     }
+    const now = this.time;
+    if (this.lastMatchTime > 0 && now - this.lastMatchTime < 3) {
+      this.timeBonusMult = Math.min(4, this.timeBonusMult + 0.5);
+    } else {
+      this.timeBonusMult = 1;
+    }
+    this.lastMatchTime = now;
+    this.streak++;
+    this.streakMult = this.streak >= 8 ? 5 : this.streak >= 5 ? 3 : this.streak >= 2 ? 2 : 1;
+    for (const t of this.tiles) {
+      if (!t.removed && this.countdownTiles.has(t.id)) {
+        const rem = (this.countdownTiles.get(t.id) ?? 1) - 1;
+        if (rem <= 0) {
+          this.countdownTiles.delete(t.id);
+          t.removed = true;
+          this.floats.push({ x: t.sx, y: t.sy, life: 1, max: 1, text: "Zamani doldu!", color: "#ff6644" });
+        } else {
+          this.countdownTiles.set(t.id, rem);
+        }
+      }
+    }
     if (pairIdx !== -1) {
       // Eslesme VFX: iki tas arasinda altin huzme
       if (matchBoardTile) {
@@ -969,8 +1058,11 @@ export class Game {
       // Hazne doldu: oyuncu kaybeder.
       this.lost = true;
       this.sfx("lose");
+      this.unlockAchievement("first_loss");
     } else {
       this.sfx("tileclick");
+      this.streak = 0;
+      this.streakMult = 1;
     }
 
     // Kazanma.
@@ -1023,7 +1115,16 @@ export class Game {
       if (this.shuffleCount === 0) {
         this.score += 500;
         this.floats.push({ x: CANVAS_W / 2, y: CANVAS_H / 2 - 40, life: 1.4, max: 1.4, text: "Temiz Zafer! +500", color: "#ffd75e" });
+        this.unlockAchievement("clean_win");
       }
+      this.gatePhase = 1;
+      this.gateOpen = 0;
+      if (this.combo >= 5) this.unlockAchievement("combo5");
+      if (this.combo >= 10) this.unlockAchievement("combo10");
+      if (this.moves <= 20) this.unlockAchievement("speed_demon");
+      if (this.score >= 2000) this.unlockAchievement("high_score");
+      this.saveAchievements();
+      this.checkThemeUnlock();
     }
     this.emitHud();
   }
@@ -1174,6 +1275,23 @@ export class Game {
         ray.alpha = Math.min(0.6, ray.alpha + dt * 0.8);
       }
     }
+    if (this.freezeActive) { this.freezeTimer -= dt; if (this.freezeTimer <= 0) this.freezeActive = false; }
+    if (this.freezeCooldown > 0) this.freezeCooldown -= dt;
+    for (const wp of this.windParticles) { wp.life -= dt; wp.x += wp.vx * dt; wp.y += wp.vy * dt; wp.vy += 100 * dt; }
+    this.windParticles = this.windParticles.filter((wp) => wp.life > 0);
+    if (this.selectedId !== null) {
+      const sel = this.tiles.find((t) => t.id === this.selectedId);
+      if (sel && !sel.removed) this.flameTrail.push({ x: sel.sx + (Math.random() - 0.5) * 8, y: sel.sy + (Math.random() - 0.5) * 8, life: 0.5, max: 0.5, r: 3 + Math.random() * 4 });
+    }
+    for (const ft of this.flameTrail) ft.life -= dt;
+    this.flameTrail = this.flameTrail.filter((ft) => ft.life > 0);
+    for (const sr of this.starRain) { sr.y += sr.vy * dt; sr.x += sr.vx * dt; sr.rot += sr.vr * dt; sr.alpha -= dt * 0.3; }
+    this.starRain = this.starRain.filter((sr) => sr.alpha > 0 && sr.y < CANVAS_H + 20);
+    if (this.gatePhase > 0 && this.gatePhase < 2) { this.gateOpen = Math.min(1, this.gateOpen + dt * 0.8); if (this.gateOpen >= 1) this.gatePhase = 2; }
+    if (this.dealAt >= 0) { for (const t of this.tiles) { if (Math.random() < 0.02) this.mistParticles.push({ x: t.sx + (Math.random() - 0.5) * 30, y: t.sy, r: 15 + Math.random() * 20, alpha: 0.4, vx: (Math.random() - 0.5) * 20 }); } }
+    for (const mp of this.mistParticles) { mp.alpha -= dt * 0.5; mp.x += mp.vx * dt; mp.y -= 15 * dt; }
+    this.mistParticles = this.mistParticles.filter((mp) => mp.alpha > 0);
+    if (this.showAchievement) { this.achievementTimer -= dt; if (this.achievementTimer <= 0) this.showAchievement = ""; }
     // Eslesme huzme animasyonu
     if (this.matchFx) {
       this.matchFx.timer -= dt;
@@ -1249,7 +1367,24 @@ export class Game {
     if (this.combo >= 2) this.sfx("combo");
     if (this.combo >= 3) this.flash = Math.min(0.6, 0.25 + this.combo * 0.05);
     this.comboTimer = this.comboDuration();
-    this.score += Math.round(100 * (1 + (this.combo - 1) * 0.15) * this.combo * this.scoreMult());
+    const totalMult = this.timeBonusMult * this.streakMult;
+    this.score += Math.round(100 * (1 + (this.combo - 1) * 0.15) * this.combo * this.scoreMult() * totalMult);
+    for (const e of [eA, eB]) {
+      if (!e) continue;
+      const bt = this.tiles.find((tt) => tt.id === e.id);
+      if (!bt) continue;
+      for (let k = 0; k < 8; k++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = 80 + Math.random() * 160;
+        this.windParticles.push({ x: bt.sx, y: bt.sy, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd - 40, life: 0.6, max: 0.6, r: 2 + Math.random() * 3, color: tileColor(bt.symbol) });
+      }
+    }
+    if (this.combo > 5) {
+      for (let k = 0; k < 12; k++) {
+        const colors = ["#ffd75e","#ff8844","#44aaff","#ff44aa","#44ff88"];
+        this.starRain.push({ x: Math.random() * CANVAS_W, y: -20, vy: 100 + Math.random() * 200, vx: (Math.random() - 0.5) * 60, rot: Math.random() * Math.PI * 2, vr: (Math.random() - 0.5) * 6, size: 4 + Math.random() * 6, alpha: 0.7 + Math.random() * 0.3, color: colors[Math.floor(Math.random() * colors.length)] });
+      }
+    }
   }
 
   shuffle(): void {
@@ -2325,6 +2460,11 @@ export class Game {
     c.fillStyle = "#d4e8f2";
     c.fillText(`Kalan: ${remaining}/${total}   Hamle: ${this.moves}   Süre: ${Math.floor(this.seconds)} sn   Karıştır: ${this.maxShuffles - this.shuffleCount}`, CANVAS_W / 2, barY + 48);
 
+    for (const wp of this.windParticles) { const a = Math.max(0, wp.life / wp.max); c.save(); c.globalAlpha = a * 0.8; c.fillStyle = wp.color; c.beginPath(); c.arc(wp.x, wp.y, wp.r * a, 0, Math.PI * 2); c.fill(); c.restore(); }
+    for (const ft of this.flameTrail) { const a = Math.max(0, ft.life / ft.max); c.save(); c.globalAlpha = a * 0.6; const fg = c.createRadialGradient(ft.x, ft.y, 0, ft.x, ft.y, ft.r); fg.addColorStop(0, "rgba(255,160,40,0.8)"); fg.addColorStop(0.5, "rgba(255,80,20,0.4)"); fg.addColorStop(1, "rgba(255,40,10,0)"); c.fillStyle = fg; c.beginPath(); c.arc(ft.x, ft.y, ft.r, 0, Math.PI * 2); c.fill(); c.restore(); }
+    for (const sr of this.starRain) { c.save(); c.globalAlpha = Math.max(0, sr.alpha); c.translate(sr.x, sr.y); c.rotate(sr.rot); c.fillStyle = sr.color; c.beginPath(); for (let i = 0; i < 4; i++) { const ang = (i / 4) * Math.PI * 2; c.lineTo(Math.cos(ang) * sr.size, Math.sin(ang) * sr.size); c.lineTo(Math.cos(ang + Math.PI / 4) * sr.size * 0.35, Math.sin(ang + Math.PI / 4) * sr.size * 0.35); } c.closePath(); c.fill(); c.restore(); }
+    for (const mp of this.mistParticles) { c.save(); c.globalAlpha = Math.max(0, mp.alpha); const mg = c.createRadialGradient(mp.x, mp.y, 0, mp.x, mp.y, mp.r); mg.addColorStop(0, "rgba(180,200,220,0.4)"); mg.addColorStop(1, "rgba(180,200,220,0)"); c.fillStyle = mg; c.beginPath(); c.arc(mp.x, mp.y, mp.r, 0, Math.PI * 2); c.fill(); c.restore(); }
+    if (this.showAchievement) { c.save(); const achA = Math.min(1, this.achievementTimer / 0.3); c.globalAlpha = achA; c.fillStyle = "rgba(20,12,5,0.85)"; c.beginPath(); c.roundRect(CANVAS_W / 2 - 140, 140, 280, 50, 12); c.fill(); c.strokeStyle = "#ffd75e"; c.lineWidth = 2; c.beginPath(); c.roundRect(CANVAS_W / 2 - 140, 140, 280, 50, 12); c.stroke(); c.fillStyle = "#ffd75e"; c.font = "bold 16px Georgia"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("Basari: " + this.showAchievement, CANVAS_W / 2, 165); c.restore(); }
     // Alttaki kısayollar (haznenin üstü) - sadece masaustu
     if (!("ontouchstart" in window)) {
       c.fillStyle = "rgba(200,145,80,0.65)";
@@ -2386,6 +2526,7 @@ export class Game {
         }
         c.restore();
       }
+      if (this.gateOpen > 0) { c.save(); const gateW = 160 * this.gateOpen; const gateH = 220 * this.gateOpen; const gx = CANVAS_W / 2 - gateW / 2; const gy = CANVAS_H / 2 - gateH / 2 - 30; c.fillStyle = "#5a3a18"; c.beginPath(); c.roundRect(gx - 8, gy - 8, gateW + 16, gateH + 16, 8); c.fill(); const doorGap = gateW * 0.4 * this.gateOpen; c.fillStyle = "#2a1a08"; c.fillRect(gx, gy, gateW / 2 - doorGap / 2, gateH); c.fillRect(gx + gateW / 2 + doorGap / 2, gy, gateW / 2 - doorGap / 2, gateH); if (this.gateOpen > 0.5) { c.globalAlpha = (this.gateOpen - 0.5) * 0.8; const lg = c.createRadialGradient(CANVAS_W / 2, CANVAS_H / 2 - 30, 10, CANVAS_W / 2, CANVAS_H / 2 - 30, 120); lg.addColorStop(0, "#ffd75e"); lg.addColorStop(1, "rgba(255,215,94,0)"); c.fillStyle = lg; c.beginPath(); c.arc(CANVAS_W / 2, CANVAS_H / 2 - 30, 120, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1; } c.restore(); }
       // Ucan taslar
       for (const vt of this.victoryTiles) {
         c.save();
@@ -3116,6 +3257,8 @@ export class Game {
       c.stroke();
     }
 
+    if (this.countdownTiles.has(t.id) && open) { const rem = this.countdownTiles.get(t.id) ?? 0; const urgency = 1 - rem / this.countdownMax; c.save(); c.fillStyle = urgency > 0.6 ? "#ff4422" : urgency > 0.3 ? "#ffaa22" : "#44cc66"; c.font = "bold 11px Georgia"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(String(rem), t.sx, t.sy + h * 0.38); c.restore(); }
+    if (this.freezeActive && open) { c.save(); c.globalAlpha = 0.25; const frzG = c.createLinearGradient(x, yTop, x + w, yTop + h); frzG.addColorStop(0, "rgba(180,220,255,0.6)"); frzG.addColorStop(0.5, "rgba(200,240,255,0.3)"); frzG.addColorStop(1, "rgba(160,200,240,0.6)"); c.fillStyle = frzG; c.beginPath(); c.roundRect(x, yTop, w, h, R); c.fill(); c.strokeStyle = "rgba(200,240,255,0.5)"; c.lineWidth = 1; for (let i = 0; i < 3; i++) { const cx2 = t.sx + (Math.random() - 0.5) * w * 0.6; const cy2 = t.sy + (Math.random() - 0.5) * h * 0.6; c.beginPath(); c.moveTo(cx2 - 4, cy2); c.lineTo(cx2 + 4, cy2); c.moveTo(cx2, cy2 - 4); c.lineTo(cx2, cy2 + 4); c.stroke(); } c.restore(); }
     // Kış teması: taş üstünde kar birikintisi
     if (this.winterMode && open) {
       let accum = this.snowAccum.get(t.id) ?? 0;
