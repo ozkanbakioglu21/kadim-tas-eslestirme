@@ -217,6 +217,167 @@ function vikingFaceSpec(kind: string): VikingSpec {
   return { type: "rune", glyph: "vegvisir", color: "#e8dcc0" };
 }
 
+// ---- Antik Mısir hiyeroglifleri (vektorel, font bagimli degil) ----
+type EgyptGlyph = {
+  lines?: number[][][];   // cizili poliline'ler
+  circles?: number[][];    // cizili daire [cx,cy,r]
+  discs?: number[][];      // dolu daire [cx,cy,r]
+  polys?: number[][][];    // cizili cokgen karsi
+  fills?: number[][][];    // dolu cokgen
+};
+const EGYPT_GLYPHS: Record<string, EgyptGlyph> = {
+  eye: {
+    lines: [
+      [[-0.9, -0.55], [-0.4, -0.72], [0.35, -0.7], [0.85, -0.5]],
+      [[0.15, 0.3], [0.15, 0.92]],
+      [[-0.72, 0.28], [-0.72, 0.72], [-0.34, 0.8]],
+    ],
+    polys: [[[-0.9, 0.02], [-0.45, -0.3], [0.15, -0.32], [0.9, 0.02], [0.45, 0.32], [-0.15, 0.3], [-0.9, 0.02]]],
+    discs: [[0.0, -0.02, 0.16]],
+  },
+  sun: {
+    discs: [[0, 0, 0.4]],
+    lines: [
+      [[0, -1], [0, -0.6]], [[0, 1], [0, 0.6]], [[-1, 0], [-0.6, 0]], [[1, 0], [0.6, 0]],
+      [[-0.7, -0.7], [-0.42, -0.42]], [[0.7, -0.7], [0.42, -0.42]], [[-0.7, 0.7], [-0.42, 0.42]], [[0.7, 0.7], [0.42, 0.42]],
+    ],
+  },
+  feather: {
+    polys: [[[0, 1], [-0.36, 0.3], [-0.3, -0.5], [0, -1], [0.3, -0.5], [0.36, 0.3], [0, 1]]],
+    lines: [
+      [[0, -1], [0, 1]],
+      [[-0.22, 0.5], [0.22, 0.5]], [[-0.26, 0.12], [0.26, 0.12]], [[-0.2, -0.28], [0.2, -0.28]],
+    ],
+  },
+  lotus: {
+    polys: [
+      [[0, -1], [-0.3, -0.15], [0, 0.4], [0.3, -0.15], [0, -1]],
+      [[-0.85, 0.0], [-0.5, -0.5], [-0.08, 0.35], [-0.85, 0.0]],
+      [[0.85, 0.0], [0.5, -0.5], [0.08, 0.35], [0.85, 0.0]],
+      [[-0.6, 0.5], [-0.28, 0.95], [0.28, 0.95], [0.6, 0.5]],
+    ],
+  },
+  ankh: {
+    circles: [[0, -0.42, 0.4]],
+    lines: [[[0, -0.02], [0, 1]], [[-0.5, 0.28], [0.5, 0.28]]],
+  },
+  scarab: {
+    discs: [[0, 0.12, 0.44]],
+    circles: [[0, -0.5, 0.22]],
+    lines: [
+      [[-0.4, -0.08], [-0.85, -0.4]], [[-0.45, 0.22], [-0.9, 0.12]], [[-0.4, 0.52], [-0.8, 0.85]],
+      [[0.4, -0.08], [0.85, -0.4]], [[0.45, 0.22], [0.9, 0.12]], [[0.4, 0.52], [0.8, 0.85]],
+      [[0, -0.3], [0, 0.55]],
+    ],
+  },
+  djed: {
+    lines: [
+      [[0, -0.72], [0, 1]], [[-0.52, -0.55], [0.52, -0.55]],
+      [[-0.52, -0.28], [0.52, -0.28]], [[-0.52, -0.0], [0.52, -0.0]], [[-0.52, 0.28], [0.52, 0.28]],
+    ],
+  },
+  papyrus: {
+    lines: [
+      [[0, 1], [0, -0.3]],
+      [[0, -0.3], [-0.55, -0.9]], [[0, -0.3], [-0.28, -0.98]], [[0, -0.3], [0, -1]], [[0, -0.3], [0.28, -0.98]], [[0, -0.3], [0.55, -0.9]],
+    ],
+    polys: [[[0, 0.4], [-0.4, 0.78], [-0.08, 0.78]], [[0, 0.4], [0.4, 0.78], [0.08, 0.78]]],
+  },
+  palm: {
+    lines: [
+      [[0, 1], [0.08, -0.2]],
+      [[0.08, -0.2], [-0.6, -0.55]], [[0.08, -0.2], [-0.3, -0.85]], [[0.08, -0.2], [0.08, -0.92]], [[0.08, -0.2], [0.5, -0.78]], [[0.08, -0.2], [0.72, -0.45]],
+    ],
+  },
+  reed: {
+    lines: [
+      [[0, 1], [0, -0.55]],
+      [[0, -0.55], [-0.38, -0.95]], [[0, -0.55], [0, -1]], [[0, -0.55], [0.38, -0.95]],
+    ],
+  },
+  obelisk: {
+    polys: [
+      [[0, -1], [-0.18, -0.7], [0.18, -0.7], [0, -1]],
+      [[-0.16, -0.7], [0.16, -0.7], [0.22, 0.9], [-0.22, 0.9], [-0.16, -0.7]],
+    ],
+    lines: [[[-0.32, 0.9], [0.32, 0.9]]],
+  },
+  snake: {
+    lines: [
+      [[-0.5, -0.72], [0, -0.92], [0.5, -0.72]],
+      [[0.5, -0.72], [0.34, -0.32], [0.5, 0.08], [0.2, 0.48], [0.46, 0.9]],
+    ],
+  },
+  was: {
+    lines: [
+      [[0, -0.55], [0, 0.9]],
+      [[0, -0.55], [-0.3, -0.85], [-0.58, -0.68]], [[0, -0.55], [-0.08, -0.95]],
+      [[0, 0.9], [0.26, 0.74], [0.42, 0.92]],
+    ],
+  },
+  pyramid: {
+    polys: [[[-0.92, 0.8], [0, -0.8], [0.92, 0.8], [-0.92, 0.8]]],
+    lines: [[[-0.12, 0.8], [0.06, -0.55]]],
+  },
+  khopesh: {
+    lines: [
+      [[0.2, -0.9], [-0.1, -0.4], [-0.16, 0.3], [0.1, 0.7]],
+      [[0.1, 0.7], [0.26, 0.95]], [[-0.02, 0.72], [0.32, 0.72]],
+    ],
+  },
+  sun_small: { discs: [[0, 0, 0.5]] },
+  reed_small: {
+    lines: [[[0, -0.9], [0, 0.9]], [[-0.28, -0.28], [0.28, -0.28]], [[-0.28, 0.28], [0.28, 0.28]]],
+  },
+};
+
+// Hiyeroglifi verili context'e cizer (mod-level, font bagimli degil).
+function strokeEgyptian(m: CanvasRenderingContext2D, glyphId: string, cx: number, cy: number, size: number, lineWidth: number, color: string): void {
+  const g = EGYPT_GLYPHS[glyphId];
+  if (!g) return;
+  m.save();
+  m.lineCap = "round";
+  m.lineJoin = "round";
+  m.strokeStyle = color;
+  m.fillStyle = color;
+  m.lineWidth = lineWidth;
+  const X = (lx: number) => cx + lx * size;
+  const Y = (ly: number) => cy + ly * size;
+  for (const pl of g.lines ?? []) { m.beginPath(); pl.forEach(([lx, ly], i) => (i ? m.lineTo(X(lx), Y(ly)) : m.moveTo(X(lx), Y(ly)))); m.stroke(); }
+  for (const [ax, ay, r] of g.circles ?? []) { m.beginPath(); m.arc(X(ax), Y(ay), r * size, 0, Math.PI * 2); m.stroke(); }
+  for (const pl of g.polys ?? []) { m.beginPath(); pl.forEach(([lx, ly], i) => (i ? m.lineTo(X(lx), Y(ly)) : m.moveTo(X(lx), Y(ly)))); m.closePath(); m.stroke(); }
+  for (const [dx, dy, r] of g.discs ?? []) { m.beginPath(); m.arc(X(dx), Y(dy), r * size, 0, Math.PI * 2); m.fill(); }
+  for (const pl of g.fills ?? []) { m.beginPath(); pl.forEach(([lx, ly], i) => (i ? m.lineTo(X(lx), Y(ly)) : m.moveTo(X(lx), Y(ly)))); m.closePath(); m.fill(); }
+  m.restore();
+}
+
+// Mısır modu icin mahjong sembolu -> hiyeroglif spesifikasyonu.
+type EgyptSpec =
+  | { type: "count"; suit: "c" | "b" | "w"; n: number }
+  | { type: "glyph"; glyph: string; color: string; marker?: "flower" | "season" };
+function egyptFaceSpec(kind: string): EgyptSpec {
+  const sepia = "#5a4020";
+  if (kind[0] === "c") return { type: "count", suit: "c", n: Number(kind.slice(1)) };
+  if (kind[0] === "b") return { type: "count", suit: "b", n: Number(kind.slice(1)) };
+  if (kind[0] === "w") return { type: "count", suit: "w", n: Number(kind.slice(1)) };
+  if (kind === "E") return { type: "glyph", glyph: "eye", color: sepia };
+  if (kind === "S") return { type: "glyph", glyph: "sun", color: sepia };
+  if (kind === "W") return { type: "glyph", glyph: "feather", color: sepia };
+  if (kind === "N") return { type: "glyph", glyph: "lotus", color: sepia };
+  if (kind === "DR") return { type: "glyph", glyph: "ankh", color: sepia };
+  if (kind === "DG") return { type: "glyph", glyph: "scarab", color: sepia };
+  if (kind === "DW") return { type: "glyph", glyph: "djed", color: sepia };
+  if (kind[0] === "f") {
+    const f = { 1: "papyrus", 2: "palm", 3: "reed", 4: "obelisk" }[Number(kind.slice(1))] ?? "papyrus";
+    return { type: "glyph", glyph: f, color: sepia, marker: "flower" };
+  }
+  if (kind[0] === "s") {
+    const s = { 1: "snake", 2: "was", 3: "pyramid", 4: "khopesh" }[Number(kind.slice(1))] ?? "pyramid";
+    return { type: "glyph", glyph: s, color: sepia, marker: "season" };
+  }
+  return { type: "glyph", glyph: "ankh", color: sepia };
+}
+
 
 // Seviye dizimleri. Taşlar standart 144 taslik mahjong setinden dogrulanir;
 // sembol atamasi kaldirma simulasyonu ile cozulebilirlik garantisi verir.
@@ -2491,6 +2652,63 @@ export class Game {
     c.restore();
   }
 
+  /** Mısır modu: arka planda gunes + cölde piramitler (vektorel). */
+  private drawPyramids(c: CanvasRenderingContext2D): void {
+    if (this.gameMode !== "egypt") return;
+    c.save();
+
+    // Gunes (yukarida, altin, sisli)
+    const sunX = CANVAS_W * 0.7, sunY = CANVAS_H * 0.2, sunR = 95;
+    const sg = c.createRadialGradient(sunX, sunY, 12, sunX, sunY, sunR);
+    sg.addColorStop(0, "rgba(255,215,94,0.30)");
+    sg.addColorStop(1, "rgba(255,215,94,0)");
+    c.fillStyle = sg;
+    c.beginPath(); c.arc(sunX, sunY, sunR, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 0.26;
+    c.fillStyle = "#e8c060";
+    c.beginPath(); c.arc(sunX, sunY, sunR * 0.4, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 1;
+
+    // Cöl zemin + ufuk
+    const hy = CANVAS_H * 0.52;
+    const gg = c.createLinearGradient(0, hy, 0, CANVAS_H);
+    gg.addColorStop(0, "rgba(150,120,70,0.12)");
+    gg.addColorStop(1, "rgba(90,70,40,0.05)");
+    c.fillStyle = gg;
+    c.fillRect(0, hy, CANVAS_W, CANVAS_H - hy);
+
+    // Piramitler (aydinlik/kogelek iki yuz)
+    const faceLight = "rgba(186,156,96,0.15)";
+    const faceDark = "rgba(120,95,55,0.15)";
+    const drawPyramid = (px: number, base: number, height: number) => {
+      const apexX = px, apexY = hy - height;
+      const lx = px - base / 2, rx = px + base / 2;
+      const fx = px + base * 0.26; // on kosese
+      c.fillStyle = faceLight;
+      c.beginPath(); c.moveTo(apexX, apexY); c.lineTo(lx, hy); c.lineTo(fx, hy); c.closePath(); c.fill();
+      c.fillStyle = faceDark;
+      c.beginPath(); c.moveTo(apexX, apexY); c.lineTo(fx, hy); c.lineTo(rx, hy); c.closePath(); c.fill();
+    };
+    drawPyramid(CANVAS_W * 0.3, 250, 200);
+    drawPyramid(CANVAS_W * 0.6, 170, 135);
+    drawPyramid(CANVAS_W * 0.82, 115, 92);
+
+    // On planda kum tepecikleri
+    c.strokeStyle = "rgba(160,130,80,0.14)";
+    c.lineWidth = 2;
+    for (let i = 0; i < 3; i++) {
+      const dy = hy + 30 + i * 26;
+      c.beginPath();
+      for (let x = -20; x <= CANVAS_W + 20; x += 24) {
+        const y = dy + Math.sin(x * 0.012 + i * 1.7) * 8;
+        if (x === -20) c.moveTo(x, y); else c.lineTo(x, y);
+      }
+      c.stroke();
+    }
+
+    c.restore();
+  }
+
   private render(): void {
     const c = this.ctx;
     const def = this.level();
@@ -2503,6 +2721,8 @@ export class Game {
     c.fillRect(0, 0, CANVAS_W, CANVAS_H);
     // Viking modu: arka planda sisli bir Viking gemisi (longship)
     this.drawVikingShip(c);
+    // Mısır modu: arka planda gunes + piramitler
+    this.drawPyramids(c);
     // Ambient dust: ucusan transparan tanecikler
     for (const d of this.dustParticles) {
       c.globalAlpha = d.alpha * (0.5 + 0.5 * Math.sin(this.time * 0.8 + d.ph));
@@ -2919,6 +3139,10 @@ export class Game {
         const spec = vikingFaceSpec(pp.symbol);
         const gid = spec.type === "rune" ? spec.glyph : "vegvisir";
         strokeRune(c, gid, pp.x, pp.y, 16, 2.5, tileColor(pp.symbol));
+      } else if (this.gameMode === "egypt") {
+        const spec = egyptFaceSpec(pp.symbol);
+        const gid = spec.type === "glyph" ? spec.glyph : "ankh";
+        strokeEgyptian(c, gid, pp.x, pp.y, 15, 2.5, tileColor(pp.symbol));
       } else {
         c.fillStyle = tileColor(pp.symbol);
         c.font = "bold 30px " + CJK_FONT;
@@ -3077,6 +3301,22 @@ export class Game {
           const spec = vikingFaceSpec(vt.symbol);
           const gid = spec.type === "rune" ? spec.glyph : "vegvisir";
           strokeRune(c, gid, 0, 0, sz * 0.42, 2, "#e8dcc0");
+        } else if (this.gameMode === "egypt") {
+          const fg = c.createLinearGradient(-sz/2, -sz*0.7, sz/2, sz*0.7);
+          fg.addColorStop(0, "#e4d5af");
+          fg.addColorStop(1, "#bda878");
+          c.fillStyle = fg;
+          c.beginPath();
+          c.roundRect(-sz/2, -sz*0.7, sz, sz*1.4, R);
+          c.fill();
+          c.strokeStyle = "#8a7448";
+          c.lineWidth = 1.5;
+          c.beginPath();
+          c.roundRect(-sz/2, -sz*0.7, sz, sz*1.4, R);
+          c.stroke();
+          const spec = egyptFaceSpec(vt.symbol);
+          const gid = spec.type === "glyph" ? spec.glyph : "ankh";
+          strokeEgyptian(c, gid, 0, 0, sz * 0.42, 2, "#5a4020");
         } else {
           const fg = c.createLinearGradient(-sz/2, -sz*0.7, sz/2, sz*0.7);
           fg.addColorStop(0, "#faf4e6");
@@ -3232,6 +3472,10 @@ export class Game {
   private paintFace(m: CanvasRenderingContext2D, kind: string, open: boolean, w: number, h: number): void {
     if (this.gameMode === "viking") {
       this.paintFaceViking(m, kind, open, w, h);
+      return;
+    }
+    if (this.gameMode === "egypt") {
+      this.paintFaceEgypt(m, kind, open, w, h);
       return;
     }
     const R = Math.max(4, Math.round(w * 0.125));
@@ -3627,6 +3871,104 @@ export class Game {
           m.fillStyle = "#ffd75e"; m.beginPath(); m.arc(mx, my, mr * 0.45, 0, Math.PI * 2); m.fill();
         } else {
           m.strokeStyle = "#e0b040"; m.lineWidth = 1.5;
+          m.beginPath(); m.arc(mx, my, mr * 0.45, 0, Math.PI * 2); m.stroke();
+          for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; m.beginPath(); m.moveTo(mx + Math.cos(a) * mr * 0.55, my + Math.sin(a) * mr * 0.55); m.lineTo(mx + Math.cos(a) * mr, my + Math.sin(a) * mr); m.stroke(); }
+        }
+      }
+    }
+  }
+
+  /** Kumluk tas (sandstone) yuzu: oyulmus antik Mısir hiyeroglifi. */
+  private paintFaceEgypt(m: CanvasRenderingContext2D, kind: string, open: boolean, w: number, h: number): void {
+    const R = Math.max(4, Math.round(w * 0.125));
+    // ---- Kum tasi tabani ----
+    const bg = m.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, open ? "#e4d5af" : "#6e5d3c");
+    bg.addColorStop(0.5, open ? "#d5c294" : "#594a2b");
+    bg.addColorStop(1, open ? "#bda878" : "#463a22");
+    m.fillStyle = bg;
+    m.beginPath();
+    m.roundRect(0, 0, w, h, R);
+    m.fill();
+    // Ince kum dokusu (rastgele noktalar)
+    let seed = kind.charCodeAt(0) * 31 + kind.charCodeAt(kind.length - 1) * 7;
+    const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    m.save();
+    m.beginPath();
+    m.roundRect(1, 1, w - 2, h - 2, R - 1);
+    m.clip();
+    m.globalAlpha = 0.07;
+    for (let i = 0; i < 26; i++) {
+      m.fillStyle = rnd() > 0.5 ? "#8a7a52" : "#f2e8ca";
+      m.beginPath();
+      m.arc(rnd() * w, rnd() * h, 0.5 + rnd() * 1.3, 0, Math.PI * 2);
+      m.fill();
+    }
+    m.restore();
+    // ---- Oyulmus cekirde (cukur panel) ----
+    const px = w * 0.09, py = h * 0.075, pw = w - px * 2, ph = h - py * 2, pR = Math.max(3, R - 2);
+    m.fillStyle = "rgba(0,0,0,0.14)";
+    m.beginPath(); m.roundRect(px + 1, py + 1.2, pw, ph, pR); m.fill();
+    const pg = m.createLinearGradient(0, py, 0, py + ph);
+    pg.addColorStop(0, open ? "#dccb9f" : "#5e4e2e");
+    pg.addColorStop(1, open ? "#c7b283" : "#4a3c23");
+    m.fillStyle = pg;
+    m.beginPath(); m.roundRect(px, py, pw, ph, pR); m.fill();
+    m.strokeStyle = "rgba(0,0,0,0.3)"; m.lineWidth = 1.2;
+    m.beginPath(); m.roundRect(px, py, pw, ph, pR); m.stroke();
+    m.strokeStyle = "rgba(255,248,224,0.42)"; m.lineWidth = 0.7;
+    m.beginPath(); m.roundRect(px + 1, py + 1, pw - 2, ph - 2, pR - 1); m.stroke();
+
+    // ---- Hiyeroglif cizim helper'i (kazima: sol-ust parlama + ana renk) ----
+    const carveGlyph = (gid: string, gx: number, gy: number, size: number, color: string) => {
+      strokeEgyptian(m, gid, gx - 0.8, gy - 1, size, Math.max(3, size * 0.22), "rgba(255,250,232,0.42)");
+      strokeEgyptian(m, gid, gx, gy, size, Math.max(2.2, size * 0.16), color);
+    };
+
+    if (!open) {
+      // Kapali tas: merkezde ankh
+      carveGlyph("ankh", w / 2, h / 2, h * 0.16, "rgba(90,70,40,0.55)");
+      return;
+    }
+
+    const spec = egyptFaceSpec(kind);
+    const cx = w / 2, cy = h / 2;
+
+    if (spec.type === "count") {
+      const fx = w * 0.36, fy = h * 0.32;
+      if (spec.suit === "c") {
+        // Daire: kucuk gunes diskleri (altin)
+        const n = spec.n;
+        const r = n === 1 ? fy * 0.5 : n === 2 ? fy * 0.36 : n === 3 ? fy * 0.3 : n === 4 ? fy * 0.27 : fy * 0.24;
+        for (const [dx, dy] of DOT_POS[n]) carveGlyph("sun_small", cx + dx * fx, cy + dy * fy, r, "#b8862e");
+      } else if (spec.suit === "b") {
+        // Bambu: kucuk papirus sazlari (yesil)
+        const n = spec.n;
+        const sz = n === 1 ? fy * 0.62 : fy * 0.4;
+        for (const [dx, dy] of DOT_POS[n]) carveGlyph("reed_small", cx + dx * fx, cy + dy * fy, sz, "#5f8f4a");
+      } else {
+        // Karakter: buyuk sayi + ustte ankh (kirmizi)
+        carveGlyph("ankh", cx, py + ph * 0.16, h * 0.075, "#a8321f");
+        const num = String(spec.n);
+        m.font = "bold " + Math.round(h * 0.5) + "px Georgia";
+        m.textAlign = "center"; m.textBaseline = "middle";
+        m.strokeStyle = "rgba(255,250,232,0.5)"; m.lineWidth = Math.max(3, h * 0.05); m.lineJoin = "round";
+        m.strokeText(num, cx - 0.8, cy + h * 0.1 - 1);
+        m.fillStyle = "#a8321f";
+        m.fillText(num, cx, cy + h * 0.1);
+      }
+    } else {
+      // Tek buyuk hiyeroglif
+      carveGlyph(spec.glyph, cx, cy, h * 0.3, spec.color);
+      // Cornel grup isareti (cicek/mevsim)
+      if (spec.marker) {
+        const mx = px + pw - 12, my = py + 12, mr = 6;
+        if (spec.marker === "flower") {
+          m.fillStyle = "#c0392b";
+          for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2 - Math.PI / 2; m.beginPath(); m.arc(mx + Math.cos(a) * mr * 0.7, my + Math.sin(a) * mr * 0.7, mr * 0.5, 0, Math.PI * 2); m.fill(); }
+          m.fillStyle = "#e8c877"; m.beginPath(); m.arc(mx, my, mr * 0.45, 0, Math.PI * 2); m.fill();
+        } else {
+          m.strokeStyle = "#c8962e"; m.lineWidth = 1.5;
           m.beginPath(); m.arc(mx, my, mr * 0.45, 0, Math.PI * 2); m.stroke();
           for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; m.beginPath(); m.moveTo(mx + Math.cos(a) * mr * 0.55, my + Math.sin(a) * mr * 0.55); m.lineTo(mx + Math.cos(a) * mr, my + Math.sin(a) * mr); m.stroke(); }
         }
