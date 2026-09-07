@@ -535,6 +535,27 @@ export class Game {
   private unlockAchievement(id: string): void { if (this.achievements.has(id)) return; this.achievements.add(id); this.showAchievement = this.ACHV_NAMES[id] ?? id; this.achievementTimer = 3; }
   private loadAchievements(): void { try { const raw = localStorage.getItem("otuken_achievements"); if (raw) this.achievements = new Set(JSON.parse(raw)); } catch {} }
   private saveAchievements(): void { try { localStorage.setItem("otuken_achievements", JSON.stringify([...this.achievements])); } catch {} }
+  // ---- Skor & Seviye Kaliciligi ----
+  private loadProgress(): void {
+    try {
+      const raw = localStorage.getItem("otuken_progress");
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d.scores) for (const k of Object.keys(d.scores) as GameMode[]) this.modeScores[k] = d.scores[k] ?? 0;
+        if (d.levels) for (const k of Object.keys(d.levels) as GameMode[]) this.modeLevels[k] = d.levels[k] ?? 0;
+        if (typeof d.classicLevel === "number") this.levelIndex = d.classicLevel;
+      }
+    } catch {}
+  }
+  private saveProgress(): void {
+    try {
+      localStorage.setItem("otuken_progress", JSON.stringify({
+        scores: this.modeScores,
+        levels: this.modeLevels,
+        classicLevel: this.levelIndex,
+      }));
+    } catch {}
+  }
   // ---- Tema Kilitleri ----
   private THEME_UNLOCK_LEVELS = [3, 6, 9, 12];
   private checkThemeUnlock(): void { localStorage.setItem("otuken_themes", JSON.stringify(this.getUnlockedThemes())); }
@@ -591,6 +612,7 @@ export class Game {
       });
     }
     this.loadAchievements();
+    this.loadProgress();
     this.newGame();
   }
 
@@ -967,11 +989,13 @@ export class Game {
     *  seviyeler başlar ve 1000+ farklı dizime kadar ilerlenebilir. */
   nextLevel(): void {
     this.levelIndex++;
+    this.saveProgress();
     this.newGame();
   }
 
   goToLevel(i: number): void {
     this.levelIndex = ((i % LEVELS.length) + LEVELS.length) % LEVELS.length;
+    this.saveProgress();
     this.newGame();
   }
 
@@ -1180,6 +1204,7 @@ export class Game {
       this.modeLevels[this.gameMode]++;
       this.sfx("win");
       this.recordProgress();
+      this.saveProgress();
       const cc = ["#ffd75e", "#e74c3c", "#2e8b57", "#3498db", "#e67e22", "#f8f1e0"];
       for (let i = 0; i < 140; i++) {
         this.confetti.push({
@@ -1560,6 +1585,7 @@ export class Game {
     const pts = Math.round(100 * (1 + (this.combo - 1) * 0.15) * this.combo * this.scoreMult() * totalMult);
     this.score += pts;
     this.modeScores[this.gameMode] += pts;
+    this.saveProgress();
     for (const e of [eA, eB]) {
       if (!e) continue;
       const bt = this.tiles.find((tt) => tt.id === e.id);
@@ -1581,6 +1607,7 @@ export class Game {
       setTimeout(() => {
         this.endlessRound++;
         this.modeLevels[this.gameMode]++;
+        this.saveProgress();
         this.tiles = [];
         this.tray = [];
         this.history = [];
