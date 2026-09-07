@@ -134,7 +134,7 @@ export default function App() {
               {"★".repeat(hud?.stars ?? 0)}{"☆".repeat(Math.max(0, 3 - (hud?.stars ?? 0)))}
             </div>
             <div className="win-actions">
-              {mode === "classic" && <button className="btn" onClick={() => gameRef.current?.nextLevel()}>Sonraki Seviye</button>}
+              <button className="btn" onClick={() => (mode === "classic" ? gameRef.current?.nextLevel() : gameRef.current?.newGame())}>Sonraki Seviye</button>
               <button className="btn ghost" onClick={() => gameRef.current?.newGame()}>Tekrar Oyna</button>
               <button className="btn ghost" onClick={() => goToMenu()}>Mod Değiştir</button>
             </div>
