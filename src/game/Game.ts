@@ -152,7 +152,7 @@ const DOT_POS: Record<number, Array<[number, number]>> = {
 // sembol atamasi kaldirma simulasyonu ile cozulebilirlik garantisi verir.
 const LEVELS: Array<{ name: string; cells: Array<[number, number]>; bg: [string, string] }> =
   [
-    { name: "Sıra", cells: rowShape(2, 4), bg: ["#0e2433", "#16384a"] },
+    { name: "Başlangıç", cells: rowShape(2, 4), bg: ["#0e2433", "#16384a"] },
     { name: "Dama", cells: checkerShape(4, 4), bg: ["#0c2833", "#17404e"] },
     { name: "Çapraz", cells: crossShape(4, 4), bg: ["#17243b", "#24365b"] },
     { name: "U Şekli", cells: uShape(4, 5), bg: ["#273323", "#3a4a2f"] },
