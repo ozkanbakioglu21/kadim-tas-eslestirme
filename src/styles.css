@@ -388,6 +388,7 @@ body,
   padding: 20px;
   background: rgba(8, 24, 32, 0.94);
   backdrop-filter: blur(6px);
+  overflow-y: auto;
 }
 .mode-title {
   font-size: clamp(28px, 8vw, 48px);
@@ -406,7 +407,7 @@ body,
   flex-wrap: wrap;
   gap: 12px;
   justify-content: center;
-  max-width: 500px;
+  max-width: 640px;
 }
 .mode-card {
   display: flex;
