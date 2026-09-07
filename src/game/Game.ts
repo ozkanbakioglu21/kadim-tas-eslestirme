@@ -738,7 +738,7 @@ export class Game {
 
     // Dinamik tas boyutu: tahta tuvale sigmayacak kadar genis/yuksekse kucult.
     const maxW = CANVAS_W - 40;
-    const maxH = CANVAS_H - 250; // ust: baslik+hazne, alt: istatistik bar
+    const maxH = CANVAS_H - 270; // ust: baslik+hazne, alt: istatistik bar
     let tw = 72;
     const ar = 100 / 72;
     const gp = (w: number) => Math.max(3, Math.round(w * 0.14));
@@ -2642,31 +2642,25 @@ export class Game {
     c.arc(plateX + plateW - 12, plateY + plateH / 2, 2.6, 0, Math.PI * 2);
     c.fill();
     c.textAlign = "center";
-    // Baslik: kucuk ve sik
-    c.font = "bold 20px Georgia";
-    c.fillStyle = "rgba(255,220,170,0.2)";
-    c.fillText("Kadim Taş Eşleştirme", CANVAS_W / 2, 22);
-    c.fillStyle = "#31200e";
-    c.fillText("Kadim Taş Eşleştirme", CANVAS_W / 2, 21);
-    // Mod adi
+    // Ust bilgi: mod + seviye
     const modeNames: Record<string, string> = { classic: "Klasik", zen: "Zen", race: "Yarış", puzzle: "Bulmaca", endless: "Kolay" };
-    c.font = "bold 13px Georgia";
+    c.font = "bold 14px Georgia";
     c.fillStyle = "rgba(200,145,80,0.6)";
-    c.fillText(modeNames[this.gameMode] ?? this.gameMode, CANVAS_W / 2, 38);
+    c.fillText(modeNames[this.gameMode] ?? this.gameMode, CANVAS_W / 2, 20);
     // Seviye: bakir kazima
     const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
-    c.font = "bold 16px Georgia";
+    c.font = "bold 14px Georgia";
     c.fillStyle = "rgba(20,10,4,0.5)";
-    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 78);
+    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 40);
     c.fillStyle = "#c89050";
-    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 77);
+    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 39);
     this.drawFates(c);
 
     // Meditasyon motosu
     if (this.motto) {
-      c.font = "italic 12px Georgia";
-      c.fillStyle = "rgba(200,150,90,0.45)";
-      c.fillText(this.motto, CANVAS_W / 2, 104);
+      c.font = "italic 11px Georgia";
+      c.fillStyle = "rgba(200,150,90,0.4)";
+      c.fillText(this.motto, CANVAS_W / 2, 56);
     }
 
     // Uyum madalyonu: yin-yang + surun cozulme yayi (tamamlanma arayisi).
@@ -2860,7 +2854,7 @@ export class Game {
     c.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
     // ---- Hazne (maxTray slotlu yuva) — ust kisim ----
-    const trayY = 56;
+    const trayY = 80;
     const trayCx = CANVAS_W / 2;
     const slotW = 72;
     const gapSlot = 10;
@@ -2873,12 +2867,13 @@ export class Game {
     c.strokeStyle = "rgba(255,255,255,0.25)";
     c.lineWidth = 1.5;
     c.stroke();
+    // Oyun basligi haznenin ustunde
     c.fillStyle = "rgba(20,10,4,0.5)";
-    c.font = "bold 14px Georgia";
+    c.font = "bold 16px Georgia";
     c.textAlign = "center";
-    c.fillText("HAZNE", trayCx, trayY - 45);
+    c.fillText("Kadim Taş Eşleştirme", trayCx, trayY - 48);
     c.fillStyle = "#c89050";
-    c.fillText("HAZNE", trayCx, trayY - 46);
+    c.fillText("Kadim Taş Eşleştirme", trayCx, trayY - 49);
     for (let i = 0; i < traySlots; i++) {
       const sx = trayCx - trayW / 2 + i * (slotW + gapSlot);
       c.fillStyle = "rgba(255,255,255,0.06)";
