@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { Game, HudState, GameMode } from "./game/Game";
 
 const MODES: Array<{ id: GameMode; name: string; icon: string; desc: string }> = [
-  { id: "classic", name: "Klasik", icon: "🏛️", desc: "Seviyelerle ilerle" },
-  { id: "zen", name: "Zen", icon: "🧘", desc: "Sınırsız rahat oyun" },
-  { id: "race", name: "Yarış", icon: "⏱️", desc: "60sn'de max skor" },
-  { id: "puzzle", name: "Bulmaca", icon: "🧩", desc: "Sadece doğru hamleler" },
-  { id: "endless", name: "Kolay", icon: "♾️", desc: "Sınırsız, rahat oyun" },
+  { id: "classic", name: "Klasik", icon: "🏛️", desc: "Seviyelerle ilerle, derin katmanlar" },
+  { id: "zen", name: "Zen", icon: "🧘", desc: "Küçük tahta, sınırsız rahat oyun" },
+  { id: "race", name: "Yarış", icon: "⏱️", desc: "Küçük tahta, 60sn'de max skor" },
+  { id: "puzzle", name: "Bulmaca", icon: "🧩", desc: "Hazır bulmacalar, sadece doğru hamleler" },
+  { id: "endless", name: "Kolay", icon: "♾️", desc: "Orta tahta, sınırsız kolay oyun" },
 ];
 
 export default function App() {

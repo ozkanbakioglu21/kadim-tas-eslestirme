@@ -274,6 +274,83 @@ function randomShape(levelIndex: number, seedOffset = 0): Array<[number, number]
   return cells;
 }
 
+/** Moda gore rastgele taht sekli olusturur. */
+function modeRandomShape(mode: GameMode, levelIndex: number, seedOffset = 0): Array<[number, number]> {
+  const rng = mulberry32(levelIndex * 7919 + 31 + seedOffset);
+  let cols: number, rows: number, maxCells: number, maxBlocks: number;
+  let shapes: Array<{ w: number; h: number; cells: [number, number][] }>;
+  switch (mode) {
+    case "zen":
+      cols = 6; rows = 5; maxCells = 24; maxBlocks = 4;
+      shapes = [
+        { w: 2, h: 2, cells: rect(2, 2) },
+        { w: 3, h: 2, cells: rect(3, 2) },
+        { w: 2, h: 3, cells: rect(2, 3) },
+        { w: 3, h: 3, cells: plusShape() },
+      ];
+      break;
+    case "race":
+      cols = 5; rows = 4; maxCells = 20; maxBlocks = 3;
+      shapes = [
+        { w: 2, h: 2, cells: rect(2, 2) },
+        { w: 3, h: 2, cells: rect(3, 2) },
+        { w: 2, h: 3, cells: rect(2, 3) },
+      ];
+      break;
+    case "puzzle":
+      cols = 5; rows = 4; maxCells = 16; maxBlocks = 3;
+      shapes = [
+        { w: 2, h: 2, cells: rect(2, 2) },
+        { w: 3, h: 2, cells: rect(3, 2) },
+        { w: 3, h: 3, cells: tShape() },
+      ];
+      break;
+    case "endless":
+      cols = 6; rows = 5; maxCells = 30; maxBlocks = 5;
+      shapes = [
+        { w: 2, h: 2, cells: rect(2, 2) },
+        { w: 3, h: 2, cells: rect(3, 2) },
+        { w: 2, h: 3, cells: rect(2, 3) },
+        { w: 3, h: 3, cells: lShape() },
+        { w: 3, h: 3, cells: plusShape() },
+      ];
+      break;
+    default:
+      return randomShape(levelIndex, seedOffset);
+  }
+  const grid = new Set<string>();
+  const blocks = 3 + Math.min(maxBlocks, levelIndex % (maxBlocks + 1));
+  for (let i = 0; i < blocks && grid.size < maxCells; i++) {
+    const sh = shapes[Math.floor(rng() * shapes.length)];
+    const cx = Math.floor(rng() * (cols - sh.w + 1));
+    const cy = Math.floor(rng() * (rows - sh.h + 1));
+    for (const pt of sh.cells) {
+      grid.add((cx + pt[0]) + "," + (cy + pt[1]));
+      if (grid.size >= maxCells) break;
+    }
+  }
+  const cells = [...grid].map((s) => {
+    const p = s.split(",").map(Number);
+    return [p[0], p[1]] as [number, number];
+  });
+  if (cells.length % 2 !== 0) cells.pop();
+  return cells;
+}
+
+/** Bulmaca modu icin on tanimli sabit duvar sekilleri. */
+const PUZZLE_LAYOUTS: Array<{ name: string; cells: Array<[number, number]> }> = [
+  { name: "Yildiz", cells: [[2,0],[1,1],[2,1],[3,1],[0,2],[1,2],[2,2],[3,2],[4,2],[1,3],[2,3],[3,3],[2,4]] },
+  { name: "Kalp", cells: [[1,0],[2,0],[4,0],[5,0],[0,1],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[1,3],[2,3],[3,3],[4,3],[5,3],[2,4],[3,4],[4,4],[3,5]] },
+  { name: "Ok", cells: [[2,0],[2,1],[1,2],[2,2],[3,2],[2,3],[2,4],[0,5],[1,5],[2,5],[3,5],[4,5]] },
+  { name: "Zigzag", cells: [[0,0],[1,0],[2,0],[2,1],[3,1],[4,1],[4,2],[3,2],[2,2],[2,3],[1,3],[0,3],[0,4],[1,4],[2,4]] },
+  { name: "Halka", cells: [[1,0],[2,0],[3,0],[0,1],[4,1],[0,2],[4,2],[0,3],[4,3],[1,4],[2,4],[3,4]] },
+  { name: "Piramit", cells: [[3,0],[2,1],[3,1],[4,1],[1,2],[2,2],[3,2],[4,2],[5,2],[0,3],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3]] },
+  { name: "Dans", cells: [[1,0],[3,0],[0,1],[2,1],[4,1],[1,2],[3,2],[0,3],[2,3],[4,3],[1,4],[3,4]] },
+  { name: "Labirent", cells: [[0,0],[1,0],[2,0],[4,0],[0,1],[2,1],[3,1],[4,1],[0,2],[1,2],[3,2],[2,3],[3,3],[4,3],[2,4],[4,4]] },
+  { name: "Kaynak", cells: [[2,0],[1,1],[2,1],[3,1],[0,2],[1,2],[2,2],[3,2],[4,2],[1,3],[2,3],[3,3],[0,4],[1,4],[2,4],[3,4],[4,4],[2,5]] },
+  { name: "Delta", cells: [[3,0],[2,1],[3,1],[4,1],[1,2],[2,2],[3,2],[4,2],[5,2],[0,3],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[0,4],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4]] },
+];
+
 function rect(w: number, h: number): [number, number][] {
   const out: [number, number][] = [];
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) out.push([x, y]);
@@ -617,18 +694,24 @@ export class Game {
   // ---- Yerleşim ----
   private level(): { name: string; cells: Array<[number, number]>; bg: [string, string] } {
     if (!this.currentLevel) {
-      // Her oyunda farkli bir rastgele dizilim + rastgele gecmis/bg.
       const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
-      const cells = randomShape(diff, Math.floor(Math.random() * 100000) + 1);
+      let cells: Array<[number, number]>;
+      let name: string;
+      if (this.gameMode === "puzzle") {
+        const layout = PUZZLE_LAYOUTS[diff % PUZZLE_LAYOUTS.length];
+        cells = layout.cells;
+        name = layout.name;
+      } else if (this.gameMode === "classic") {
+        cells = randomShape(diff, Math.floor(Math.random() * 100000) + 1);
+        name = diff < LEVELS.length ? LEVELS[diff].name : `Rastgele #${diff + 1}`;
+      } else {
+        cells = modeRandomShape(this.gameMode, diff, Math.floor(Math.random() * 100000) + 1);
+        const modeNames: Record<string, string> = { zen: "Zen", race: "Yarış", endless: "Kolay" };
+        name = `${modeNames[this.gameMode] ?? this.gameMode} #${diff + 1}`;
+      }
       const special = this.specialArt();
       const mixedBg = ["#2f3b1c", "#4a5b2a"] as [string, string];
       const bg = special === "mixed" ? mixedBg : RANDOM_BG[diff % RANDOM_BG.length];
-      const name =
-        diff < LEVELS.length
-          ? LEVELS[diff].name
-          : special === "mixed"
-            ? "Vahşi Bozkır"
-            : `Rastgele #${diff + 1}`;
       this.currentLevel = { name, cells, bg };
     }
     return this.currentLevel;
@@ -672,9 +755,10 @@ export class Game {
       };
       layers = [cells.slice(), rect(4, 9, 1, 6), rect(5, 8, 2, 5), rect(6, 7, 3, 4), [[6, 3]]];
     } else {
-      // Kademeli platform derinligi: kenar 1 kat, orta 2 kat, merkez kule 2-4 kat.
+      // Moda gore katman derinligi: zen/yarisi/bulmaca/kolay icin sinirli, klasik icin acik.
+      const maxLayers = this.gameMode === "zen" ? 2 : this.gameMode === "race" ? 2 : this.gameMode === "puzzle" ? 2 : this.gameMode === "endless" ? 3 : 4;
       const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
-      const coreDepth = diff >= 49 ? 4 : diff >= 9 ? 3 : 2;
+      const coreDepth = Math.min(maxLayers, diff >= 49 ? 4 : diff >= 9 ? 3 : 2);
       const cMn = Math.max(0, Math.floor((cols + 1) / 3));
       const cMx = Math.min(cols, cols - 1 - Math.floor((cols + 1) / 3));
       const rMn = Math.max(0, Math.floor((rows + 1) / 3));
@@ -727,8 +811,10 @@ export class Game {
     this.dealAt = this.time;
     this.dealRattle();
     this.countdownTiles.clear();
-    for (const t of this.tiles) {
-      if (Math.random() < 0.2) this.countdownTiles.set(t.id, this.countdownMax);
+    if (this.gameMode === "classic") {
+      for (const t of this.tiles) {
+        if (Math.random() < 0.2) this.countdownTiles.set(t.id, this.countdownMax);
+      }
     }
   }
 
