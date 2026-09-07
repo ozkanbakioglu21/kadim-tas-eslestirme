@@ -57,6 +57,8 @@ export interface HudState {
   validMoves: number;
   endlessRound: number;
   modeLevel: number;
+  wrongMoves: number;
+  maxWrongMoves: number;
 }
 
 // Göktürk rünleri (Orhun alfabesi) — arka plan motifleri için.
@@ -557,6 +559,8 @@ export class Game {
   private raceDuration = 60;
   private endlessRound = 1;
   private validMoveCount = 0;
+  private wrongMoves = 0;
+  private maxWrongMoves = 5;
 
   onHud?: (h: HudState) => void;
   setMode(mode: GameMode): void { this.gameMode = mode; this.newGame(); }
@@ -965,7 +969,9 @@ export class Game {
     this.wonAt = 0;
     this.fates = this.rollFates();
     this.motto = MOTTOS[Math.floor(Math.random() * MOTTOS.length)];
-this.endlessRound = 1;
+    this.endlessRound = 1;
+    this.wrongMoves = 0;
+    this.maxWrongMoves = this.gameMode === "endless" ? 5 : 0;
     this.buildLayout();
     this.emitHud();
   }
@@ -1134,6 +1140,18 @@ this.endlessRound = 1;
       }
     }
 
+    // Bulmaca modu: yanlis eslesme kontrolu (haznede 1 tas varsa ve yeni tas eslesmiyorsa)
+    if (this.gameMode === "puzzle" && this.tray.length === 1) {
+      const trayTile = this.tray[0];
+      if (matchKey(trayTile.symbol) !== matchKey(target.symbol)) {
+        this.shakeAmount = 10;
+        this.lost = true;
+        this.sfx("lose");
+        this.unlockAchievement("first_loss");
+        return;
+      }
+    }
+
     // Taşı tahtadan alıp hazneye tek tek ekle.
     target.removed = true;
     // Kış teması: erime su damlacıkları
@@ -1232,6 +1250,16 @@ this.endlessRound = 1;
       this.sfx("tileclick");
       this.streak = 0;
       this.streakMult = 1;
+      // Yanlis tiklama: Kolay modunda hata sayaci
+      if (this.gameMode === "endless" && this.maxWrongMoves > 0) {
+        this.wrongMoves++;
+        this.shakeAmount = 8;
+        if (this.wrongMoves >= this.maxWrongMoves) {
+          this.lost = true;
+          this.sfx("lose");
+          this.unlockAchievement("first_loss");
+        }
+      }
     }
 
     // Kazanma (endless modda atla - breakPair'da yenilenir).
@@ -1613,6 +1641,12 @@ this.endlessRound = 1;
     this.combo++;
     if (this.combo >= 2) this.sfx("combo");
     if (this.combo >= 3) this.flash = Math.min(0.6, 0.25 + this.combo * 0.05);
+    // Yaris modu: kombo basina +2sn bonus
+    if (this.gameMode === "race" && this.combo >= 2) {
+      this.raceTimeLeft = Math.min(this.raceDuration, this.raceTimeLeft + 2);
+      const bt = this.tiles.find((tt) => tt.id === eA.id);
+      if (bt) this.floatingTexts.push({ x: bt.sx + 30, y: bt.sy - 50, life: 0.8, max: 0.8, text: "+2sn!", color: "#4fb3a0", size: 20 });
+    }
     this.comboTimer = this.comboDuration();
     const totalMult = this.timeBonusMult * this.streakMult;
     const pts = Math.round(100 * (1 + (this.combo - 1) * 0.15) * this.combo * this.scoreMult() * totalMult);
@@ -2004,6 +2038,8 @@ this.endlessRound = 1;
       validMoves: this.validMoveCount,
       endlessRound: this.endlessRound,
       modeLevel: this.modeLevels[this.gameMode],
+      wrongMoves: this.wrongMoves,
+      maxWrongMoves: this.maxWrongMoves,
     });
   }
 
@@ -2941,7 +2977,11 @@ this.endlessRound = 1;
       c.fillText("Kaybettin!", CANVAS_W / 2, CANVAS_H / 2 - 120);
       c.font = "bold 26px Georgia";
       c.fillStyle = "#f2c9c4";
-      c.fillText("Hazne doldu, eslesme kalmadi.", CANVAS_W / 2, CANVAS_H / 2 - 65);
+      const lossMsg = this.gameMode === "puzzle" ? "Yanlış eşleştirme yaptın!" :
+                      this.gameMode === "endless" ? `Hak doldu! (${this.maxWrongMoves} hak)` :
+                      this.gameMode === "race" ? "Süre doldu!" :
+                      "Hazne doldu, eşleşme kalmadı.";
+      c.fillText(lossMsg, CANVAS_W / 2, CANVAS_H / 2 - 65);
       const bcx = CANVAS_W / 2, bcy = CANVAS_H - 380;
       c.fillStyle = "#7d2a2a";
       c.beginPath();
