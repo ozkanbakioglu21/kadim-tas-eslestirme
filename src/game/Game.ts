@@ -2765,7 +2765,7 @@ export class Game {
     c.globalAlpha = 1;
 
     // ---- Hazne (maxTray slotlu yuva) — ust kisim ----
-    const trayY = 80;
+    const trayY = 60;
     const trayCx = CANVAS_W / 2;
     const slotW = 72;
     const gapSlot = 10;
@@ -2773,7 +2773,7 @@ export class Game {
     const trayW = traySlots * slotW + (traySlots - 1) * gapSlot;
     c.fillStyle = "rgba(10,20,30,0.35)";
     c.beginPath();
-    c.roundRect(trayCx - trayW / 2 - 14, trayY - 28, trayW + 28, 56, 14);
+    c.roundRect(trayCx - trayW / 2 - 14, trayY - 20, trayW + 28, 52, 14);
     c.fill();
     c.strokeStyle = "rgba(255,255,255,0.25)";
     c.lineWidth = 1.5;
@@ -2782,17 +2782,17 @@ export class Game {
       const sx = trayCx - trayW / 2 + i * (slotW + gapSlot);
       c.fillStyle = "rgba(255,255,255,0.06)";
       c.beginPath();
-      c.roundRect(sx, trayY - 18, slotW, 40, 10);
+      c.roundRect(sx, trayY - 12, slotW, 36, 10);
       c.fill();
       c.strokeStyle = "rgba(255,255,255,0.18)";
       c.lineWidth = 1;
       c.stroke();
       if (i < this.tray.length) {
         const tt = this.tray[i];
-        const fh = 42;
+        const fh = 38;
         const fw = fh * (this.tw / this.th);
         const fx0 = sx + slotW / 2 - fw / 2;
-        const fy0 = trayY - 18 + (40 - fh) / 2;
+        const fy0 = trayY - 12 + (36 - fh) / 2;
         c.save();
         c.shadowColor = "rgba(0,0,0,0.55)";
         c.shadowBlur = 7;
