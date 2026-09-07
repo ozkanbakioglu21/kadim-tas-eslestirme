@@ -2279,18 +2279,6 @@ export class Game {
     g.addColorStop(1, "#161210");
     c.fillStyle = g;
     c.fillRect(0, 0, CANVAS_W, CANVAS_H);
-    // Ince ahshap damarlari (yatay)
-    c.save();
-    c.globalAlpha = 0.035;
-    for (let i = 0; i < CANVAS_H; i += 6) {
-      c.strokeStyle = i % 12 === 0 ? "#3a2a1a" : "#2a1a0a";
-      c.lineWidth = 0.4;
-      c.beginPath();
-      c.moveTo(0, i);
-      c.lineTo(CANVAS_W, i + (Math.sin(i * 0.1) * 0.5));
-      c.stroke();
-    }
-    c.restore();
     // Ambient dust: ucusan transparan tanecikler
     for (const d of this.dustParticles) {
       c.globalAlpha = d.alpha * (0.5 + 0.5 * Math.sin(this.time * 0.8 + d.ph));
