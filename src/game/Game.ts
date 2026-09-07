@@ -32,7 +32,7 @@ export interface Tile {
   sy: number; // ekran y merkez
 }
 
-export type GameMode = "classic" | "zen" | "race" | "puzzle" | "endless";
+export type GameMode = "classic" | "zen" | "race" | "puzzle" | "endless" | "viking" | "egypt" | "steppe";
 
 export type WeatherType = "rain" | "snow" | "wind" | "storm" | "aurora" | "fireflies";
 
@@ -317,6 +317,36 @@ function modeRandomShape(mode: GameMode, levelIndex: number, seedOffset = 0): Ar
         { w: 3, h: 3, cells: plusShape() },
       ];
       break;
+    case "viking":
+      cols = 8; rows = 6; maxCells = 40; maxBlocks = 6;
+      shapes = [
+        { w: 2, h: 2, cells: rect(2, 2) },
+        { w: 3, h: 2, cells: rect(3, 2) },
+        { w: 2, h: 3, cells: rect(2, 3) },
+        { w: 3, h: 3, cells: plusShape() },
+        { w: 3, h: 3, cells: lShape() },
+        { w: 4, h: 3, cells: uShape(4, 3) },
+      ];
+      break;
+    case "egypt":
+      cols = 7; rows = 6; maxCells = 30; maxBlocks = 4;
+      shapes = [
+        { w: 2, h: 2, cells: rect(2, 2) },
+        { w: 3, h: 2, cells: rect(3, 2) },
+        { w: 3, h: 3, cells: tShape() },
+        { w: 4, h: 2, cells: rect(4, 2) },
+      ];
+      break;
+    case "steppe":
+      cols = 9; rows = 5; maxCells = 32; maxBlocks = 5;
+      shapes = [
+        { w: 2, h: 2, cells: rect(2, 2) },
+        { w: 3, h: 2, cells: rect(3, 2) },
+        { w: 4, h: 2, cells: rect(4, 2) },
+        { w: 2, h: 3, cells: rect(2, 3) },
+        { w: 4, h: 3, cells: tShape() },
+      ];
+      break;
     default:
       return randomShape(levelIndex, seedOffset);
   }
@@ -436,8 +466,8 @@ export class Game {
   private pops: Array<{ x: number; y: number; life: number; max: number; symbol: string; open: boolean }> = [];
   private time = 0;
   private score = 0;
-  private modeScores: Record<GameMode, number> = { classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0 };
-  private modeLevels: Record<GameMode, number> = { classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0 };
+  private modeScores: Record<GameMode, number> = { classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0, viking: 0, egypt: 0, steppe: 0 };
+  private modeLevels: Record<GameMode, number> = { classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0, viking: 0, egypt: 0, steppe: 0 };
   private combo = 0;
   private comboTimer = 0;
   private fates: string[] = [];
@@ -692,7 +722,7 @@ export class Game {
         name = diff < LEVELS.length ? LEVELS[diff].name : `Rastgele #${diff + 1}`;
       } else {
         cells = modeRandomShape(this.gameMode, diff, Math.floor(Math.random() * 100000) + 1);
-        const modeNames: Record<string, string> = { zen: "Zen", race: "Yarış", endless: "Kolay" };
+        const modeNames: Record<string, string> = { zen: "Zen", race: "Yarış", endless: "Kolay", viking: "Viking", egypt: "Mısır", steppe: "Bozkır" };
         name = `${modeNames[this.gameMode] ?? this.gameMode} #${diff + 1}`;
       }
       const special = this.specialArt();
@@ -741,8 +771,8 @@ export class Game {
       };
       layers = [cells.slice(), rect(4, 9, 1, 6), rect(5, 8, 2, 5), rect(6, 7, 3, 4), [[6, 3]]];
     } else {
-      // Moda gore katman derinligi: zen/yarisi/bulmaca/kolay icin sinirli, klasik icin acik.
-      const maxLayers = this.gameMode === "zen" ? 2 : this.gameMode === "race" ? 2 : this.gameMode === "puzzle" ? 2 : this.gameMode === "endless" ? 3 : 4;
+      // Moda gore katman derinligi: zen/yarisi/bulmaca icin 2, bozkir 2, kolay/misir 3, klasik/viking 4.
+      const maxLayers = this.gameMode === "zen" ? 2 : this.gameMode === "race" ? 2 : this.gameMode === "puzzle" ? 2 : this.gameMode === "steppe" ? 2 : this.gameMode === "egypt" ? 3 : this.gameMode === "endless" ? 3 : 4;
       const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
       const coreDepth = Math.min(maxLayers, diff >= 49 ? 4 : diff >= 9 ? 3 : 2);
       const cMn = Math.max(0, Math.floor((cols + 1) / 3));
@@ -2534,7 +2564,7 @@ export class Game {
 
     // Baslik: minimal ust bilgi
     c.textAlign = "center";
-    const modeNames: Record<string, string> = { classic: "Klasik", zen: "Zen", race: "Yarış", puzzle: "Bulmaca", endless: "Kolay" };
+    const modeNames: Record<string, string> = { classic: "Klasik", zen: "Zen", race: "Yarış", puzzle: "Bulmaca", endless: "Kolay", viking: "Viking", egypt: "Mısır", steppe: "Bozkır" };
     // Seviye + mod
     const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
     c.font = "bold 13px Georgia";

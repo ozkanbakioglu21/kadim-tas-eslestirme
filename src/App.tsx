@@ -7,6 +7,9 @@ const MODES: Array<{ id: GameMode; name: string; icon: string; desc: string }> =
   { id: "race", name: "Yarış", icon: "⏱️", desc: "Küçük tahta, 60sn'de max skor" },
   { id: "puzzle", name: "Bulmaca", icon: "🧩", desc: "Hazır bulmacalar, sadece doğru hamleler" },
   { id: "endless", name: "Kolay", icon: "♾️", desc: "Orta tahta, sınırsız kolay oyun" },
+  { id: "viking", name: "Viking", icon: "🛡️", desc: "Geniş tahta, derin katmanlar, zorlu meydan" },
+  { id: "egypt", name: "Mısır", icon: "🏺", desc: "Piramit dizimi, orta derinlik" },
+  { id: "steppe", name: "Bozkır", icon: "🐎", desc: "Geniş alçak tahta, rahat oyun" },
 ];
 
 export default function App() {
