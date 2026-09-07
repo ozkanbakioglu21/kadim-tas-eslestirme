@@ -378,6 +378,95 @@ function egyptFaceSpec(kind: string): EgyptSpec {
   return { type: "glyph", glyph: "ankh", color: sepia };
 }
 
+// ---- GoekTurk (Orkhon) harfleri + kurt/geyik (vektorel, font bagimli degil) ----
+type SteppeGlyph = {
+  lines?: number[][][];
+  circles?: number[][];
+  discs?: number[][];
+  polys?: number[][][];
+  fills?: number[][][];
+};
+const STEPPE_GLYPHS: Record<string, SteppeGlyph> = {
+  // Kurt (bozkir kurdusu) - profil kafa
+  kurt: {
+    polys: [[[-0.6, 0.35], [-0.65, -0.3], [-0.35, -0.75], [0.1, -0.95], [0.25, -0.5], [0.85, -0.15], [0.4, 0.05], [0.25, 0.5], [-0.35, 0.5], [-0.6, 0.35]]],
+    lines: [[[-0.3, -0.55], [-0.16, -0.72]], [[0.85, -0.15], [0.55, -0.02]]],
+    discs: [[0.22, -0.24, 0.06]],
+  },
+  // Geyik (alag) - boynuzlu kafa
+  geyik: {
+    lines: [
+      [[-0.15, -0.55], [-0.42, -1]], [[-0.3, -0.8], [-0.62, -0.82]], [[-0.24, -0.62], [-0.04, -0.9]],
+      [[0.08, -0.52], [0.3, -0.95]], [[0.22, -0.75], [0.52, -0.78]],
+    ],
+    polys: [[[-0.45, 0.5], [-0.5, -0.15], [-0.3, -0.5], [0.1, -0.48], [0.8, -0.15], [0.45, 0.0], [0.3, 0.2], [0.1, 0.5], [-0.2, 0.55], [-0.45, 0.5]]],
+    discs: [[0.18, -0.25, 0.05]],
+  },
+  // Orkhon harfleri (dikey ana hat + aciklica dallar)
+  orkhon_1: { lines: [[[0, -1], [0, 1]], [[0, -0.55], [0.6, -0.2]]] },
+  orkhon_2: { lines: [[[0, -1], [0, 1]], [[0, -0.5], [-0.6, -0.15]], [[0, 0.35], [-0.6, 0.7]]] },
+  orkhon_3: { lines: [[[0, -1], [0, 1]], [[0, -0.6], [0.6, -0.25]], [[0, 0.15], [0.6, 0.5]]] },
+  orkhon_4: { lines: [[[0, -1], [0, 1]], [[0, -0.75], [0.6, -0.4]], [[0, -0.1], [0.6, 0.25]], [[0, 0.55], [0.6, 0.9]]] },
+  orkhon_5: { lines: [[[0, -1], [0, 1]], [[0, -0.55], [0.6, -0.2]], [[0, 0.45], [-0.6, 0.8]]] },
+  orkhon_6: { lines: [[[0, -1], [0, 1]], [[-0.6, -0.7], [0, -0.35], [0.6, -0.7]]] },
+  orkhon_7: { lines: [[[0, -1], [0, 1]], [[0, -0.5], [0.6, -0.5]], [[0, 0.25], [0.6, 0.25]]] },
+  orkhon_8: { lines: [[[0, -1], [0, 1]], [[0, -0.7], [0.6, -0.35], [-0.6, 0.35], [0.6, 0.7]]] },
+  orkhon_9: { lines: [[[-0.55, -0.75], [0.55, -0.75]], [[0, -0.75], [0, 1]], [[0, 0.35], [0.55, 0.75]]] },
+  orkhon_10: { lines: [[[0, -1], [0, 1]], [[0, -0.5], [-0.6, -0.15]], [[0, 0.25], [0.6, 0.6]]] },
+  orkhon_11: { lines: [[[0, -1], [0, 1]], [[-0.6, -0.75], [-0.15, -0.35]], [[0.6, -0.75], [0.15, -0.35]], [[-0.5, 0.5], [0, 0.95], [0.5, 0.5]]] },
+  orkhon_12: { lines: [[[0, -1], [0, 1]], [[0, -0.6], [0.6, -0.25]], [[0, 0.3], [-0.6, 0.65]]] },
+  orkhon_13: { lines: [[[0, -1], [0, 1]], [[0, -0.85], [0.6, -0.85]], [[0, 0.6], [0.6, 0.6]]] },
+  // Sayi birimleri
+  sun_small: { discs: [[0, 0, 0.5]] },
+  grass: { lines: [[[0, 0.95], [-0.02, 0.1], [-0.4, -0.9]], [[0, 0.95], [0.05, -0.1]], [[0, 0.95], [0.05, 0.0], [0.5, -0.85]]] },
+};
+
+function strokeSteppe(m: CanvasRenderingContext2D, glyphId: string, cx: number, cy: number, size: number, lineWidth: number, color: string): void {
+  const g = STEPPE_GLYPHS[glyphId];
+  if (!g) return;
+  m.save();
+  m.lineCap = "round";
+  m.lineJoin = "round";
+  m.strokeStyle = color;
+  m.fillStyle = color;
+  m.lineWidth = lineWidth;
+  const X = (lx: number) => cx + lx * size;
+  const Y = (ly: number) => cy + ly * size;
+  for (const pl of g.lines ?? []) { m.beginPath(); pl.forEach(([lx, ly], i) => (i ? m.lineTo(X(lx), Y(ly)) : m.moveTo(X(lx), Y(ly)))); m.stroke(); }
+  for (const [ax, ay, r] of g.circles ?? []) { m.beginPath(); m.arc(X(ax), Y(ay), r * size, 0, Math.PI * 2); m.stroke(); }
+  for (const pl of g.polys ?? []) { m.beginPath(); pl.forEach(([lx, ly], i) => (i ? m.lineTo(X(lx), Y(ly)) : m.moveTo(X(lx), Y(ly)))); m.closePath(); m.stroke(); }
+  for (const [dx, dy, r] of g.discs ?? []) { m.beginPath(); m.arc(X(dx), Y(dy), r * size, 0, Math.PI * 2); m.fill(); }
+  for (const pl of g.fills ?? []) { m.beginPath(); pl.forEach(([lx, ly], i) => (i ? m.lineTo(X(lx), Y(ly)) : m.moveTo(X(lx), Y(ly)))); m.closePath(); m.fill(); }
+  m.restore();
+}
+
+// Bozkir modu icin mahjong sembolu -> GoekTurk/kurt/geyik spesifikasyonu.
+type SteppeSpec =
+  | { type: "count"; suit: "c" | "b" | "w"; n: number }
+  | { type: "glyph"; glyph: string; color: string; marker?: "flower" | "season" };
+function steppeFaceSpec(kind: string): SteppeSpec {
+  const ink = "#e8d8b8";
+  if (kind[0] === "c") return { type: "count", suit: "c", n: Number(kind.slice(1)) };
+  if (kind[0] === "b") return { type: "count", suit: "b", n: Number(kind.slice(1)) };
+  if (kind[0] === "w") return { type: "count", suit: "w", n: Number(kind.slice(1)) };
+  if (kind === "E") return { type: "glyph", glyph: "kurt", color: ink };
+  if (kind === "S") return { type: "glyph", glyph: "geyik", color: ink };
+  if (kind === "W") return { type: "glyph", glyph: "orkhon_1", color: ink };
+  if (kind === "N") return { type: "glyph", glyph: "orkhon_2", color: ink };
+  if (kind === "DR") return { type: "glyph", glyph: "orkhon_3", color: ink };
+  if (kind === "DG") return { type: "glyph", glyph: "orkhon_4", color: ink };
+  if (kind === "DW") return { type: "glyph", glyph: "orkhon_5", color: ink };
+  if (kind[0] === "f") {
+    const f = { 1: "orkhon_6", 2: "orkhon_7", 3: "orkhon_8", 4: "orkhon_9" }[Number(kind.slice(1))] ?? "orkhon_6";
+    return { type: "glyph", glyph: f, color: ink, marker: "flower" };
+  }
+  if (kind[0] === "s") {
+    const s = { 1: "orkhon_10", 2: "orkhon_11", 3: "orkhon_12", 4: "orkhon_13" }[Number(kind.slice(1))] ?? "orkhon_10";
+    return { type: "glyph", glyph: s, color: ink, marker: "season" };
+  }
+  return { type: "glyph", glyph: "kurt", color: ink };
+}
+
 
 // Seviye dizimleri. Taşlar standart 144 taslik mahjong setinden dogrulanir;
 // sembol atamasi kaldirma simulasyonu ile cozulebilirlik garantisi verir.
@@ -2709,6 +2798,83 @@ export class Game {
     c.restore();
   }
 
+  /** Bozkir modu: arka planda genis cayir, gunes, yari-mobitler (vektorel). */
+  private drawSteppe(c: CanvasRenderingContext2D): void {
+    if (this.gameMode !== "steppe") return;
+    c.save();
+
+    // Soluk gunes (yukarida, sol)
+    const sunX = CANVAS_W * 0.24, sunY = CANVAS_H * 0.17, sunR = 88;
+    const sg = c.createRadialGradient(sunX, sunY, 12, sunX, sunY, sunR);
+    sg.addColorStop(0, "rgba(255,230,170,0.30)");
+    sg.addColorStop(1, "rgba(255,230,170,0)");
+    c.fillStyle = sg;
+    c.beginPath(); c.arc(sunX, sunY, sunR, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 0.24;
+    c.fillStyle = "#f0d89a";
+    c.beginPath(); c.arc(sunX, sunY, sunR * 0.4, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 1;
+
+    // Uzak cayir ufugu (dalgali)
+    const hy = CANVAS_H * 0.5;
+    const hill = (amp: number, base: number, alpha: number, color: string) => {
+      c.globalAlpha = alpha;
+      c.fillStyle = color;
+      c.beginPath();
+      c.moveTo(0, CANVAS_H);
+      for (let x = 0; x <= CANVAS_W; x += 16) {
+        const y = base + Math.sin(x * 0.008 + base) * amp + Math.sin(x * 0.02 + base * 2) * (amp * 0.4);
+        c.lineTo(x, y);
+      }
+      c.lineTo(CANVAS_W, CANVAS_H);
+      c.closePath();
+      c.fill();
+      c.globalAlpha = 1;
+    };
+    hill(14, hy - 10, 0.12, "#6a7a44");
+    hill(20, hy + 40, 0.12, "#5a6a3a");
+    hill(28, hy + 120, 0.10, "#4a5830");
+
+    // Yari mobitleri (orta planda, kucuk)
+    const yurt = (x: number, y: number, s: number) => {
+      c.fillStyle = "rgba(210,190,150,0.20)";
+      c.beginPath();
+      c.moveTo(x - 22 * s, y);
+      c.quadraticCurveTo(x - 22 * s, y - 20 * s, x, y - 22 * s);
+      c.quadraticCurveTo(x + 22 * s, y - 20 * s, x + 22 * s, y);
+      c.closePath();
+      c.fill();
+      // cubuk
+      c.fillStyle = "rgba(120,90,55,0.28)";
+      c.fillRect(x - 5 * s, y - 12 * s, 10 * s, 12 * s);
+      // tepelik
+      c.strokeStyle = "rgba(210,190,150,0.22)";
+      c.lineWidth = 1.5;
+      c.beginPath(); c.arc(x, y - 22 * s, 5 * s, Math.PI, 0); c.stroke();
+    };
+    yurt(CANVAS_W * 0.68, hy + 60, 1.1);
+    yurt(CANVAS_W * 0.8, hy + 84, 0.85);
+
+    // On planda bozkir otu (incel cizgiler)
+    c.strokeStyle = "rgba(150,170,110,0.16)";
+    c.lineWidth = 1.4;
+    for (let i = 0; i < 26; i++) {
+      const gx = (i / 26) * CANVAS_W + Math.sin(i * 1.7) * 8;
+      const gy = CANVAS_H - 26 + Math.sin(i * 2.3) * 8;
+      const gh = 16 + (i % 5) * 5;
+      c.beginPath();
+      c.moveTo(gx, gy);
+      c.quadraticCurveTo(gx + 4, gy - gh * 0.6, gx + 9, gy - gh);
+      c.stroke();
+      c.beginPath();
+      c.moveTo(gx, gy);
+      c.quadraticCurveTo(gx - 4, gy - gh * 0.5, gx - 8, gy - gh * 0.8);
+      c.stroke();
+    }
+
+    c.restore();
+  }
+
   private render(): void {
     const c = this.ctx;
     const def = this.level();
@@ -2723,6 +2889,8 @@ export class Game {
     this.drawVikingShip(c);
     // Mısır modu: arka planda gunes + piramitler
     this.drawPyramids(c);
+    // Bozkır modu: arka planda cayir + gunes + yari
+    this.drawSteppe(c);
     // Ambient dust: ucusan transparan tanecikler
     for (const d of this.dustParticles) {
       c.globalAlpha = d.alpha * (0.5 + 0.5 * Math.sin(this.time * 0.8 + d.ph));
@@ -3143,6 +3311,10 @@ export class Game {
         const spec = egyptFaceSpec(pp.symbol);
         const gid = spec.type === "glyph" ? spec.glyph : "ankh";
         strokeEgyptian(c, gid, pp.x, pp.y, 15, 2.5, tileColor(pp.symbol));
+      } else if (this.gameMode === "steppe") {
+        const spec = steppeFaceSpec(pp.symbol);
+        const gid = spec.type === "glyph" ? spec.glyph : "kurt";
+        strokeSteppe(c, gid, pp.x, pp.y, 15, 2.5, tileColor(pp.symbol));
       } else {
         c.fillStyle = tileColor(pp.symbol);
         c.font = "bold 30px " + CJK_FONT;
@@ -3317,6 +3489,22 @@ export class Game {
           const spec = egyptFaceSpec(vt.symbol);
           const gid = spec.type === "glyph" ? spec.glyph : "ankh";
           strokeEgyptian(c, gid, 0, 0, sz * 0.42, 2, "#5a4020");
+        } else if (this.gameMode === "steppe") {
+          const fg = c.createLinearGradient(-sz/2, -sz*0.7, sz/2, sz*0.7);
+          fg.addColorStop(0, "#9a7442");
+          fg.addColorStop(1, "#5e4222");
+          c.fillStyle = fg;
+          c.beginPath();
+          c.roundRect(-sz/2, -sz*0.7, sz, sz*1.4, R);
+          c.fill();
+          c.strokeStyle = "#3a2a16";
+          c.lineWidth = 1.5;
+          c.beginPath();
+          c.roundRect(-sz/2, -sz*0.7, sz, sz*1.4, R);
+          c.stroke();
+          const spec = steppeFaceSpec(vt.symbol);
+          const gid = spec.type === "glyph" ? spec.glyph : "kurt";
+          strokeSteppe(c, gid, 0, 0, sz * 0.42, 2, "#e8d8b8");
         } else {
           const fg = c.createLinearGradient(-sz/2, -sz*0.7, sz/2, sz*0.7);
           fg.addColorStop(0, "#faf4e6");
@@ -3476,6 +3664,10 @@ export class Game {
     }
     if (this.gameMode === "egypt") {
       this.paintFaceEgypt(m, kind, open, w, h);
+      return;
+    }
+    if (this.gameMode === "steppe") {
+      this.paintFaceSteppe(m, kind, open, w, h);
       return;
     }
     const R = Math.max(4, Math.round(w * 0.125));
@@ -3969,6 +4161,110 @@ export class Game {
           m.fillStyle = "#e8c877"; m.beginPath(); m.arc(mx, my, mr * 0.45, 0, Math.PI * 2); m.fill();
         } else {
           m.strokeStyle = "#c8962e"; m.lineWidth = 1.5;
+          m.beginPath(); m.arc(mx, my, mr * 0.45, 0, Math.PI * 2); m.stroke();
+          for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; m.beginPath(); m.moveTo(mx + Math.cos(a) * mr * 0.55, my + Math.sin(a) * mr * 0.55); m.lineTo(mx + Math.cos(a) * mr, my + Math.sin(a) * mr); m.stroke(); }
+        }
+      }
+    }
+  }
+
+  /** GoekTurk/bozkir yuzu: sicak ahsap + oyulmus Orkhon harfi / kurt / geyik. */
+  private paintFaceSteppe(m: CanvasRenderingContext2D, kind: string, open: boolean, w: number, h: number): void {
+    const R = Math.max(4, Math.round(w * 0.125));
+    // ---- Sicak ahsap tabani ----
+    const bg = m.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, open ? "#9a7442" : "#4a3820");
+    bg.addColorStop(0.5, open ? "#7a5830" : "#3a2c18");
+    bg.addColorStop(1, open ? "#5e4222" : "#2c2112");
+    m.fillStyle = bg;
+    m.beginPath();
+    m.roundRect(0, 0, w, h, R);
+    m.fill();
+    // Ince ahsap damari (yatay cizgiler)
+    let seed = kind.charCodeAt(0) * 31 + kind.charCodeAt(kind.length - 1) * 7;
+    const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    m.save();
+    m.beginPath();
+    m.roundRect(1, 1, w - 2, h - 2, R - 1);
+    m.clip();
+    m.globalAlpha = 0.08;
+    for (let i = 0; i < 8; i++) {
+      const y0 = (h / 8) * i + rnd() * 4;
+      m.strokeStyle = i % 2 ? "#c8a878" : "#3a2a16";
+      m.lineWidth = 0.5 + rnd() * 0.6;
+      m.beginPath();
+      m.moveTo(-2, y0);
+      const step = (w + 4) / 3;
+      for (let x = 0; x < w + 4; x += step) {
+        m.quadraticCurveTo(x + step / 2, y0 + (rnd() - 0.5) * 4, x + step, y0 + (rnd() - 0.5) * 3);
+      }
+      m.stroke();
+    }
+    m.restore();
+    // ---- Oyulmus cekirde ----
+    const px = w * 0.09, py = h * 0.075, pw = w - px * 2, ph = h - py * 2, pR = Math.max(3, R - 2);
+    m.fillStyle = "rgba(0,0,0,0.24)";
+    m.beginPath(); m.roundRect(px + 1, py + 1.4, pw, ph, pR); m.fill();
+    const pg = m.createLinearGradient(0, py, 0, py + ph);
+    pg.addColorStop(0, open ? "#6e4f2c" : "#332614");
+    pg.addColorStop(1, open ? "#523a1f" : "#241a0e");
+    m.fillStyle = pg;
+    m.beginPath(); m.roundRect(px, py, pw, ph, pR); m.fill();
+    m.strokeStyle = "rgba(0,0,0,0.5)"; m.lineWidth = 1.5;
+    m.beginPath(); m.roundRect(px, py, pw, ph, pR); m.stroke();
+    m.strokeStyle = "rgba(255,240,210,0.16)"; m.lineWidth = 0.8;
+    m.beginPath(); m.roundRect(px + 1, py + 1, pw - 2, ph - 2, pR - 1); m.stroke();
+
+    // ---- GoekTurk cizim helper'i (kazima: golge + ana) ----
+    const carve = (gid: string, gx: number, gy: number, size: number, color: string) => {
+      strokeSteppe(m, gid, gx + 1, gy + 1.4, size, Math.max(3.4, size * 0.22), "rgba(0,0,0,0.55)");
+      strokeSteppe(m, gid, gx, gy, size, Math.max(2.2, size * 0.16), color);
+    };
+
+    if (!open) {
+      // Kapali tas: merkezde kucuk kurt
+      carve("kurt", w / 2, h / 2, h * 0.15, "rgba(220,200,160,0.5)");
+      return;
+    }
+
+    const spec = steppeFaceSpec(kind);
+    const cx = w / 2, cy = h / 2;
+
+    if (spec.type === "count") {
+      const fx = w * 0.36, fy = h * 0.32;
+      if (spec.suit === "c") {
+        // Daire: kucuk gunes diskleri (altin)
+        const n = spec.n;
+        const r = n === 1 ? fy * 0.5 : n === 2 ? fy * 0.36 : n === 3 ? fy * 0.3 : n === 4 ? fy * 0.27 : fy * 0.24;
+        for (const [dx, dy] of DOT_POS[n]) carve("sun_small", cx + dx * fx, cy + dy * fy, r, "#e0b850");
+      } else if (spec.suit === "b") {
+        // Bambu: kucuk ot demetleri (yesil)
+        const n = spec.n;
+        const sz = n === 1 ? fy * 0.6 : fy * 0.4;
+        for (const [dx, dy] of DOT_POS[n]) carve("grass", cx + dx * fx, cy + dy * fy, sz, "#8fb060");
+      } else {
+        // Karakter: buyuk sayi + ustte kurt (kirmizi)
+        carve("kurt", cx, py + ph * 0.16, h * 0.075, "#d8604a");
+        const num = String(spec.n);
+        m.font = "bold " + Math.round(h * 0.5) + "px Georgia";
+        m.textAlign = "center"; m.textBaseline = "middle";
+        m.strokeStyle = "rgba(0,0,0,0.6)"; m.lineWidth = Math.max(3, h * 0.05); m.lineJoin = "round";
+        m.strokeText(num, cx + 1, cy + h * 0.1 + 1.4);
+        m.fillStyle = "#e8735a";
+        m.fillText(num, cx, cy + h * 0.1);
+      }
+    } else {
+      // Tek buyuk sembol (harf / kurt / geyik)
+      carve(spec.glyph, cx, cy, h * 0.3, spec.color);
+      // Cornel grup isareti (cicek/mevsim)
+      if (spec.marker) {
+        const mx = px + pw - 12, my = py + 12, mr = 6;
+        if (spec.marker === "flower") {
+          m.fillStyle = "#d8607a";
+          for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2 - Math.PI / 2; m.beginPath(); m.arc(mx + Math.cos(a) * mr * 0.7, my + Math.sin(a) * mr * 0.7, mr * 0.5, 0, Math.PI * 2); m.fill(); }
+          m.fillStyle = "#ffd75e"; m.beginPath(); m.arc(mx, my, mr * 0.45, 0, Math.PI * 2); m.fill();
+        } else {
+          m.strokeStyle = "#e0b040"; m.lineWidth = 1.5;
           m.beginPath(); m.arc(mx, my, mr * 0.45, 0, Math.PI * 2); m.stroke();
           for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; m.beginPath(); m.moveTo(mx + Math.cos(a) * mr * 0.55, my + Math.sin(a) * mr * 0.55); m.lineTo(mx + Math.cos(a) * mr, my + Math.sin(a) * mr); m.stroke(); }
         }
