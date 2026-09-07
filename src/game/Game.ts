@@ -1876,10 +1876,7 @@ export class Game {
 
   private maxTray(): number {
     if (this.gameMode === "puzzle") return 2;
-    let m = 4;
-    if (this.fates.includes("iron")) m += 1;
-    if (this.fates.includes("limited")) m -= 1;
-    return Math.max(2, m);
+    return 4;
   }
 
   private scoreMult(): number {
