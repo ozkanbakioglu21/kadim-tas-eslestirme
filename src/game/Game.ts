@@ -34,6 +34,8 @@ export interface Tile {
 
 export type GameMode = "classic" | "zen" | "race" | "puzzle" | "endless";
 
+export type WeatherType = "rain" | "snow" | "wind" | "blizzard" | "storm" | "aurora" | "fireflies";
+
 export interface HudState {
   remaining: number;
   total: number;
@@ -438,6 +440,21 @@ export class Game {
   private meltDrops: Array<{ x: number; y: number; vx: number; vy: number; life: number; max: number; r: number }> = [];
   private winterMode = false;
   private rainMode = false;
+  private weather: WeatherType = "rain";
+  private windStreaks: Array<{ x: number; y: number; speed: number; len: number; alpha: number }> = [];
+  private gustDust: Array<{ x: number; y: number; ph: number; r: number; alpha: number }> = [];
+  private lightningNext = 6;
+  private lightningTimer = 0;
+  private lightningFlash = 0;
+  private lightningPoints: Array<[number, number]> = [];
+  private auroraBands: Array<{ y: number; color: string; phase: number; speed: number; amp: number; width: number }> = [
+    { y: 95, color: "110,255,170", phase: 0, speed: 0.35, amp: 18, width: 34 },
+    { y: 148, color: "150,120,255", phase: 2.1, speed: 0.27, amp: 24, width: 46 },
+    { y: 200, color: "80,220,200", phase: 4.2, speed: 0.43, amp: 14, width: 26 },
+  ];
+  private fireflies: Array<{ x: number; y: number; vx: number; vy: number; ph: number; r: number }> = [];
+  private shootingStars: Array<{ x: number; y: number; vx: number; vy: number; life: number; max: number }> = [];
+  private shootingStarNext = 2;
   private lastMatchTime = 0;
   private timeBonusMult = 1;
   private streak = 0;
@@ -834,9 +851,11 @@ export class Game {
     this.victoryStarted = false;
     this.snowAccum.clear();
     this.meltDrops = [];
-    const weatherRoll = Math.random();
-    this.winterMode = weatherRoll < 0.5;
-    this.rainMode = !this.winterMode;
+    const weathers: WeatherType[] = ["rain", "snow", "wind", "blizzard", "storm", "aurora", "fireflies"];
+    this.weather = weathers[Math.floor(Math.random() * weathers.length)];
+    this.winterMode = this.weather === "snow" || this.weather === "blizzard";
+    this.rainMode = this.weather === "rain" || this.weather === "storm";
+    this.setupWeatherParticles();
     this.lastMatchTime = 0;
     this.timeBonusMult = 1;
     this.streak = 0;
@@ -860,13 +879,45 @@ export class Game {
     this.wonAt = 0;
     this.fates = this.rollFates();
     this.motto = MOTTOS[Math.floor(Math.random() * MOTTOS.length)];
-    this.endlessRound = 1;
+this.endlessRound = 1;
     this.buildLayout();
     this.emitHud();
   }
 
+  /** Secilen hava modeli icin parcaciklari hazirlar. */
+  private setupWeatherParticles(): void {
+    this.windStreaks = [];
+    this.gustDust = [];
+    this.fireflies = [];
+    this.shootingStars = [];
+    this.lightningNext = 3 + Math.random() * 5;
+    this.lightningTimer = 0;
+    this.lightningFlash = 0;
+    this.lightningPoints = [];
+    this.shootingStarNext = 1.5 + Math.random() * 3;
+    if (this.weather === "wind") {
+      for (let i = 0; i < 18; i++) {
+        this.windStreaks.push({ x: Math.random() * CANVAS_W, y: 80 + Math.random() * (CANVAS_H - 160), speed: 420 + Math.random() * 420, len: 60 + Math.random() * 110, alpha: 0.08 + Math.random() * 0.16 });
+      }
+      for (let i = 0; i < 44; i++) {
+        this.gustDust.push({ x: Math.random() * CANVAS_W, y: 80 + Math.random() * (CANVAS_H - 120), ph: Math.random() * 6.28, r: 0.8 + Math.random() * 1.8, alpha: 0.15 + Math.random() * 0.3 });
+      }
+    }
+    if (this.weather === "blizzard") {
+      this.snowflakes = [];
+      for (let i = 0; i < 170; i++) {
+        this.snowflakes.push({ x: Math.random() * CANVAS_W, y: Math.random() * CANVAS_H, speed: 130 + Math.random() * 160, size: 1.5 + Math.random() * 2.6, wobble: Math.random() * Math.PI * 2, alpha: 0.5 + Math.random() * 0.45 });
+      }
+    }
+    if (this.weather === "fireflies") {
+      for (let i = 0; i < 26; i++) {
+        this.fireflies.push({ x: Math.random() * CANVAS_W, y: 150 + Math.random() * (CANVAS_H - 260), vx: (Math.random() - 0.5) * 26, vy: (Math.random() - 0.5) * 18, ph: Math.random() * 6.28, r: 1.6 + Math.random() * 1.6 });
+      }
+    }
+  }
+
   /** Bir sonraki seviyeye geçer; elle tanımlılar bittikten sonra rastgele
-   *  seviyeler başlar ve 1000+ farklı dizime kadar ilerlenebilir. */
+    *  seviyeler başlar ve 1000+ farklı dizime kadar ilerlenebilir. */
   nextLevel(): void {
     this.levelIndex++;
     this.newGame();
@@ -1293,14 +1344,74 @@ export class Game {
     }
     // Kar taneleri guncelleme (sadece kis modunda)
     if (this.winterMode) {
+      const blz = this.weather === "blizzard";
       for (const sf of this.snowflakes) {
         sf.y += sf.speed * dt;
-        sf.x += Math.sin(this.time * 0.8 + sf.wobble) * 20 * dt;
-        if (sf.y > CANVAS_H + 10) {
+        sf.x += (blz ? 150 : 0) + Math.sin(this.time * 0.8 + sf.wobble) * 20 * dt;
+        if (sf.y > CANVAS_H + 10 || sf.x > CANVAS_W + 20) {
           sf.y = -10;
-          sf.x = Math.random() * CANVAS_W;
+          sf.x = blz ? -10 - Math.random() * 120 : Math.random() * CANVAS_W;
         }
       }
+    }
+    // Rüzgar: çizgiler + savrulan toz
+    if (this.weather === "wind") {
+      for (const ws of this.windStreaks) {
+        ws.x += ws.speed * dt;
+        if (ws.x - ws.len > CANVAS_W) {
+          ws.x = -ws.len;
+          ws.y = 80 + Math.random() * (CANVAS_H - 160);
+          ws.speed = 420 + Math.random() * 420;
+        }
+      }
+      for (const gd of this.gustDust) {
+        gd.x += (120 + Math.sin(this.time * 1.4 + gd.ph) * 50) * dt;
+        gd.y += Math.sin(this.time * 0.9 + gd.ph * 2) * 14 * dt;
+        if (gd.x > CANVAS_W + 10) {
+          gd.x = -10;
+          gd.y = 80 + Math.random() * (CANVAS_H - 120);
+        }
+      }
+    }
+    // Fırtına: şimşek zamanlaması
+    if (this.weather === "storm") {
+      this.lightningNext -= dt;
+      if (this.lightningNext <= 0) {
+        this.spawnLightning();
+        this.lightningNext = 4 + Math.random() * 8;
+      }
+      this.lightningTimer = Math.max(0, this.lightningTimer - dt);
+      this.lightningFlash = Math.max(0, this.lightningFlash - dt * 3.2);
+    }
+    // Ateşböcekleri + kayan yıldızlar
+    if (this.weather === "fireflies") {
+      for (const ff of this.fireflies) {
+        ff.x += (ff.vx + Math.sin(this.time * 1.1 + ff.ph) * 12) * dt;
+        ff.y += (ff.vy + Math.cos(this.time * 0.9 + ff.ph * 1.7) * 10) * dt;
+        if (ff.x < 10) ff.x = CANVAS_W - 10;
+        if (ff.x > CANVAS_W - 10) ff.x = 10;
+        if (ff.y < 140) ff.y = CANVAS_H - 200;
+        if (ff.y > CANVAS_H - 180) ff.y = 150;
+      }
+      this.shootingStarNext -= dt;
+      if (this.shootingStarNext <= 0) {
+        this.shootingStarNext = 2 + Math.random() * 4.5;
+        const fromLeft = Math.random() < 0.5;
+        this.shootingStars.push({
+          x: fromLeft ? -20 : CANVAS_W * (0.3 + Math.random() * 0.7),
+          y: 60 + Math.random() * 260,
+          vx: (fromLeft ? 1 : -1) * (380 + Math.random() * 240),
+          vy: 130 + Math.random() * 90,
+          life: 1.4,
+          max: 1.4,
+        });
+      }
+      for (const ss of this.shootingStars) {
+        ss.x += ss.vx * dt;
+        ss.y += ss.vy * dt;
+        ss.life -= dt;
+      }
+      this.shootingStars = this.shootingStars.filter((ss) => ss.life > 0 && ss.y < CANVAS_H);
     }
     // Erime su damlalari guncelleme
     for (const md of this.meltDrops) {
@@ -1563,6 +1674,52 @@ export class Game {
     for (let i = 0; i < 16; i++) {
       setTimeout(() => this.clack(0.05 + Math.random() * 0.09), i * 85 + Math.random() * 30);
     }
+  }
+
+  /** Gurultu: uzun dusuk frekansli gurelti (simssek sonu). */
+  private thunder(): void {
+    const ac = this.audio || this.ensureAudio();
+    if (!ac) return;
+    const dur = 1.6;
+    const len = Math.floor(ac.sampleRate * dur);
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) {
+      const t = i / len;
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.2) * (0.6 + 0.4 * Math.sin(t * 40 + Math.random() * 2));
+    }
+    const src = ac.createBufferSource();
+    src.buffer = buf;
+    const lp = ac.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(300, ac.currentTime);
+    lp.frequency.exponentialRampToValueAtTime(60, ac.currentTime + dur);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.35, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
+    src.connect(lp);
+    lp.connect(g);
+    g.connect(ac.destination);
+    src.start();
+  }
+
+  /** Simssek cizgisi uretir, flaş + shake + gurultu tetikler. */
+  private spawnLightning(): void {
+    const x0 = 60 + Math.random() * (CANVAS_W - 120);
+    const pts: Array<[number, number]> = [];
+    let x = x0;
+    let y = 0;
+    const depth = 300 + Math.random() * 220;
+    while (y < depth) {
+      pts.push([x, y]);
+      x += (Math.random() - 0.5) * 60;
+      y += 24 + Math.random() * 30;
+    }
+    this.lightningPoints = pts;
+    this.lightningTimer = 0.32;
+    this.lightningFlash = 1;
+    this.shakeAmount = Math.max(this.shakeAmount, 5);
+    this.thunder();
   }
 
   /** Uyum madalyonu: merkezde yavas donen yin-yang, etrafinda surun
@@ -2164,6 +2321,133 @@ export class Game {
         c.restore();
       }
     }
+    // Kar fırtınası: beyaz sis + görüş kaybı
+    if (this.weather === "blizzard") {
+      const haze = 0.14 + 0.1 * Math.sin(this.time * 0.7) * Math.sin(this.time * 0.23);
+      c.fillStyle = "rgba(225,236,248," + Math.max(0.05, haze).toFixed(3) + ")";
+      c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    }
+    // Rüzgar: çizgiler + savrulan toz
+    if (this.weather === "wind") {
+      for (const ws of this.windStreaks) {
+        c.save();
+        c.globalAlpha = ws.alpha;
+        c.strokeStyle = "#cfe8f8";
+        c.lineWidth = 1.4;
+        c.beginPath();
+        c.moveTo(ws.x, ws.y);
+        c.lineTo(ws.x - ws.len, ws.y + ws.len * 0.08);
+        c.stroke();
+        c.restore();
+      }
+      for (const gd of this.gustDust) {
+        c.save();
+        c.globalAlpha = gd.alpha;
+        c.fillStyle = "#d8e8d8";
+        c.beginPath();
+        c.arc(gd.x, gd.y, gd.r, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+      }
+    }
+    // Fırtına: karanlık bulut tonu + şimşek
+    if (this.weather === "storm") {
+      c.fillStyle = "rgba(30,40,60,0.16)";
+      c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      if (this.lightningTimer > 0 && this.lightningPoints.length > 1) {
+        const la = this.lightningTimer / 0.32;
+        c.save();
+        c.strokeStyle = "rgba(240,248,255," + (la * 0.95).toFixed(3) + ")";
+        c.shadowColor = "rgba(180,200,255,0.9)";
+        c.shadowBlur = 18;
+        c.lineWidth = 2.6;
+        c.beginPath();
+        for (let i = 0; i < this.lightningPoints.length; i++) {
+          const p = this.lightningPoints[i];
+          if (i === 0) c.moveTo(p[0], p[1]);
+          else c.lineTo(p[0], p[1]);
+        }
+        c.stroke();
+        c.restore();
+      }
+      if (this.lightningFlash > 0) {
+        c.fillStyle = "rgba(235,242,255," + (this.lightningFlash * 0.4).toFixed(3) + ")";
+        c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      }
+    }
+    // Kutup ışıkları + soğuk hava
+    if (this.weather === "aurora") {
+      c.fillStyle = "rgba(140,180,255,0.09)";
+      c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      for (const band of this.auroraBands) {
+        c.save();
+        c.globalAlpha = 0.16 + 0.07 * Math.sin(this.time * band.speed + band.phase);
+        c.shadowColor = "rgba(" + band.color + ",0.8)";
+        c.shadowBlur = 26;
+        const grad = c.createLinearGradient(0, band.y - band.width, 0, band.y + band.width * 2);
+        grad.addColorStop(0, "rgba(" + band.color + ",0)");
+        grad.addColorStop(0.5, "rgba(" + band.color + ",0.55)");
+        grad.addColorStop(1, "rgba(" + band.color + ",0)");
+        c.fillStyle = grad;
+        c.beginPath();
+        for (let x = 0; x <= CANVAS_W; x += 24) {
+          const y = band.y + Math.sin(x * 0.008 + this.time * band.speed * 2 + band.phase) * band.amp;
+          if (x === 0) c.moveTo(x, y);
+          else c.lineTo(x, y);
+        }
+        for (let x = CANVAS_W; x >= 0; x -= 24) {
+          const y = band.y + band.width * 1.6 + Math.sin(x * 0.01 + this.time * band.speed * 1.6 + band.phase) * band.amp * 0.7;
+          c.lineTo(x, y);
+        }
+        c.closePath();
+        c.fill();
+        c.restore();
+      }
+    }
+    // Ateşböcekleri + kayan yıldızlar
+    if (this.weather === "fireflies") {
+      c.fillStyle = "rgba(40,50,90,0.12)";
+      c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      for (const ss of this.shootingStars) {
+        const a = ss.life / ss.max;
+        const hv = Math.hypot(ss.vx, ss.vy) || 1;
+        const nx = ss.vx / hv;
+        const ny = ss.vy / hv;
+        const tl = 90;
+        c.save();
+        c.globalAlpha = a * 0.9;
+        const gr = c.createLinearGradient(ss.x, ss.y, ss.x - nx * tl, ss.y - ny * tl);
+        gr.addColorStop(0, "rgba(255,255,240,0.95)");
+        gr.addColorStop(1, "rgba(255,255,240,0)");
+        c.strokeStyle = gr;
+        c.lineWidth = 2.2;
+        c.beginPath();
+        c.moveTo(ss.x, ss.y);
+        c.lineTo(ss.x - nx * tl, ss.y - ny * tl);
+        c.stroke();
+        c.fillStyle = "#fffef0";
+        c.beginPath();
+        c.arc(ss.x, ss.y, 2.2, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+      }
+      for (const ff of this.fireflies) {
+        const glow = Math.max(0, Math.sin(this.time * 2.2 + ff.ph));
+        const a = 0.15 + glow * 0.75;
+        c.save();
+        c.globalAlpha = a * 0.35;
+        c.fillStyle = "#d8ff88";
+        c.beginPath();
+        c.arc(ff.x, ff.y, ff.r * 4, 0, Math.PI * 2);
+        c.fill();
+        c.globalAlpha = a;
+        c.fillStyle = "#f4ffa8";
+        c.beginPath();
+        c.arc(ff.x, ff.y, ff.r, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+      }
+    }
     // Erime su damlalari
     for (const md of this.meltDrops) {
       const a = Math.max(0, md.life / md.max);
@@ -2299,6 +2583,7 @@ export class Game {
       const canT = open && this.sideFree(t);
       const lift = this.lifts.get(t.id) ?? 0;
       const bob = canT ? Math.sin(this.time * 1.6 + t.x * 1.31 + t.y * 0.97) * 0.7 : 0;
+      const windSway = this.weather === "wind" ? Math.sin(this.time * 1.3 + t.x * 0.9 + t.y * 0.7) * 1.6 : 0;
       let dk = 1;
       if (this.dealAt >= 0) {
         dk = Math.max(0, Math.min(1, (this.time - this.dealAt - (this.dealDelay.get(t.id) ?? 0)) / 0.22));
@@ -2308,10 +2593,10 @@ export class Game {
         const e = 1 - Math.pow(1 - dk, 3);
         c.save();
         c.globalAlpha = e;
-        this.drawTile(c, { ...t, sy: t.sy + bob + lift - (1 - e) * 46 }, open, sel, canT);
+        this.drawTile(c, { ...t, sx: t.sx + windSway, sy: t.sy + bob + lift - (1 - e) * 46 }, open, sel, canT);
         c.restore();
       } else {
-        this.drawTile(c, { ...t, sy: t.sy + bob + lift }, open, sel, canT);
+        this.drawTile(c, { ...t, sx: t.sx + windSway, sy: t.sy + bob + lift }, open, sel, canT);
         // Kilitli tas karartmasi: acik ama secilemeyen taslar
         if (open && !canT && !sel && dk >= 1) {
           c.save();
@@ -3350,11 +3635,11 @@ export class Game {
     // Kış teması: taş üstünde kar birikintisi
     if (this.winterMode && open) {
       let accum = this.snowAccum.get(t.id) ?? 0;
-      // Yavas birikim (time tabanli)
-      if (accum < 4) {
-        accum = Math.min(4, accum + 0.016);
-        this.snowAccum.set(t.id, accum);
-      }
+// Yavas birikim (time tabanli); kar firtinasi hizli birikir
+        if (accum < 4) {
+          accum = Math.min(4, accum + (this.weather === "blizzard" ? 0.05 : 0.016));
+          this.snowAccum.set(t.id, accum);
+        }
       if (accum > 0.5) {
         c.save();
         c.beginPath();
