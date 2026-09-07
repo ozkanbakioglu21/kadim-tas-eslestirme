@@ -73,19 +73,19 @@ export default function App() {
           <input type="range" className="volume-slider" min="0" max="1" step="0.05" value={muted ? 0 : volume} onChange={(e) => { setVolume(parseFloat(e.target.value)); gameRef.current?.getSound().setVolume(parseFloat(e.target.value)); }} />
         </div>
         {mode === "race" && hud && (
-          <div className={`race-timer ${hud.raceTimeLeft <= 10 ? "pulse" : ""}`} style={{ color: hud.raceTimeLeft <= 10 ? "#ff4444" : "#ffd75e" }}>
+          <div className={`race-timer bottom-indicator ${hud.raceTimeLeft <= 10 ? "pulse" : ""}`} style={{ color: hud.raceTimeLeft <= 10 ? "#ff4444" : "#ffd75e" }}>
             ⏱ {Math.ceil(hud.raceTimeLeft)}sn
           </div>
         )}
         {mode === "endless" && hud && hud.maxWrongMoves > 0 && (
-          <div className="wrong-moves-badge" style={{ color: hud.wrongMoves >= hud.maxWrongMoves ? "#ff4444" : hud.wrongMoves >= 3 ? "#ffa500" : "#4fb3a0" }}>
+          <div className="wrong-moves-badge bottom-indicator" style={{ color: hud.wrongMoves >= hud.maxWrongMoves ? "#ff4444" : hud.wrongMoves >= 3 ? "#ffa500" : "#4fb3a0" }}>
             ❤️ {hud.maxWrongMoves - hud.wrongMoves}
           </div>
         )}
         {showMenu && (
           <div className="mode-menu-overlay">
-            <div className="mode-title">Kadim Taş Eşleştirme</div>
-            <div className="mode-subtitle">Oyun Modu Seç</div>
+            <div className="mode-title">Kadim Taş</div>
+            <div className="mode-subtitle">Eşleştirme</div>
             <div className="mode-grid">
               {MODES.map((m) => (
                 <button key={m.id} className="mode-card" onClick={() => selectMode(m.id)}>
@@ -115,6 +115,7 @@ export default function App() {
         )}
       </div>
       <div className="toolbar">
+        <div className="mode-info">{MODES.find((m) => m.id === mode)?.icon} {MODES.find((m) => m.id === mode)?.name}</div>
         {mode === "endless" && hud && (
           <div className="mode-info">Round {hud.endlessRound}</div>
         )}

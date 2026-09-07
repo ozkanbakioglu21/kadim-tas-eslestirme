@@ -738,7 +738,7 @@ export class Game {
 
     // Dinamik tas boyutu: tahta tuvale sigmayacak kadar genis/yuksekse kucult.
     const maxW = CANVAS_W - 40;
-    const maxH = CANVAS_H - 330;
+    const maxH = CANVAS_H - 250; // ust: baslik+hazne, alt: istatistik bar
     let tw = 72;
     const ar = 100 / 72;
     const gp = (w: number) => Math.max(3, Math.round(w * 0.14));
@@ -889,7 +889,7 @@ export class Game {
     const boardW = this.layoutCols * (tw + gap);
     const boardH = this.layoutRows * (th + gap);
     const sx0 = this.boardOriginX() - boardW / 2;
-    const sy0 = (CANVAS_H - boardH) / 2 + 30;
+    const sy0 = (CANVAS_H - boardH) / 2 + 40; // hazne ustte, stat asagida
     const sx = sx0 + col * (tw + gap) + ox;
     const sy = sy0 + row * (th + gap) + oy;
     return {
@@ -1083,7 +1083,7 @@ export class Game {
   }
 
   private retryHit(x: number, y: number): boolean {
-    const bcx = CANVAS_W / 2, bcy = CANVAS_H - 380;
+    const bcx = CANVAS_W / 2, bcy = CANVAS_H / 2 + 80;
     return x >= bcx - 105 && x <= bcx + 105 && y >= bcy - 29 && y <= bcy + 29;
   }
 
@@ -2347,8 +2347,8 @@ export class Game {
           m.fill();
         }
       };
-      band(102, 1); // başlık altı
-      band(CANVAS_H - 92, -1); // hazne üstü
+      band(102, 1); // baslik alti
+      band(CANVAS_H - 140, -1); // istatistik bar ustü
 
       this.motifsCache = off;
     }
@@ -2642,25 +2642,31 @@ export class Game {
     c.arc(plateX + plateW - 12, plateY + plateH / 2, 2.6, 0, Math.PI * 2);
     c.fill();
     c.textAlign = "center";
-    c.font = "bold 38px Georgia";
-    c.fillStyle = "rgba(255,220,170,0.25)";
-    c.fillText("Kadim Taş Eşleştirme", CANVAS_W / 2, 61.5);
+    // Baslik: kucuk ve sik
+    c.font = "bold 20px Georgia";
+    c.fillStyle = "rgba(255,220,170,0.2)";
+    c.fillText("Kadim Taş Eşleştirme", CANVAS_W / 2, 22);
     c.fillStyle = "#31200e";
-    c.fillText("Kadim Taş Eşleştirme", CANVAS_W / 2, 60);
+    c.fillText("Kadim Taş Eşleştirme", CANVAS_W / 2, 21);
+    // Mod adi
+    const modeNames: Record<string, string> = { classic: "Klasik", zen: "Zen", race: "Yarış", puzzle: "Bulmaca", endless: "Kolay" };
+    c.font = "bold 13px Georgia";
+    c.fillStyle = "rgba(200,145,80,0.6)";
+    c.fillText(modeNames[this.gameMode] ?? this.gameMode, CANVAS_W / 2, 38);
     // Seviye: bakir kazima
     const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
-    c.font = "bold 22px Georgia";
+    c.font = "bold 16px Georgia";
     c.fillStyle = "rgba(20,10,4,0.5)";
-    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 93);
+    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 78);
     c.fillStyle = "#c89050";
-    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 92);
+    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 77);
     this.drawFates(c);
 
-    // Meditasyon motosu — her yeni duvarda degisen felsefi nefes.
+    // Meditasyon motosu
     if (this.motto) {
-      c.font = "italic 15px Georgia";
-      c.fillStyle = "rgba(200,150,90,0.55)";
-      c.fillText(this.motto, CANVAS_W / 2, 122);
+      c.font = "italic 12px Georgia";
+      c.fillStyle = "rgba(200,150,90,0.45)";
+      c.fillText(this.motto, CANVAS_W / 2, 104);
     }
 
     // Uyum madalyonu: yin-yang + surun cozulme yayi (tamamlanma arayisi).
@@ -2670,7 +2676,7 @@ export class Game {
     const boxW = this.layoutCols * (this.tw + this.gap) + this.gap;
     const boxH = this.layoutRows * (this.th + this.gap) + this.gap;
     const bx = this.boardOriginX() - boxW / 2;
-    const by = (CANVAS_H - boxH) / 2 + 30;
+    const by = (CANVAS_H - boxH) / 2 + 40; // hazne ustte, stat asagida
     c.strokeStyle = "rgba(255,255,255,0.08)";
     c.lineWidth = 2;
     c.strokeRect(bx - 12, by - 12, boxW + 24, boxH + 24);
@@ -2853,8 +2859,8 @@ export class Game {
     c.fillStyle = hg;
     c.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-    // ---- Hazne (maxTray slotlu yuva) ----
-    const trayY = CANVAS_H - 34;
+    // ---- Hazne (maxTray slotlu yuva) — ust kisim ----
+    const trayY = 56;
     const trayCx = CANVAS_W / 2;
     const slotW = 72;
     const gapSlot = 10;
@@ -2905,7 +2911,7 @@ export class Game {
     const total = this.tiles.length;
     // Ahşap bar arka planı
     c.save();
-    const barY = 96;
+    const barY = CANVAS_H - 130;
     const barH = 62;
     const barG = c.createLinearGradient(0, barY, 0, barY + barH);
     barG.addColorStop(0, "rgba(60,40,18,0.85)");
@@ -2960,11 +2966,11 @@ export class Game {
     for (const sr of this.starRain) { c.save(); c.globalAlpha = Math.max(0, sr.alpha); c.translate(sr.x, sr.y); c.rotate(sr.rot); c.fillStyle = sr.color; c.beginPath(); for (let i = 0; i < 4; i++) { const ang = (i / 4) * Math.PI * 2; c.lineTo(Math.cos(ang) * sr.size, Math.sin(ang) * sr.size); c.lineTo(Math.cos(ang + Math.PI / 4) * sr.size * 0.35, Math.sin(ang + Math.PI / 4) * sr.size * 0.35); } c.closePath(); c.fill(); c.restore(); }
     for (const mp of this.mistParticles) { c.save(); c.globalAlpha = Math.max(0, mp.alpha); const mg = c.createRadialGradient(mp.x, mp.y, 0, mp.x, mp.y, mp.r); mg.addColorStop(0, "rgba(180,200,220,0.4)"); mg.addColorStop(1, "rgba(180,200,220,0)"); c.fillStyle = mg; c.beginPath(); c.arc(mp.x, mp.y, mp.r, 0, Math.PI * 2); c.fill(); c.restore(); }
     if (this.showAchievement) { c.save(); const achA = Math.min(1, this.achievementTimer / 0.3); c.globalAlpha = achA; c.fillStyle = "rgba(20,12,5,0.85)"; c.beginPath(); c.roundRect(CANVAS_W / 2 - 140, 140, 280, 50, 12); c.fill(); c.strokeStyle = "#ffd75e"; c.lineWidth = 2; c.beginPath(); c.roundRect(CANVAS_W / 2 - 140, 140, 280, 50, 12); c.stroke(); c.fillStyle = "#ffd75e"; c.font = "bold 16px Georgia"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("Basari: " + this.showAchievement, CANVAS_W / 2, 165); c.restore(); }
-    // Alttaki kısayollar (haznenin üstü) - sadece masaustu
+    // Alt kisim kisayollari (masaustu)
     if (!("ontouchstart" in window)) {
-      c.fillStyle = "rgba(200,145,80,0.65)";
-      c.font = "15px Georgia";
-      c.fillText("[Yeni Oyun] N   [Geri Al] U   [Sonraki] L", CANVAS_W / 2, CANVAS_H - 60);
+      c.fillStyle = "rgba(200,145,80,0.5)";
+      c.font = "12px Georgia";
+      c.fillText("[Yeni Oyun] N   [Geri Al] U   [Sonraki] L", CANVAS_W / 2, CANVAS_H - 20);
     }
     // ---- Kayip ekrani ----
     if (this.lost) {
@@ -2982,7 +2988,7 @@ export class Game {
                       this.gameMode === "race" ? "Süre doldu!" :
                       "Hazne doldu, eşleşme kalmadı.";
       c.fillText(lossMsg, CANVAS_W / 2, CANVAS_H / 2 - 65);
-      const bcx = CANVAS_W / 2, bcy = CANVAS_H - 380;
+      const bcx = CANVAS_W / 2, bcy = CANVAS_H / 2 + 80;
       c.fillStyle = "#7d2a2a";
       c.beginPath();
       c.roundRect(bcx - 105, bcy - 29, 210, 58, 16);
