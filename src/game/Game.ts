@@ -34,7 +34,7 @@ export interface Tile {
 
 export type GameMode = "classic" | "zen" | "race" | "puzzle" | "endless";
 
-export type WeatherType = "rain" | "snow" | "wind" | "blizzard" | "storm" | "aurora" | "fireflies";
+export type WeatherType = "rain" | "snow" | "wind" | "storm" | "aurora" | "fireflies";
 
 export interface HudState {
   remaining: number;
@@ -902,9 +902,9 @@ export class Game {
     this.victoryStarted = false;
     this.snowAccum.clear();
     this.meltDrops = [];
-    const weathers: WeatherType[] = ["rain", "snow", "wind", "blizzard", "storm", "aurora", "fireflies"];
+    const weathers: WeatherType[] = ["rain", "snow", "wind", "storm", "aurora", "fireflies"];
     this.weather = weathers[Math.floor(Math.random() * weathers.length)];
-    this.winterMode = this.weather === "snow" || this.weather === "blizzard";
+    this.winterMode = this.weather === "snow";
     this.rainMode = this.weather === "rain" || this.weather === "storm";
     this.setupWeatherParticles();
     this.lastMatchTime = 0;
@@ -954,12 +954,6 @@ export class Game {
       }
       for (let i = 0; i < 44; i++) {
         this.gustDust.push({ x: Math.random() * CANVAS_W, y: 80 + Math.random() * (CANVAS_H - 120), ph: Math.random() * 6.28, r: 0.8 + Math.random() * 1.8, alpha: 0.15 + Math.random() * 0.3 });
-      }
-    }
-    if (this.weather === "blizzard") {
-      this.snowflakes = [];
-      for (let i = 0; i < 400; i++) {
-        this.snowflakes.push({ x: Math.random() * CANVAS_W, y: Math.random() * CANVAS_H, speed: 300 + Math.random() * 300, size: 1.5 + Math.random() * 4, wobble: Math.random() * Math.PI * 2, alpha: 0.6 + Math.random() * 0.4 });
       }
     }
     if (this.weather === "fireflies") {
@@ -1373,13 +1367,12 @@ export class Game {
     }
     // Kar taneleri guncelleme (sadece kis modunda)
     if (this.winterMode) {
-      const blz = this.weather === "blizzard";
       for (const sf of this.snowflakes) {
         sf.y += sf.speed * dt;
-        sf.x += (blz ? 350 : 0) + Math.sin(this.time * 0.8 + sf.wobble) * 30 * dt;
+        sf.x += Math.sin(this.time * 0.8 + sf.wobble) * 20 * dt;
         if (sf.y > CANVAS_H + 10 || sf.x > CANVAS_W + 20) {
           sf.y = -10;
-          sf.x = blz ? -10 - Math.random() * 120 : Math.random() * CANVAS_W;
+          sf.x = Math.random() * CANVAS_W;
         }
       }
     }
@@ -2348,32 +2341,6 @@ export class Game {
         c.fill();
         c.restore();
       }
-    }
-    // Kar fırtınası: yogun sis + kuvvetli ruzgar
-    if (this.weather === "blizzard") {
-      const haze = 0.28 + 0.12 * Math.sin(this.time * 0.6);
-      c.save();
-      // Yogun beyaz sis
-      c.fillStyle = "rgba(210,225,240," + Math.max(0.12, haze).toFixed(3) + ")";
-      c.fillRect(0, 0, CANVAS_W, CANVAS_H);
-      // Soğuk mavi ton
-      c.globalAlpha = 0.08;
-      c.fillStyle = "#7aa0c0";
-      c.fillRect(0, 0, CANVAS_W, CANVAS_H);
-      // Kuvvetli yatay ruzgar cizgileri
-      c.globalAlpha = 0.18;
-      c.strokeStyle = "#d8e8f4";
-      c.lineWidth = 1.8;
-      for (let i = 0; i < 20; i++) {
-        const wy = (i / 20) * CANVAS_H + Math.sin(this.time * 3 + i * 0.7) * 40;
-        const wx = ((this.time * 700 + i * 180) % (CANVAS_W + 400)) - 200;
-        const len = 120 + Math.sin(this.time + i * 1.3) * 50;
-        c.beginPath();
-        c.moveTo(wx, wy);
-        c.lineTo(wx + len, wy + 2);
-        c.stroke();
-      }
-      c.restore();
     }
     // Rüzgar: çizgiler + savrulan toz
     if (this.weather === "wind") {
@@ -3606,7 +3573,7 @@ export class Game {
       let accum = this.snowAccum.get(t.id) ?? 0;
 // Yavas birikim (time tabanli); kar firtinasi hizli birikir
         if (accum < 4) {
-          accum = Math.min(4, accum + (this.weather === "blizzard" ? 0.05 : 0.016));
+          accum = Math.min(4, accum + 0.016);
           this.snowAccum.set(t.id, accum);
         }
       if (accum > 0.5) {
