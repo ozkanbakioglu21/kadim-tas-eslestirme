@@ -958,8 +958,8 @@ export class Game {
     }
     if (this.weather === "blizzard") {
       this.snowflakes = [];
-      for (let i = 0; i < 170; i++) {
-        this.snowflakes.push({ x: Math.random() * CANVAS_W, y: Math.random() * CANVAS_H, speed: 130 + Math.random() * 160, size: 1.5 + Math.random() * 2.6, wobble: Math.random() * Math.PI * 2, alpha: 0.5 + Math.random() * 0.45 });
+      for (let i = 0; i < 280; i++) {
+        this.snowflakes.push({ x: Math.random() * CANVAS_W, y: Math.random() * CANVAS_H, speed: 200 + Math.random() * 260, size: 1.5 + Math.random() * 3.5, wobble: Math.random() * Math.PI * 2, alpha: 0.5 + Math.random() * 0.5 });
       }
     }
     if (this.weather === "fireflies") {
@@ -1376,7 +1376,7 @@ export class Game {
       const blz = this.weather === "blizzard";
       for (const sf of this.snowflakes) {
         sf.y += sf.speed * dt;
-        sf.x += (blz ? 150 : 0) + Math.sin(this.time * 0.8 + sf.wobble) * 20 * dt;
+        sf.x += (blz ? 220 : 0) + Math.sin(this.time * 0.8 + sf.wobble) * 25 * dt;
         if (sf.y > CANVAS_H + 10 || sf.x > CANVAS_W + 20) {
           sf.y = -10;
           sf.x = blz ? -10 - Math.random() * 120 : Math.random() * CANVAS_W;
@@ -2352,11 +2352,25 @@ export class Game {
         c.restore();
       }
     }
-    // Kar fırtınası: beyaz sis + görüş kaybı
+    // Kar fırtınası: yogun beyaz sis + gorunus kaybi + kuvvetli yatay ruzgar
     if (this.weather === "blizzard") {
-      const haze = 0.14 + 0.1 * Math.sin(this.time * 0.7) * Math.sin(this.time * 0.23);
-      c.fillStyle = "rgba(225,236,248," + Math.max(0.05, haze).toFixed(3) + ")";
+      const haze = 0.22 + 0.15 * Math.sin(this.time * 0.7) * Math.sin(this.time * 0.23);
+      c.fillStyle = "rgba(225,236,248," + Math.max(0.08, haze).toFixed(3) + ")";
       c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      // Ruzgar cizgileri
+      c.save();
+      c.globalAlpha = 0.12;
+      c.strokeStyle = "#e0eaf4";
+      c.lineWidth = 1.2;
+      for (let i = 0; i < 12; i++) {
+        const wy = (i / 12) * CANVAS_H + Math.sin(this.time * 2 + i) * 30;
+        const wx = ((this.time * 400 + i * 200) % (CANVAS_W + 300)) - 150;
+        c.beginPath();
+        c.moveTo(wx, wy);
+        c.lineTo(wx + 80 + Math.sin(this.time + i) * 30, wy + 4);
+        c.stroke();
+      }
+      c.restore();
     }
     // Rüzgar: çizgiler + savrulan toz
     if (this.weather === "wind") {
