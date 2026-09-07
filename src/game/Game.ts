@@ -1101,42 +1101,11 @@ export class Game {
       }
     }
 
-    // Bulmaca modu: yanlis eslesme kontrolu (haznede 1 tas varsa ve yeni tas eslesmiyorsa)
-    if (this.gameMode === "puzzle" && this.tray.length === 1) {
-      const trayTile = this.tray[0];
-      if (matchKey(trayTile.symbol) !== matchKey(target.symbol)) {
-        this.shakeAmount = 10;
-        this.lost = true;
-        this.sfx("lose");
-        this.unlockAchievement("first_loss");
-        return;
-      }
-    }
-
-    // Taşı tahtadan alıp hazneye tek tek ekle.
+    // Tasi tahtadan alip hazneye ekle.
     target.removed = true;
-    // Kış teması: erime su damlacıkları
-    if (this.winterMode) {
-      const dropCount = 6 + Math.floor(Math.random() * 4);
-      for (let i = 0; i < dropCount; i++) {
-        const ang = Math.random() * Math.PI * 2;
-        const spd = 60 + Math.random() * 100;
-        this.meltDrops.push({
-          x: target.sx + (Math.random() - 0.5) * this.tw * 0.6,
-          y: target.sy + (Math.random() - 0.5) * this.th * 0.3,
-          vx: Math.cos(ang) * spd * 0.4,
-          vy: -Math.abs(Math.sin(ang) * spd) - 30,
-          life: 0.8 + Math.random() * 0.5,
-          max: 1.3,
-          r: 1.5 + Math.random() * 2,
-        });
-      }
-      // Kar birikimini temizle
-      this.snowAccum.delete(target.id);
-    }
     this.tray.push({ id: target.id, symbol: target.symbol });
 
-    // Haznede aynı desenden 2 varsa -> kır (eşleşme).
+    // Haznede ayni desenden 2 varsa -> kir (eslesme).
     const lastIdx = this.tray.length - 1;
     let pairIdx = -1;
     for (let i = 0; i < lastIdx; i++) {
@@ -1200,27 +1169,14 @@ export class Game {
       }
       this.breakPair(pairIdx, lastIdx);
     } else if (this.tray.length >= this.maxTray()) {
-      if (this.gameMode === "zen") {
-        this.tray.shift();
-      } else {
-        this.lost = true;
-        this.sfx("lose");
-        this.unlockAchievement("first_loss");
-      }
+      // Hazne dolu ve eslesme yok → kaybetme (tum modlar)
+      this.lost = true;
+      this.sfx("lose");
+      this.unlockAchievement("first_loss");
     } else {
       this.sfx("tileclick");
       this.streak = 0;
       this.streakMult = 1;
-      // Yanlis tiklama: Kolay modunda hata sayaci
-      if (this.gameMode === "endless" && this.maxWrongMoves > 0) {
-        this.wrongMoves++;
-        this.shakeAmount = 8;
-        if (this.wrongMoves >= this.maxWrongMoves) {
-          this.lost = true;
-          this.sfx("lose");
-          this.unlockAchievement("first_loss");
-        }
-      }
     }
 
     // Kazanma (endless modda atla - breakPair'da yenilenir).
@@ -2830,10 +2786,7 @@ export class Game {
       c.fillText("Kaybettin!", CANVAS_W / 2, CANVAS_H / 2 - 120);
       c.font = "bold 26px Georgia";
       c.fillStyle = "#f2c9c4";
-      const lossMsg = this.gameMode === "puzzle" ? "Yanlış eşleştirme yaptın!" :
-                      this.gameMode === "endless" ? `Hak doldu! (${this.maxWrongMoves} hak)` :
-                      this.gameMode === "race" ? "Süre doldu!" :
-                      "Hazne doldu, eşleşme kalmadı.";
+      const lossMsg = "Hazne dolu, eşleşme kalmadı!";
       c.fillText(lossMsg, CANVAS_W / 2, CANVAS_H / 2 - 65);
       const bcx = CANVAS_W / 2, bcy = CANVAS_H / 2 + 80;
       c.fillStyle = "#7d2a2a";

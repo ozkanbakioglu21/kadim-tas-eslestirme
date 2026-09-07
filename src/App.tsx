@@ -106,11 +106,6 @@ export default function App() {
             {Math.ceil(hud.raceTimeLeft)}
           </div>
         )}
-        {mode === "endless" && hud && hud.maxWrongMoves > 0 && (
-          <div className="wrong-moves-badge" style={{ color: hud.wrongMoves >= hud.maxWrongMoves ? "#ff4444" : hud.wrongMoves >= 3 ? "#ffa500" : "#8ab4a0" }}>
-            {hud.maxWrongMoves - hud.wrongMoves}
-          </div>
-        )}
         {showMenu && (
           <div className="mode-menu-overlay">
             <div className="mode-title">Kadim Taş</div>
