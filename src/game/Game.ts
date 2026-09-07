@@ -2389,6 +2389,108 @@ export class Game {
   }
 
   // ---- Render ----
+  /** Viking modu: arka planda, su uzerinde yuzen sisli bir longship (vektorel). */
+  private drawVikingShip(c: CanvasRenderingContext2D): void {
+    if (this.gameMode !== "viking") return;
+    c.save();
+    c.translate(CANVAS_W / 2, CANVAS_H * 0.82);
+    const hull = "rgba(96,122,158,0.14)";
+    const detail = "rgba(120,150,186,0.11)";
+    c.lineCap = "round";
+    c.lineJoin = "round";
+
+    // Deniz dalgalar (geminin arkasinda, hafif hareketli)
+    c.strokeStyle = detail;
+    c.lineWidth = 2;
+    for (let w = 0; w < 3; w++) {
+      c.beginPath();
+      const wy = 30 + w * 11;
+      for (let x = -300; x <= 300; x += 20) {
+        const y = wy + Math.sin((x + this.time * 26) * 0.018 + w * 1.3) * 3.2;
+        if (x === -300) c.moveTo(x, y); else c.lineTo(x, y);
+      }
+      c.stroke();
+    }
+
+    // Gove (hull)
+    c.fillStyle = hull;
+    c.beginPath();
+    c.moveTo(240, -70);
+    c.bezierCurveTo(120, -56, -120, -56, -250, -70);
+    c.bezierCurveTo(-235, -30, -215, 5, -190, 22);
+    c.bezierCurveTo(-80, 36, 80, 36, 195, 24);
+    c.bezierCurveTo(220, 5, 235, -35, 240, -70);
+    c.closePath();
+    c.fill();
+
+    // Pruva: yilan/egberger kafa (sag)
+    c.strokeStyle = hull;
+    c.lineWidth = 11;
+    c.beginPath();
+    c.moveTo(236, -60);
+    c.bezierCurveTo(272, -80, 292, -114, 286, -154);
+    c.stroke();
+    c.fillStyle = hull;
+    c.beginPath();
+    c.moveTo(286, -154);
+    c.bezierCurveTo(280, -176, 296, -190, 315, -183);
+    c.bezierCurveTo(324, -179, 325, -169, 317, -165);
+    c.lineTo(305, -167);
+    c.bezierCurveTo(299, -159, 292, -158, 286, -154);
+    c.closePath();
+    c.fill();
+
+    // Sancak (left) burun
+    c.strokeStyle = hull;
+    c.lineWidth = 9;
+    c.beginPath();
+    c.moveTo(-246, -66);
+    c.bezierCurveTo(-268, -84, -277, -110, -272, -134);
+    c.stroke();
+
+    // Iskalalar (oars)
+    c.strokeStyle = detail;
+    c.lineWidth = 4;
+    for (let i = 0; i < 9; i++) {
+      const ox = -180 + i * 44;
+      c.beginPath();
+      c.moveTo(ox, -18);
+      c.lineTo(ox - 26, 46);
+      c.stroke();
+      c.fillStyle = detail;
+      c.beginPath();
+      c.ellipse(ox - 28, 50, 4, 9, 0.5, 0, Math.PI * 2);
+      c.fill();
+    }
+
+    // Kalkanlar (gunwale boyunca)
+    for (let i = 0; i < 8; i++) {
+      const sx = -176 + i * 52;
+      c.fillStyle = detail;
+      c.beginPath();
+      c.arc(sx, -42, 12, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = hull;
+      c.beginPath();
+      c.arc(sx, -42, 5, 0, Math.PI * 2);
+      c.fill();
+    }
+
+    // Direk + sarili yelken
+    c.strokeStyle = hull;
+    c.lineWidth = 4;
+    c.beginPath();
+    c.moveTo(8, -58);
+    c.lineTo(8, -172);
+    c.stroke();
+    c.fillStyle = detail;
+    c.beginPath();
+    c.ellipse(8, -140, 22, 34, 0, 0, Math.PI * 2);
+    c.fill();
+
+    c.restore();
+  }
+
   private render(): void {
     const c = this.ctx;
     const def = this.level();
@@ -2399,6 +2501,8 @@ export class Game {
     g.addColorStop(1, "#161210");
     c.fillStyle = g;
     c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    // Viking modu: arka planda sisli bir Viking gemisi (longship)
+    this.drawVikingShip(c);
     // Ambient dust: ucusan transparan tanecikler
     for (const d of this.dustParticles) {
       c.globalAlpha = d.alpha * (0.5 + 0.5 * Math.sin(this.time * 0.8 + d.ph));
