@@ -148,6 +148,76 @@ const DOT_POS: Record<number, Array<[number, number]>> = {
   9: [[-0.6, -0.6], [0, -0.6], [0.6, -0.6], [-0.6, 0], [0, 0], [0.6, 0], [-0.6, 0.6], [0, 0.6], [0.6, 0.6]],
 };
 
+// ---- Viking / İskandinav rünleri (vektörel çizim, font bagimliligi yok) ----
+// Her run, -1..1 kutusundaki poliline (x,y; y asagi) + istenirse daireler.
+type RuneGlyph = { lines?: number[][][]; circles?: number[][] };
+const RUNE_GLYPHS: Record<string, RuneGlyph> = {
+  ring: { circles: [[0, 0, 0.92], [0, 0, 0.3]] },
+  staff: { lines: [[[-0.18, -1], [-0.18, 1]], [[0.18, -1], [0.18, 1]], [[-0.4, -0.4], [0.4, -0.4]], [[-0.4, 0.4], [0.4, 0.4]]] },
+  mannaz: { lines: [[[0, -1], [0, 1]], [[-0.5, -1], [0.5, 1]], [[0.5, -1], [-0.5, 1]]] },
+  algiz: { lines: [[[0, -1], [0, 1]], [[0, -0.3], [-0.62, -1]], [[0, -0.3], [0.62, -1]]] },
+  sowilo: { lines: [[[-0.5, -1], [0.5, -0.28], [-0.5, 0.28], [0.5, 1]]] },
+  wunjo: { lines: [[[0, -1], [0, 1]], [[0, -1], [0.55, -0.7], [0.55, -0.05], [0, -0.2]]] },
+  naudiz: { lines: [[[-0.42, -1], [-0.42, 1]], [[0.42, -1], [0.42, 1]], [[-0.42, -1], [0.42, 1]], [[0.42, -1], [-0.42, 1]]] },
+  mjolnir: { lines: [[[-0.65, -0.95], [0.65, -0.95]], [[-0.65, -0.25], [0.65, -0.25]], [[-0.65, -0.95], [-0.65, -0.25]], [[0.65, -0.95], [0.65, -0.25]], [[0, -0.25], [0, 1]]] },
+  gebo: { lines: [[[-0.6, -0.8], [0.6, 0.8]], [[0.6, -0.8], [-0.6, 0.8]]] },
+  dagaz: { lines: [[[-0.55, -1], [0.55, 1]], [[0.55, -1], [-0.55, 1]], [[-0.55, -0.42], [0.55, -0.42]], [[-0.55, 0.42], [0.55, 0.42]]] },
+  fehu: { lines: [[[-0.3, -1], [-0.3, 1]], [[-0.3, -0.5], [0.7, -1]], [[-0.3, 0.2], [0.7, -0.3]]] },
+  berkano: { lines: [[[-0.4, -1], [-0.4, 1]], [[-0.4, -1], [0.55, -0.5], [-0.4, -0.02]], [[-0.4, -0.02], [0.55, 0.5], [-0.4, 1]]] },
+  jera: { lines: [[[-0.25, -0.75], [0.6, -0.75], [0.25, -0.3]], [[0.25, 0.3], [-0.6, 0.3], [-0.25, 0.75]]] },
+  laguz: { lines: [[[-0.2, -1], [-0.2, 1]], [[-0.2, -0.6], [0.65, -1]]] },
+  eihwaz: { lines: [[[0, -1], [0, 1]], [[0, -0.55], [-0.55, -0.2], [0, 0.15]]] },
+  perthro: { lines: [[[-0.45, -1], [0.45, -0.4], [-0.45, 0.25], [0.45, 1]]] },
+  thurisaz: { lines: [[[-0.4, -1], [-0.4, 1]], [[-0.4, -0.5], [0.55, 0], [-0.4, 0.5]]] },
+  othala: { lines: [[[-0.5, 0.05], [0, -0.8], [0.5, 0.05], [0, 0.8], [-0.5, 0.05]], [[-0.22, 0.2], [-0.62, 0.95]], [[0.22, 0.2], [0.62, 0.95]]] },
+  vegvisir: { lines: [[[0, -1], [0, 1]], [[-0.7, -0.7], [0, 0]], [[0.7, -0.7], [0, 0]], [[-0.7, 0.7], [0, 0]], [[0.7, 0.7], [0, 0]], [[-0.5, -0.5], [0.5, -0.5]], [[-0.5, 0.5], [0.5, 0.5]]] },
+};
+
+// Rune'yi verili context'e cizer (mod-level, font bagimli degil).
+function strokeRune(m: CanvasRenderingContext2D, glyphId: string, cx: number, cy: number, size: number, lineWidth: number, color: string): void {
+  const g = RUNE_GLYPHS[glyphId];
+  if (!g) return;
+  m.save();
+  m.lineCap = "round";
+  m.lineJoin = "round";
+  m.strokeStyle = color;
+  m.lineWidth = lineWidth;
+  for (const pl of g.lines ?? []) {
+    m.beginPath();
+    pl.forEach(([lx, ly], i) => { const X = cx + lx * size, Y = cy + ly * size; i ? m.lineTo(X, Y) : m.moveTo(X, Y); });
+    m.stroke();
+  }
+  for (const [cxr, cyr, r] of g.circles ?? []) { m.beginPath(); m.arc(cx + cxr * size, cy + cyr * size, r * size, 0, Math.PI * 2); m.stroke(); }
+  m.restore();
+}
+
+// Viking modu icin mahjong sembolu -> rune spesifikasyonu.
+type VikingSpec =
+  | { type: "count"; suit: "c" | "b" | "w"; n: number }
+  | { type: "rune"; glyph: string; color: string; marker?: "flower" | "season" };
+function vikingFaceSpec(kind: string): VikingSpec {
+  if (kind[0] === "c") return { type: "count", suit: "c", n: Number(kind.slice(1)) };
+  if (kind[0] === "b") return { type: "count", suit: "b", n: Number(kind.slice(1)) };
+  if (kind[0] === "w") return { type: "count", suit: "w", n: Number(kind.slice(1)) };
+  if (kind === "E") return { type: "rune", glyph: "algiz", color: "#e8dcc0" };
+  if (kind === "S") return { type: "rune", glyph: "sowilo", color: "#e8dcc0" };
+  if (kind === "W") return { type: "rune", glyph: "wunjo", color: "#e8dcc0" };
+  if (kind === "N") return { type: "rune", glyph: "naudiz", color: "#e8dcc0" };
+  if (kind === "DR") return { type: "rune", glyph: "mjolnir", color: "#e8dcc0" };
+  if (kind === "DG") return { type: "rune", glyph: "gebo", color: "#e8dcc0" };
+  if (kind === "DW") return { type: "rune", glyph: "dagaz", color: "#e8dcc0" };
+  if (kind[0] === "f") {
+    const f = { 1: "fehu", 2: "berkano", 3: "jera", 4: "laguz" }[Number(kind.slice(1))] ?? "fehu";
+    return { type: "rune", glyph: f, color: "#e8dcc0", marker: "flower" };
+  }
+  if (kind[0] === "s") {
+    const s = { 1: "eihwaz", 2: "perthro", 3: "thurisaz", 4: "othala" }[Number(kind.slice(1))] ?? "othala";
+    return { type: "rune", glyph: s, color: "#e8dcc0", marker: "season" };
+  }
+  return { type: "rune", glyph: "vegvisir", color: "#e8dcc0" };
+}
+
+
 // Seviye dizimleri. Taşlar standart 144 taslik mahjong setinden dogrulanir;
 // sembol atamasi kaldirma simulasyonu ile cozulebilirlik garantisi verir.
 const LEVELS: Array<{ name: string; cells: Array<[number, number]>; bg: [string, string] }> =
@@ -2741,11 +2811,17 @@ export class Game {
       c.arc(pp.x, pp.y, rr, 0, Math.PI * 2);
       c.stroke();
       c.globalAlpha = a * 0.55;
-      c.fillStyle = tileColor(pp.symbol);
-      c.font = "bold 30px " + CJK_FONT;
-      c.textAlign = "center";
-      c.textBaseline = "middle";
-      c.fillText(faceLabel(pp.symbol), pp.x, pp.y);
+      if (this.gameMode === "viking") {
+        const spec = vikingFaceSpec(pp.symbol);
+        const gid = spec.type === "rune" ? spec.glyph : "vegvisir";
+        strokeRune(c, gid, pp.x, pp.y, 16, 2.5, tileColor(pp.symbol));
+      } else {
+        c.fillStyle = tileColor(pp.symbol);
+        c.font = "bold 30px " + CJK_FONT;
+        c.textAlign = "center";
+        c.textBaseline = "middle";
+        c.fillText(faceLabel(pp.symbol), pp.x, pp.y);
+      }
       c.restore();
     }
 
@@ -2881,24 +2957,42 @@ export class Game {
         c.rotate(vt.rot);
         const sz = 18;
         const R = 4;
-        const fg = c.createLinearGradient(-sz/2, -sz*0.7, sz/2, sz*0.7);
-        fg.addColorStop(0, "#faf4e6");
-        fg.addColorStop(0.5, "#e0d4b8");
-        fg.addColorStop(1, "#d4c8a8");
-        c.fillStyle = fg;
-        c.beginPath();
-        c.roundRect(-sz/2, -sz*0.7, sz, sz*1.4, R);
-        c.fill();
-        c.strokeStyle = "#c8b898";
-        c.lineWidth = 1.5;
-        c.beginPath();
-        c.roundRect(-sz/2, -sz*0.7, sz, sz*1.4, R);
-        c.stroke();
-        c.fillStyle = "#4a3520";
-        c.font = `bold ${Math.round(sz * 0.6)}px ${CJK_FONT}`;
-        c.textAlign = "center";
-        c.textBaseline = "middle";
-        c.fillText(faceLabel(vt.symbol), 0, 0);
+        if (this.gameMode === "viking") {
+          const fg = c.createLinearGradient(-sz/2, -sz*0.7, sz/2, sz*0.7);
+          fg.addColorStop(0, "#5b5348");
+          fg.addColorStop(1, "#3c362e");
+          c.fillStyle = fg;
+          c.beginPath();
+          c.roundRect(-sz/2, -sz*0.7, sz, sz*1.4, R);
+          c.fill();
+          c.strokeStyle = "#2a241d";
+          c.lineWidth = 1.5;
+          c.beginPath();
+          c.roundRect(-sz/2, -sz*0.7, sz, sz*1.4, R);
+          c.stroke();
+          const spec = vikingFaceSpec(vt.symbol);
+          const gid = spec.type === "rune" ? spec.glyph : "vegvisir";
+          strokeRune(c, gid, 0, 0, sz * 0.42, 2, "#e8dcc0");
+        } else {
+          const fg = c.createLinearGradient(-sz/2, -sz*0.7, sz/2, sz*0.7);
+          fg.addColorStop(0, "#faf4e6");
+          fg.addColorStop(0.5, "#e0d4b8");
+          fg.addColorStop(1, "#d4c8a8");
+          c.fillStyle = fg;
+          c.beginPath();
+          c.roundRect(-sz/2, -sz*0.7, sz, sz*1.4, R);
+          c.fill();
+          c.strokeStyle = "#c8b898";
+          c.lineWidth = 1.5;
+          c.beginPath();
+          c.roundRect(-sz/2, -sz*0.7, sz, sz*1.4, R);
+          c.stroke();
+          c.fillStyle = "#4a3520";
+          c.font = `bold ${Math.round(sz * 0.6)}px ${CJK_FONT}`;
+          c.textAlign = "center";
+          c.textBaseline = "middle";
+          c.fillText(faceLabel(vt.symbol), 0, 0);
+        }
         c.restore();
       }
       c.textAlign = "center";
@@ -3016,7 +3110,7 @@ export class Game {
   private getFaceCanvas(kind: string, open: boolean): HTMLCanvasElement {
     const w = this.tw;
     const h = this.th;
-    const key = kind + "|" + (open ? 1 : 0) + "|" + w + "x" + h;
+    const key = this.gameMode + "|" + kind + "|" + (open ? 1 : 0) + "|" + w + "x" + h;
     const hit = this.faceCache.get(key);
     if (hit) return hit;
     const S = 2;
@@ -3032,6 +3126,10 @@ export class Game {
 
   /** El oymasi fildisi yuzu: yagli yuzey + kazinmis sembol + inlay tas. */
   private paintFace(m: CanvasRenderingContext2D, kind: string, open: boolean, w: number, h: number): void {
+    if (this.gameMode === "viking") {
+      this.paintFaceViking(m, kind, open, w, h);
+      return;
+    }
     const R = Math.max(4, Math.round(w * 0.125));
     let seed = kind.charCodeAt(0) * 31 + kind.charCodeAt(kind.length - 1) * 7 + (open ? 3 : 11);
     const rnd = () => {
@@ -3309,6 +3407,126 @@ export class Game {
         tamga(w / 2, h * 0.72, h * 0.045, n === 1 ? 0 : 1);
       }
       carve(kind.slice(1), w / 2, h / 2 + h * 0.3, h * 0.15, "#b89040");
+    }
+  }
+
+  /** Viking modu: eski tas/ahsap zemin + kazilmis Iskandinav runlari. */
+  private paintFaceViking(m: CanvasRenderingContext2D, kind: string, open: boolean, w: number, h: number): void {
+    const R = Math.max(4, Math.round(w * 0.125));
+    // ---- Eski tas/ahsap taban ----
+    const bg = m.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, open ? "#5b5348" : "#3a2f28");
+    bg.addColorStop(0.5, open ? "#4c453b" : "#2f261f");
+    bg.addColorStop(1, open ? "#3c362e" : "#241d17");
+    m.fillStyle = bg;
+    m.beginPath();
+    m.roundRect(0, 0, w, h, R);
+    m.fill();
+    // Ince tasin dokusu (rastgele cizgiler)
+    let seed = kind.charCodeAt(0) * 31 + kind.charCodeAt(kind.length - 1) * 7;
+    const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    m.save();
+    m.beginPath();
+    m.roundRect(1, 1, w - 2, h - 2, R - 1);
+    m.clip();
+    m.globalAlpha = 0.07;
+    for (let i = 0; i < 7; i++) {
+      const y0 = (h / 7) * i + rnd() * 4;
+      m.strokeStyle = i % 2 ? "#8a7f6a" : "#2a241d";
+      m.lineWidth = 0.5 + rnd() * 0.6;
+      m.beginPath();
+      m.moveTo(-2, y0);
+      const step = (w + 4) / 3;
+      for (let x = 0; x < w + 4; x += step) {
+        m.quadraticCurveTo(x + step / 2, y0 + (rnd() - 0.5) * 4, x + step, y0 + (rnd() - 0.5) * 3);
+      }
+      m.stroke();
+    }
+    m.restore();
+    // ---- Kazilmis panel (derin cukur) ----
+    const px = w * 0.09, py = h * 0.075, pw = w - px * 2, ph = h - py * 2, pR = Math.max(3, R - 2);
+    m.fillStyle = "rgba(0,0,0,0.22)";
+    m.beginPath(); m.roundRect(px + 1, py + 1.4, pw, ph, pR); m.fill();
+    const pg = m.createLinearGradient(0, py, 0, py + ph);
+    pg.addColorStop(0, open ? "#524a3f" : "#332a22");
+    pg.addColorStop(1, open ? "#3e382f" : "#241d16");
+    m.fillStyle = pg;
+    m.beginPath(); m.roundRect(px, py, pw, ph, pR); m.fill();
+    m.strokeStyle = "rgba(0,0,0,0.5)"; m.lineWidth = 1.5;
+    m.beginPath(); m.roundRect(px, py, pw, ph, pR); m.stroke();
+    m.strokeStyle = "rgba(255,245,225,0.18)"; m.lineWidth = 0.8;
+    m.beginPath(); m.roundRect(px + 1, py + 1, pw - 2, ph - 2, pR - 1); m.stroke();
+
+    // ---- Rune cizim helper'i ----
+    const carveRune = (glyphId: string, cx: number, cy: number, size: number, color: string) => {
+      // Derin golge (kazimanin ic kismi)
+      strokeRune(m, glyphId, cx + 1, cy + 1.4, size, Math.max(3.4, size * 0.22), "rgba(0,0,0,0.6)");
+      // Ana rune
+      strokeRune(m, glyphId, cx, cy, size, Math.max(2.2, size * 0.16), color);
+    };
+
+    if (!open) {
+      // Kapali tas: merkezde Vegvisir pusula
+      carveRune("vegvisir", w / 2, h / 2, h * 0.16, "rgba(200,180,150,0.5)");
+      return;
+    }
+
+    const spec = vikingFaceSpec(kind);
+    const cx = w / 2, cy = h / 2;
+
+    if (spec.type === "count") {
+      const fx = w * 0.36, fy = h * 0.32;
+      if (spec.suit === "c") {
+        // Daire: kazilmis rune-halkalari (mavi)
+        const n = spec.n;
+        const r = n === 1 ? fy * 0.62 : n === 2 ? fy * 0.4 : n === 3 ? fy * 0.33 : n === 4 ? fy * 0.3 : fy * 0.26;
+        for (const [dx, dy] of DOT_POS[n]) carveRune("ring", cx + dx * fx, cy + dy * fy, r, "#7fb2d8");
+      } else if (spec.suit === "b") {
+        // Bambu: kazilmis rune-direkler (yesil)
+        const n = spec.n;
+        const sw = n === 1 ? fx * 0.4 : fx * 0.3;
+        const sh = n === 1 ? fy * 1.25 : fy * 0.66;
+        for (const [dx, dy] of DOT_POS[n]) {
+          m.save();
+          m.translate(cx + dx * fx, cy + dy * fy);
+          // diregi dikey ciz
+          m.strokeStyle = "rgba(0,0,0,0.55)"; m.lineWidth = sw * 0.9 + 2; m.lineCap = "round";
+          m.beginPath(); m.moveTo(0, -sh / 2 + 1.3); m.lineTo(0, sh / 2 + 1.3); m.stroke();
+          m.strokeStyle = "#7bbf8f"; m.lineWidth = sw * 0.9;
+          m.beginPath(); m.moveTo(0, -sh / 2); m.lineTo(0, sh / 2); m.stroke();
+          // iki dugum
+          m.lineWidth = sw * 0.35;
+          m.beginPath(); m.moveTo(-sw * 0.5, -sh * 0.18); m.lineTo(sw * 0.5, -sh * 0.18);
+          m.moveTo(-sw * 0.5, sh * 0.18); m.lineTo(sw * 0.5, sh * 0.18); m.stroke();
+          m.restore();
+        }
+      } else {
+        // Karakter: buyuk kazilmis sayi + ustte Mannaz rune (kirmizi)
+        carveRune("mannaz", cx, py + ph * 0.16, h * 0.075, "#c0392b");
+        const num = String(spec.n);
+        m.font = "bold " + Math.round(h * 0.5) + "px Georgia";
+        m.textAlign = "center"; m.textBaseline = "middle";
+        m.strokeStyle = "rgba(0,0,0,0.6)"; m.lineWidth = Math.max(3, h * 0.05); m.lineJoin = "round";
+        m.strokeText(num, cx + 1, cy + h * 0.1 + 1.4);
+        m.fillStyle = "#e8442a";
+        m.fillText(num, cx, cy + h * 0.1);
+      }
+    } else {
+      // Tek buyuk rune
+      carveRune(spec.glyph, cx, cy, h * 0.28, spec.color);
+      // Cornel grup isareti (cicek/mevsim)
+      if (spec.marker) {
+        const mx = px + pw - 12, my = py + 12, mr = 6;
+        if (spec.marker === "flower") {
+          m.fillStyle = "#e85468";
+          for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2 - Math.PI / 2; m.beginPath(); m.arc(mx + Math.cos(a) * mr * 0.7, my + Math.sin(a) * mr * 0.7, mr * 0.5, 0, Math.PI * 2); m.fill(); }
+          m.fillStyle = "#ffd75e"; m.beginPath(); m.arc(mx, my, mr * 0.45, 0, Math.PI * 2); m.fill();
+        } else {
+          m.strokeStyle = "#e0b040"; m.lineWidth = 1.5;
+          m.beginPath(); m.arc(mx, my, mr * 0.45, 0, Math.PI * 2); m.stroke();
+          for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; m.beginPath(); m.moveTo(mx + Math.cos(a) * mr * 0.55, my + Math.sin(a) * mr * 0.55); m.lineTo(mx + Math.cos(a) * mr, my + Math.sin(a) * mr); m.stroke(); }
+        }
+      }
     }
   }
 
