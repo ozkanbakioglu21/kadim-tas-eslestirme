@@ -97,27 +97,6 @@ body,
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-.level-picker {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 96vw;
-}
-
-.lvl {
-  min-width: 34px;
-  min-height: 38px;
-  padding: 8px 4px;
-  text-align: center;
-  font-size: 13px;
-}
-
-.lvl.active {
-  background: #d4af37;
-  color: #1a1200;
-}
-
 /* ---- Genel buton ---- */
 .btn {
   font-size: 14px;
@@ -311,19 +290,10 @@ body,
     padding: 4px 2px;
     padding-bottom: calc(env(safe-area-inset-bottom, 4px) + 2px);
   }
-  .level-picker {
-    gap: 3px;
-  }
   .btn {
     font-size: 12px;
     padding: 8px 12px;
     min-height: 40px;
-  }
-  .lvl {
-    min-width: 30px;
-    min-height: 34px;
-    padding: 6px 2px;
-    font-size: 12px;
   }
   .power-btn {
     width: 46px;
@@ -374,12 +344,6 @@ body,
   .btn {
     padding: 6px 10px;
     min-height: 36px;
-    font-size: 11px;
-  }
-  .lvl {
-    min-width: 26px;
-    min-height: 30px;
-    padding: 4px 2px;
     font-size: 11px;
   }
 }
