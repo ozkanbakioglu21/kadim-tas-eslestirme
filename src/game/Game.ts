@@ -3602,10 +3602,10 @@ export class Game {
     const yTop = t.sy - h / 2;
     const R = Math.max(4, Math.round(w * 0.125));
 
-    // ---- Renk paleti (ceviz: acik = yagli, kapali = golegde) ----
-    const faceTop = open ? "#f5ecd8" : "#6b1a1a";
-    const faceBot = open ? "#d4c8a8" : "#320808";
-    const rim = open ? "#c8b898" : "#5a1212";
+    // ---- Fildisi renk paleti (eskitmis, antika) ----
+    const faceTop = open ? "#f0e8d4" : "#6b1a1a";
+    const faceBot = open ? "#c8b890" : "#320808";
+    const rim = open ? "#a89868" : "#5a1212";
 
     // ---- Cift katmanli golge: yakin temas + derinlik ----
     const ly = this.lifts.get(t.id) ?? 0;
@@ -3626,41 +3626,56 @@ export class Game {
     c.fill();
     c.restore();
 
-    // ---- Yan kalinlik (3D extrusion: 6px derinlik) ----
-    const sideH = 6 + layerDepth * 0.4;
-    c.fillStyle = open ? "#b8a888" : "#4a1010";
+    // ---- Yan kalinlik (kalin fildisi blok) ----
+    const sideH = 8 + layerDepth * 0.5;
+    c.fillStyle = open ? "#b8a878" : "#4a1010";
     c.beginPath();
-    c.roundRect(x + 1.5, yTop + sideH, w, h, R);
+    c.roundRect(x + 1, yTop + sideH, w - 2, 7, [0, 0, R, R]);
     c.fill();
     // Yan kenar parcasi (sag)
-    c.fillStyle = open ? "#9a8a70" : "#380a0a";
+    c.fillStyle = open ? "#9a8a60" : "#380a0a";
     c.beginPath();
-    c.roundRect(x + w - 2.5, yTop + sideH * 0.6, 3, h * 0.85, 1);
+    c.roundRect(x + w - 3, yTop + sideH * 0.5, 3, h * 0.8, 1);
     c.fill();
 
-    // ---- Govde: 135 derece egimli degrade (bombeli yuzey hissi) ----
-    const bg = c.createLinearGradient(x, yTop, x + w, yTop + h);
-    bg.addColorStop(0, open ? "#faf4e6" : "#7a2020");
-    bg.addColorStop(0.35, faceTop);
-    bg.addColorStop(0.65, open ? "#e0d4b8" : "#4a1010");
+    // ---- Govde: fildisi degrade (bombeli, yagli yuzey) ----
+    const bg = c.createLinearGradient(x, yTop, x + w * 0.3, yTop + h);
+    bg.addColorStop(0, open ? "#faf6ea" : "#7a2020");
+    bg.addColorStop(0.2, open ? "#f2ead2" : "#6a1818");
+    bg.addColorStop(0.5, faceTop);
+    bg.addColorStop(0.8, open ? "#ddd0b0" : "#4a1010");
     bg.addColorStop(1, faceBot);
     c.fillStyle = bg;
     c.beginPath();
     c.roundRect(x, yTop, w, h, R);
     c.fill();
 
+    // ---- Fildisi damar dokusu (ince cizgiler) ----
+    if (open) {
+      c.save();
+      c.globalAlpha = 0.06;
+      c.strokeStyle = "#8a7a50";
+      c.lineWidth = 0.5;
+      for (let i = 0; i < 4; i++) {
+        const yy = yTop + h * (0.2 + i * 0.2);
+        c.beginPath();
+        c.moveTo(x + R, yy);
+        c.bezierCurveTo(x + w * 0.3, yy + 2, x + w * 0.7, yy - 1, x + w - R, yy + 1);
+        c.stroke();
+      }
+      c.restore();
+    }
+
     // ---- 3D Bevel: sol-ust parlak + sag-alt koyu ----
-    // Sag-alt: kalin karanlik bevel
-    c.strokeStyle = "rgba(0,0,0,0.45)";
+    c.strokeStyle = "rgba(0,0,0,0.5)";
     c.lineWidth = 2.5;
     c.beginPath();
     c.moveTo(x + R + 1, yTop + h - 1.5);
     c.lineTo(x + w - 3, yTop + h - 1.5);
     c.lineTo(x + w - 1.5, yTop + R + 1);
     c.stroke();
-    // Sol-ust: parlak isik cizgisi
-    c.strokeStyle = "rgba(255,255,255,0.45)";
-    c.lineWidth = 1;
+    c.strokeStyle = "rgba(255,255,255,0.5)";
+    c.lineWidth = 1.2;
     c.beginPath();
     c.moveTo(x + R, yTop + 1);
     c.lineTo(x + w - 3, yTop + 1);
@@ -3678,28 +3693,26 @@ export class Game {
     //      ruzgar / ejderha / cicek / mevsim) ----
     this.drawFace(c, t, open, canTake);
 
-    // ---- Taş yüzü sanatsal ışıklandırma (cam vurgusu + iç gölge) ----
+    // ---- Fildisi parilti (yagli mermer efekti) ----
     if (open) {
       c.save();
       const gA = c.createRadialGradient(
-        x + w * 0.36,
-        yTop + h * 0.28,
-        2,
-        x + w * 0.36,
-        yTop + h * 0.28,
-        w * 0.95,
+        x + w * 0.35, yTop + h * 0.25, 2,
+        x + w * 0.35, yTop + h * 0.25, w * 0.9,
       );
-      gA.addColorStop(0, "rgba(255,255,255,0.35)");
+      gA.addColorStop(0, "rgba(255,255,255,0.38)");
+      gA.addColorStop(0.5, "rgba(255,255,255,0.08)");
       gA.addColorStop(1, "rgba(255,255,255,0)");
       c.fillStyle = gA;
       c.beginPath();
       c.roundRect(x + 2, yTop + 2, w - 4, h - 4, R - 1);
       c.fill();
       c.restore();
+      // Alt kisim sicak golge
       c.save();
-      const gB = c.createLinearGradient(0, yTop + h * 0.45, 0, yTop + h);
-      gB.addColorStop(0, "rgba(120,80,20,0)");
-      gB.addColorStop(1, "rgba(180,150,80,0.10)");
+      const gB = c.createLinearGradient(0, yTop + h * 0.5, 0, yTop + h);
+      gB.addColorStop(0, "rgba(160,130,60,0)");
+      gB.addColorStop(1, "rgba(160,130,60,0.08)");
       c.fillStyle = gB;
       c.beginPath();
       c.roundRect(x + 2, yTop + 2, w - 4, h - 4, R - 1);
