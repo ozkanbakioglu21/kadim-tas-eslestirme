@@ -3184,20 +3184,19 @@ export class Game {
     return cv;
   }
 
-  /** El oymasi ceviz yuzu: agac dokusu + parlatilmis panel + inlay sembol. */
+  /** El oymasi fildisi yuzu: yagli yuzey + kazinmis sembol + inlay tas. */
   private paintFace(m: CanvasRenderingContext2D, kind: string, open: boolean, w: number, h: number): void {
     const R = Math.max(4, Math.round(w * 0.125));
-    // Deterministik agac dokusu (tas basina sabit, ama her turde farkli).
     let seed = kind.charCodeAt(0) * 31 + kind.charCodeAt(kind.length - 1) * 7 + (open ? 3 : 11);
     const rnd = () => {
       seed = (seed * 1103515245 + 12345) & 0x7fffffff;
       return seed / 0x7fffffff;
     };
-    // ---- Ceviz tabani ----
+    // ---- Fildisi tabani ----
     const bg = m.createLinearGradient(0, 0, 0, h);
-    bg.addColorStop(0, open ? "#f5ecd8" : "#6b1a1a");
-    bg.addColorStop(0.5, open ? "#e8dcc0" : "#4a1010");
-    bg.addColorStop(1, open ? "#d4c8a8" : "#320808");
+    bg.addColorStop(0, open ? "#f0e8d4" : "#6b1a1a");
+    bg.addColorStop(0.5, open ? "#e4d8b8" : "#4a1010");
+    bg.addColorStop(1, open ? "#c8b890" : "#320808");
     m.fillStyle = bg;
     m.beginPath();
     m.roundRect(0, 0, w, h, R);
@@ -3206,51 +3205,49 @@ export class Game {
     m.beginPath();
     m.roundRect(1, 1, w - 2, h - 2, R - 1);
     m.clip();
-    for (let i = 0; i < 11; i++) {
-      const y0 = (h / 11) * i + rnd() * 4;
-      m.strokeStyle = rnd() > 0.5 ? "rgba(60,40,20,0.18)" : "rgba(200,180,140,0.12)";
-      m.lineWidth = 0.8 + rnd() * 0.9;
+    // Fildisi damarlari
+    for (let i = 0; i < 6; i++) {
+      const y0 = (h / 6) * i + rnd() * 3;
+      m.strokeStyle = rnd() > 0.5 ? "rgba(140,120,80,0.1)" : "rgba(200,180,140,0.08)";
+      m.lineWidth = 0.4 + rnd() * 0.5;
       m.beginPath();
       m.moveTo(-2, y0);
-      const step = (w + 4) / 4;
+      const step = (w + 4) / 3;
       for (let x = 0; x < w + 4; x += step) {
-        m.quadraticCurveTo(x + step / 2, y0 + (rnd() - 0.5) * 5, x + step, y0 + (rnd() - 0.5) * 3);
+        m.quadraticCurveTo(x + step / 2, y0 + (rnd() - 0.5) * 3, x + step, y0 + (rnd() - 0.5) * 2);
       }
       m.stroke();
     }
-    // Agac gumlusu
-    m.strokeStyle = "rgba(80,20,20,0.25)";
-    m.lineWidth = 1;
-    const kx = w * (0.2 + rnd() * 0.6);
-    const ky = h * (0.15 + rnd() * 0.7);
-    for (let r = 2; r < 7; r += 2.4) {
-      m.beginPath();
-      m.ellipse(kx, ky, r * 1.5, r, 0.3, 0, Math.PI * 2);
-      m.stroke();
-    }
     m.restore();
-    // ---- Oyulmus yuz paneli (cukur) ----
+    // ---- Kazilmis yuz paneli (derin cukur) ----
     const px = w * 0.09;
     const py = h * 0.075;
     const pw = w - px * 2;
     const ph = h - py * 2;
     const pR = Math.max(3, R - 2);
+    // Cukur golgesi (derinlik hissi)
+    m.fillStyle = "rgba(0,0,0,0.12)";
+    m.beginPath();
+    m.roundRect(px + 0.8, py + 1.2, pw, ph, pR);
+    m.fill();
+    // Panel yuzeyi
     const pg = m.createLinearGradient(0, py, 0, py + ph);
-    pg.addColorStop(0, open ? "#f0e4cc" : "#5a1515");
-    pg.addColorStop(1, open ? "#ddd0b4" : "#3a0c0c");
+    pg.addColorStop(0, open ? "#ede4cc" : "#5a1515");
+    pg.addColorStop(1, open ? "#d8ccb0" : "#3a0c0c");
     m.fillStyle = pg;
     m.beginPath();
     m.roundRect(px, py, pw, ph, pR);
     m.fill();
-    m.strokeStyle = "rgba(80,60,30,0.35)";
-    m.lineWidth = 1.4;
+    // Kenar kazimasi (alt kisim koyu, ust kisim acik)
+    m.strokeStyle = "rgba(100,80,50,0.4)";
+    m.lineWidth = 1.5;
     m.beginPath();
     m.roundRect(px, py, pw, ph, pR);
     m.stroke();
-    m.strokeStyle = "rgba(255,245,220,0.45)";
-    m.lineWidth = 1;
+    m.strokeStyle = "rgba(255,250,235,0.5)";
+    m.lineWidth = 0.8;
     m.beginPath();
-    m.roundRect(px + 1.2, py + 1.6, pw - 2.4, ph - 2.4, pR - 1);
+    m.roundRect(px + 1, py + 1, pw - 2, ph - 2, pR - 1);
     m.stroke();
     if (!open) {
       // Kapali tas arkaligi: hafif kare dokusu + merkezde Gokturk boynuz burme cifti.
@@ -3276,77 +3273,87 @@ export class Game {
       this.hornSpiral(m, w / 2 + w * 0.09, h / 2, h * 0.11, -1, 0.55);
       return;
     }
-    // ---- Kazima: cekintinin alt kenari isik + koyu inlay ----
+    // ---- Kazima: derin oyma efekti ----
     const carve = (ch: string, cx: number, cy: number, size: number, color: string) => {
       m.font = "bold " + Math.round(size) + "px " + CJK_FONT;
       m.textAlign = "center";
       m.textBaseline = "middle";
-      // Koyu halo (arka plan kontrastı)
-      m.strokeStyle = "rgba(0,0,0,0.45)";
-      m.lineWidth = Math.max(2, size * 0.06);
+      // Derin golge (kazimanin ic kismi)
+      m.strokeStyle = "rgba(0,0,0,0.55)";
+      m.lineWidth = Math.max(2.5, size * 0.07);
       m.lineJoin = "round";
-      m.strokeText(ch, cx, cy);
-      // Işık kenar (alt katman)
-      m.fillStyle = "rgba(255,250,240,0.70)";
-      m.fillText(ch, cx, cy + 1.5);
-      // Ana sembol
+      m.strokeText(ch, cx, cy + 1);
+      // Alt kenar isigi (kazimanin ust kenyasi)
+      m.fillStyle = "rgba(255,252,240,0.75)";
+      m.fillText(ch, cx, cy - 0.8);
+      // Ana sembol (kazima ici)
       m.fillStyle = color;
-      m.fillText(ch, cx, cy);
+      m.fillText(ch, cx, cy + 0.5);
     };
-    // Turkuaz inlay tas: cekinti + parlatilmis tas + matrix damari + spekular.
+    // Turkuaz inlay tas: derin cukur + parlatilmis tas + matrix damari.
     const stone = (cx: number, cy: number, r: number) => {
+      // Cukur golgesi
       m.beginPath();
-      m.arc(cx, cy, r + 1.6, 0, Math.PI * 2);
-      m.fillStyle = "rgba(10,5,2,0.75)";
+      m.arc(cx, cy, r + 2, 0, Math.PI * 2);
+      m.fillStyle = "rgba(0,0,0,0.35)";
       m.fill();
-      const g = m.createRadialGradient(cx - r * 0.35, cy - r * 0.4, r * 0.15, cx, cy, r);
-      g.addColorStop(0, "#ffffff");
-      g.addColorStop(0.4, "#e8e0d4");
-      g.addColorStop(1, "#b8a890");
+      // Tas govdesi
+      const g = m.createRadialGradient(cx - r * 0.3, cy - r * 0.35, r * 0.1, cx, cy, r);
+      g.addColorStop(0, "#e8f0f0");
+      g.addColorStop(0.3, "#b8d8d8");
+      g.addColorStop(0.7, "#6aadaa");
+      g.addColorStop(1, "#3a8888");
       m.fillStyle = g;
       m.beginPath();
       m.arc(cx, cy, r, 0, Math.PI * 2);
       m.fill();
-      m.strokeStyle = "rgba(80,60,40,0.30)";
-      m.lineWidth = Math.max(0.6, r * 0.12);
+      // Matrix damari
+      m.strokeStyle = "rgba(40,60,60,0.4)";
+      m.lineWidth = Math.max(0.5, r * 0.1);
       m.beginPath();
-      m.moveTo(cx - r * 0.55, cy + r * 0.18);
-      m.quadraticCurveTo(cx, cy - r * 0.12, cx + r * 0.55, cy + r * 0.32);
+      m.moveTo(cx - r * 0.6, cy + r * 0.15);
+      m.quadraticCurveTo(cx, cy - r * 0.1, cx + r * 0.6, cy + r * 0.25);
       m.stroke();
-      m.fillStyle = "rgba(255,255,255,0.90)";
+      // Spekular parlaklik
+      m.fillStyle = "rgba(255,255,255,0.85)";
       m.beginPath();
-      m.ellipse(cx - r * 0.35, cy - r * 0.45, r * 0.28, r * 0.16, -0.6, 0, Math.PI * 2);
+      m.ellipse(cx - r * 0.3, cy - r * 0.4, r * 0.25, r * 0.15, -0.5, 0, Math.PI * 2);
       m.fill();
     };
-    // Bambu inlayi: cekinti + sicak degrade + gunler + yan parlaklik.
+    // Bambu inlayi: kazilmis cubuk + sicak degrade + dugumler.
     const stick = (cx: number, cy: number, sw: number, sh: number, color: string) => {
       const x = cx - sw / 2;
       const y = cy - sh / 2;
+      // Cukur golgesi
       m.beginPath();
-      m.roundRect(x - 1, y - 1, sw + 2, sh + 2, sw * 0.5);
-      m.fillStyle = "rgba(10,5,2,0.65)";
+      m.roundRect(x - 1.5, y - 0.5, sw + 3, sh + 2, sw * 0.5);
+      m.fillStyle = "rgba(0,0,0,0.3)";
       m.fill();
+      // Cubuk govdesi
       const g = m.createLinearGradient(x, 0, x + sw, 0);
-      g.addColorStop(0, shade(color, -30));
-      g.addColorStop(0.4, color);
-      g.addColorStop(1, shade(color, -38));
+      g.addColorStop(0, shade(color, -25));
+      g.addColorStop(0.35, color);
+      g.addColorStop(0.65, shade(color, -15));
+      g.addColorStop(1, shade(color, -35));
       m.fillStyle = g;
       m.beginPath();
       m.roundRect(x, y, sw, sh, sw * 0.5);
       m.fill();
-      m.strokeStyle = "rgba(8,24,14,0.70)";
-      m.lineWidth = Math.max(0.7, sw * 0.14);
+      // Dugum cizgileri
+      m.strokeStyle = "rgba(20,40,20,0.6)";
+      m.lineWidth = Math.max(0.8, sw * 0.15);
       m.beginPath();
-      m.moveTo(x + sw * 0.15, y + sh * 0.32);
-      m.lineTo(x + sw * 0.85, y + sh * 0.32);
-      m.moveTo(x + sw * 0.15, y + sh * 0.68);
-      m.lineTo(x + sw * 0.85, y + sh * 0.68);
+      m.moveTo(x + sw * 0.12, y + sh * 0.33);
+      m.lineTo(x + sw * 0.88, y + sh * 0.33);
+      m.moveTo(x + sw * 0.12, y + sh * 0.67);
+      m.lineTo(x + sw * 0.88, y + sh * 0.67);
       m.stroke();
-      m.strokeStyle = "rgba(255,240,200,0.60)";
+      // Parlak kenar
+      m.strokeStyle = "rgba(255,240,200,0.55)";
       m.lineWidth = Math.max(0.5, sw * 0.1);
       m.beginPath();
-      m.moveTo(x + sw * 0.28, y + sw * 0.5);
-      m.lineTo(x + sw * 0.28, y + sh - sw * 0.5);
+      m.moveTo(x + sw * 0.3, y + sw * 0.45);
+      m.lineTo(x + sw * 0.3, y + sh - sw * 0.45);
       m.stroke();
     };
     // Geometrik Orhon tamgasi (kus / gun / koyun boynuzu).
