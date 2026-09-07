@@ -698,7 +698,7 @@ export class Game {
 
     // Dinamik tas boyutu: tahta tuvale sigmayacak kadar genis/yuksekse kucult.
     const maxW = CANVAS_W - 40;
-    const maxH = CANVAS_H - 270; // ust: baslik+hazne, alt: istatistik bar
+    const maxH = CANVAS_H - 200; // ust: hazne, alt: buton alani
     let tw = 72;
     const ar = 100 / 72;
     const gp = (w: number) => Math.max(3, Math.round(w * 0.14));
@@ -847,9 +847,8 @@ export class Game {
     const ox = layer * tw * 0.17;
     const oy = layer * -th * 0.14;
     const boardW = this.layoutCols * (tw + gap);
-    const boardH = this.layoutRows * (th + gap);
     const sx0 = this.boardOriginX() - boardW / 2;
-    const sy0 = (CANVAS_H - boardH) / 2 + 40; // hazne ustte, stat asagida
+    const sy0 = 150; // hazne asagisindan basla
     const sx = sx0 + col * (tw + gap) + ox;
     const sy = sy0 + row * (th + gap) + oy;
     return {
@@ -2566,48 +2565,14 @@ export class Game {
       c.restore();
     }
 
-    // Baslik: uzaya cekilmis ince bakir plak + basilmis yazi.
-    const plateW = 356;
-    const plateX = CANVAS_W / 2 - plateW / 2;
-    const plateY = 26;
-    const plateH = 52;
-    const pgr = c.createLinearGradient(0, plateY, 0, plateY + plateH);
-    pgr.addColorStop(0, "#8a5a2c");
-    pgr.addColorStop(0.5, "#6e4520");
-    pgr.addColorStop(1, "#54331a");
-    c.fillStyle = pgr;
-    c.beginPath();
-    c.roundRect(plateX, plateY, plateW, plateH, 10);
-    c.fill();
-    c.strokeStyle = "rgba(255,205,140,0.35)";
-    c.lineWidth = 1;
-    c.beginPath();
-    c.roundRect(plateX + 2.5, plateY + 2.5, plateW - 5, plateH - 5, 8);
-    c.stroke();
-    c.strokeStyle = "rgba(20,10,4,0.6)";
-    c.beginPath();
-    c.roundRect(plateX - 1.5, plateY - 1.5, plateW + 3, plateH + 3, 11);
-    c.stroke();
-    c.fillStyle = "rgba(255,210,150,0.5)";
-    c.beginPath();
-    c.arc(plateX + 12, plateY + plateH / 2, 2.6, 0, Math.PI * 2);
-    c.fill();
-    c.beginPath();
-    c.arc(plateX + plateW - 12, plateY + plateH / 2, 2.6, 0, Math.PI * 2);
-    c.fill();
+    // Baslik: minimal ust bilgi
     c.textAlign = "center";
-    // Ust bilgi: mod + seviye
     const modeNames: Record<string, string> = { classic: "Klasik", zen: "Zen", race: "Yarış", puzzle: "Bulmaca", endless: "Kolay" };
-    c.font = "bold 13px Georgia";
-    c.fillStyle = "rgba(200,145,80,0.55)";
-    c.fillText(modeNames[this.gameMode] ?? this.gameMode, CANVAS_W / 2, 18);
-    // Seviye
+    // Seviye + mod
     const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
     c.font = "bold 13px Georgia";
-    c.fillStyle = "rgba(20,10,4,0.45)";
-    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 36);
     c.fillStyle = "#c89050";
-    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 35);
+    c.fillText(`${modeNames[this.gameMode] ?? this.gameMode} · Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 22);
     this.drawFates(c);
 
     // Meditasyon motosu
@@ -2624,7 +2589,7 @@ export class Game {
     const boxW = this.layoutCols * (this.tw + this.gap) + this.gap;
     const boxH = this.layoutRows * (this.th + this.gap) + this.gap;
     const bx = this.boardOriginX() - boxW / 2;
-    const by = (CANVAS_H - boxH) / 2 + 40; // hazne ustte, stat asagida
+    const by = 150; // hazne asagisindan basla
     c.strokeStyle = "rgba(255,255,255,0.08)";
     c.lineWidth = 2;
     c.strokeRect(bx - 12, by - 12, boxW + 24, boxH + 24);
@@ -2799,16 +2764,8 @@ export class Game {
     }
     c.globalAlpha = 1;
 
-    // Sobaligi: sol-alttan kalkan sicak hale (kadim ocak).
-    const hg = c.createRadialGradient(40, 1210, 30, 40, 1210, 720);
-    hg.addColorStop(0, "rgba(255,150,60,0.13)");
-    hg.addColorStop(0.45, "rgba(255,130,55,0.05)");
-    hg.addColorStop(1, "rgba(255,130,55,0)");
-    c.fillStyle = hg;
-    c.fillRect(0, 0, CANVAS_W, CANVAS_H);
-
     // ---- Hazne (maxTray slotlu yuva) — ust kisim ----
-    const trayY = 105;
+    const trayY = 80;
     const trayCx = CANVAS_W / 2;
     const slotW = 72;
     const gapSlot = 10;
@@ -2816,34 +2773,26 @@ export class Game {
     const trayW = traySlots * slotW + (traySlots - 1) * gapSlot;
     c.fillStyle = "rgba(10,20,30,0.35)";
     c.beginPath();
-    c.roundRect(trayCx - trayW / 2 - 14, trayY - 40, trayW + 28, 66, 14);
+    c.roundRect(trayCx - trayW / 2 - 14, trayY - 28, trayW + 28, 56, 14);
     c.fill();
     c.strokeStyle = "rgba(255,255,255,0.25)";
     c.lineWidth = 1.5;
     c.stroke();
-    // Oyun basligi haznenin ustunde
-    c.fillStyle = "rgba(20,10,4,0.5)";
-    c.font = "bold 16px Georgia";
-    c.textAlign = "center";
-    c.fillText("Kadim Taş Eşleştirme", trayCx, trayY - 50);
-    c.fillStyle = "#c89050";
-    c.fillText("Kadim Taş Eşleştirme", trayCx, trayY - 51);
     for (let i = 0; i < traySlots; i++) {
       const sx = trayCx - trayW / 2 + i * (slotW + gapSlot);
       c.fillStyle = "rgba(255,255,255,0.06)";
       c.beginPath();
-      c.roundRect(sx, trayY - 28, slotW, 40, 10);
+      c.roundRect(sx, trayY - 18, slotW, 40, 10);
       c.fill();
       c.strokeStyle = "rgba(255,255,255,0.18)";
       c.lineWidth = 1;
       c.stroke();
       if (i < this.tray.length) {
-        // Haznedeki tas: mini ceviz tas olarak gorunsun
         const tt = this.tray[i];
         const fh = 42;
         const fw = fh * (this.tw / this.th);
         const fx0 = sx + slotW / 2 - fw / 2;
-        const fy0 = trayY - 28 + (40 - fh) / 2;
+        const fy0 = trayY - 18 + (40 - fh) / 2;
         c.save();
         c.shadowColor = "rgba(0,0,0,0.55)";
         c.shadowBlur = 7;
@@ -2855,72 +2804,19 @@ export class Game {
     c.textBaseline = "alphabetic";
 
 
-    // Üst şerit: ahşap bar + istatistik.
+    // Alt bilgi: kalan tas + hamle
     const remaining = this.tiles.filter((t) => !t.removed).length;
     const total = this.tiles.length;
-    // Ahşap bar arka planı
-    c.save();
-    const barY = CANVAS_H - 130;
-    const barH = 62;
-    const barG = c.createLinearGradient(0, barY, 0, barY + barH);
-    barG.addColorStop(0, "rgba(60,40,18,0.85)");
-    barG.addColorStop(0.5, "rgba(50,32,14,0.90)");
-    barG.addColorStop(1, "rgba(40,25,10,0.85)");
-    c.fillStyle = barG;
-    c.beginPath();
-    c.roundRect(16, barY, CANVAS_W - 32, barH, 12);
-    c.fill();
-    // Ahşap kenar）
-    c.strokeStyle = "rgba(212,175,55,0.4)";
-    c.lineWidth = 1.5;
-    c.stroke();
-    // İçerneк parıltı
-    const barHi = c.createLinearGradient(0, barY, 0, barY + barH);
-    barHi.addColorStop(0, "rgba(255,255,255,0.08)");
-    barHi.addColorStop(0.4, "rgba(255,255,255,0)");
-    barHi.addColorStop(1, "rgba(0,0,0,0.1)");
-    c.fillStyle = barHi;
-    c.beginPath();
-    c.roundRect(16, barY, CANVAS_W - 32, barH, 12);
-    c.fill();
-    c.restore();
-    c.fillStyle = "#ffd75e";
-    c.font = "bold 18px Georgia";
+    c.fillStyle = "rgba(200,145,80,0.45)";
+    c.font = "12px Georgia";
     c.textAlign = "center";
-    let topLine = `Puan: ${this.score}`;
-    if (this.combo > 1 && this.comboTimer > 0) topLine += `   Combo ×${this.combo}`;
-    c.fillText(topLine, CANVAS_W / 2, barY + 24);
-    // Kombo gosterigi (sag ust)
-    if (this.combo > 1 && this.comboTimer > 0) {
-      const cAlpha = Math.min(1, this.comboTimer / 0.8);
-      const cPulse = 0.7 + 0.3 * Math.sin(this.time * 6);
-      c.save();
-      c.globalAlpha = cAlpha;
-      c.textAlign = "right";
-      c.font = "bold 28px Georgia";
-      c.shadowColor = "rgba(255,150,40,0.7)";
-      c.shadowBlur = 14;
-      c.fillStyle = "rgba(255,180,40," + cPulse.toFixed(2) + ")";
-      c.fillText(`×${this.combo} Kombo`, CANVAS_W - 36, barY + 24);
-      c.shadowBlur = 0;
-      c.fillStyle = "#ffd75e";
-      c.fillText(`×${this.combo} Kombo`, CANVAS_W - 36, barY + 24);
-      c.restore();
-    }
-    c.fillStyle = "#d4e8f2";
-    c.fillText(`Kalan: ${remaining}/${total}   Hamle: ${this.moves}   Süre: ${Math.floor(this.seconds)} sn   Karıştır: ${this.maxShuffles - this.shuffleCount}`, CANVAS_W / 2, barY + 48);
+    c.fillText(`Kalan: ${remaining}/${total}  ·  Hamle: ${this.moves}  ·  ${Math.floor(this.seconds)} sn`, CANVAS_W / 2, CANVAS_H - 20);
 
     for (const wp of this.windParticles) { const a = Math.max(0, wp.life / wp.max); c.save(); c.globalAlpha = a * 0.8; c.fillStyle = wp.color; c.beginPath(); c.arc(wp.x, wp.y, wp.r * a, 0, Math.PI * 2); c.fill(); c.restore(); }
     for (const ft of this.flameTrail) { const a = Math.max(0, ft.life / ft.max); c.save(); c.globalAlpha = a * 0.6; const fg = c.createRadialGradient(ft.x, ft.y, 0, ft.x, ft.y, ft.r); fg.addColorStop(0, "rgba(255,160,40,0.8)"); fg.addColorStop(0.5, "rgba(255,80,20,0.4)"); fg.addColorStop(1, "rgba(255,40,10,0)"); c.fillStyle = fg; c.beginPath(); c.arc(ft.x, ft.y, ft.r, 0, Math.PI * 2); c.fill(); c.restore(); }
     for (const sr of this.starRain) { c.save(); c.globalAlpha = Math.max(0, sr.alpha); c.translate(sr.x, sr.y); c.rotate(sr.rot); c.fillStyle = sr.color; c.beginPath(); for (let i = 0; i < 4; i++) { const ang = (i / 4) * Math.PI * 2; c.lineTo(Math.cos(ang) * sr.size, Math.sin(ang) * sr.size); c.lineTo(Math.cos(ang + Math.PI / 4) * sr.size * 0.35, Math.sin(ang + Math.PI / 4) * sr.size * 0.35); } c.closePath(); c.fill(); c.restore(); }
     for (const mp of this.mistParticles) { c.save(); c.globalAlpha = Math.max(0, mp.alpha); const mg = c.createRadialGradient(mp.x, mp.y, 0, mp.x, mp.y, mp.r); mg.addColorStop(0, "rgba(180,200,220,0.4)"); mg.addColorStop(1, "rgba(180,200,220,0)"); c.fillStyle = mg; c.beginPath(); c.arc(mp.x, mp.y, mp.r, 0, Math.PI * 2); c.fill(); c.restore(); }
     if (this.showAchievement) { c.save(); const achA = Math.min(1, this.achievementTimer / 0.3); c.globalAlpha = achA; c.fillStyle = "rgba(20,12,5,0.85)"; c.beginPath(); c.roundRect(CANVAS_W / 2 - 140, 140, 280, 50, 12); c.fill(); c.strokeStyle = "#ffd75e"; c.lineWidth = 2; c.beginPath(); c.roundRect(CANVAS_W / 2 - 140, 140, 280, 50, 12); c.stroke(); c.fillStyle = "#ffd75e"; c.font = "bold 16px Georgia"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("Basari: " + this.showAchievement, CANVAS_W / 2, 165); c.restore(); }
-    // Alt kisim kisayollari (masaustu)
-    if (!("ontouchstart" in window)) {
-      c.fillStyle = "rgba(200,145,80,0.5)";
-      c.font = "12px Georgia";
-      c.fillText("[Yeni Oyun] N   [Geri Al] U   [Sonraki] L", CANVAS_W / 2, CANVAS_H - 20);
-    }
     // ---- Kayip ekrani ----
     if (this.lost) {
       c.fillStyle = "rgba(30,5,5,0.55)";

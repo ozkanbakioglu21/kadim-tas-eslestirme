@@ -77,23 +77,30 @@ export default function App() {
             </button>
           </div>
         </div>
-        {/* Sag alt: yuvarlak butonlar */}
+        {/* Alt: yatay butonlar */}
         <div className="action-buttons">
-          <button className="action-btn" onClick={() => gameRef.current?.undo()} title="Geri">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          <button className="action-btn primary" onClick={() => gameRef.current?.newGame()} title="Yeni Oyun">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           </button>
-          <button className="action-btn" onClick={() => gameRef.current?.hint()} title="İpucu">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <button className="action-btn" onClick={() => gameRef.current?.undo()} title="Geri Al">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
           </button>
           <button className="action-btn" onClick={() => gameRef.current?.shuffle()} title="Karıştır">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
             {mode !== "zen" && hud && hud.shuffles > 0 && <span className="action-badge">{hud.shuffles}</span>}
             {mode === "zen" && <span className="action-badge">∞</span>}
           </button>
-          <button className="action-btn primary" onClick={() => gameRef.current?.newGame()} title="Yeni Oyun">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          <button className="action-btn" onClick={() => gameRef.current?.hint()} title="İpucu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           </button>
         </div>
+        {/* Puan + Kombo */}
+        {hud && (
+          <div className="score-bar">
+            <span className="score-text">{hud.score}</span>
+            {hud.combo > 1 && <span className="combo-text">×{hud.combo}</span>}
+          </div>
+        )}
         {mode === "race" && hud && (
           <div className={`race-timer ${hud.raceTimeLeft <= 10 ? "pulse" : ""}`} style={{ color: hud.raceTimeLeft <= 10 ? "#ff4444" : "#e8dcc0" }}>
             {Math.ceil(hud.raceTimeLeft)}
