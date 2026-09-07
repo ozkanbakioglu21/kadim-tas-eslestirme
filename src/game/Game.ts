@@ -958,8 +958,17 @@ export class Game {
     }
     if (this.weather === "blizzard") {
       this.snowflakes = [];
-      for (let i = 0; i < 280; i++) {
-        this.snowflakes.push({ x: Math.random() * CANVAS_W, y: Math.random() * CANVAS_H, speed: 200 + Math.random() * 260, size: 1.5 + Math.random() * 3.5, wobble: Math.random() * Math.PI * 2, alpha: 0.5 + Math.random() * 0.5 });
+      // Yakın taneler: büyük, hızlı, parlak
+      for (let i = 0; i < 40; i++) {
+        this.snowflakes.push({ x: Math.random() * CANVAS_W, y: Math.random() * CANVAS_H, speed: 250 + Math.random() * 180, size: 3 + Math.random() * 3, wobble: Math.random() * Math.PI * 2, alpha: 0.7 + Math.random() * 0.3 });
+      }
+      // Orta mesafe taneler
+      for (let i = 0; i < 80; i++) {
+        this.snowflakes.push({ x: Math.random() * CANVAS_W, y: Math.random() * CANVAS_H, speed: 160 + Math.random() * 120, size: 1.8 + Math.random() * 2, wobble: Math.random() * Math.PI * 2, alpha: 0.45 + Math.random() * 0.3 });
+      }
+      // Uzak taneler: küçük, yavaş, soluk
+      for (let i = 0; i < 60; i++) {
+        this.snowflakes.push({ x: Math.random() * CANVAS_W, y: Math.random() * CANVAS_H, speed: 80 + Math.random() * 80, size: 0.8 + Math.random() * 1.2, wobble: Math.random() * Math.PI * 2, alpha: 0.2 + Math.random() * 0.2 });
       }
     }
     if (this.weather === "fireflies") {
@@ -1376,7 +1385,7 @@ export class Game {
       const blz = this.weather === "blizzard";
       for (const sf of this.snowflakes) {
         sf.y += sf.speed * dt;
-        sf.x += (blz ? 220 : 0) + Math.sin(this.time * 0.8 + sf.wobble) * 25 * dt;
+        sf.x += (blz ? 160 : 0) + Math.sin(this.time * 0.8 + sf.wobble) * 22 * dt;
         if (sf.y > CANVAS_H + 10 || sf.x > CANVAS_W + 20) {
           sf.y = -10;
           sf.x = blz ? -10 - Math.random() * 120 : Math.random() * CANVAS_W;
@@ -2339,37 +2348,43 @@ export class Game {
       for (const sf of this.snowflakes) {
         c.save();
         c.globalAlpha = sf.alpha;
+        // Buyuk taneler icin yumusak parlama
+        if (sf.size > 2.5) {
+          c.globalAlpha = sf.alpha * 0.2;
+          c.fillStyle = "#d0e4f0";
+          c.beginPath();
+          c.arc(sf.x, sf.y, sf.size * 2.5, 0, Math.PI * 2);
+          c.fill();
+          c.globalAlpha = sf.alpha;
+        }
         c.fillStyle = "#e8f0f8";
         c.beginPath();
         c.arc(sf.x, sf.y, sf.size, 0, Math.PI * 2);
         c.fill();
-        // Kar tanesi parliltisi
-        c.globalAlpha = sf.alpha * 0.4;
+        // Ic parlaklik
+        c.globalAlpha = sf.alpha * 0.5;
         c.fillStyle = "#ffffff";
         c.beginPath();
-        c.arc(sf.x - sf.size * 0.3, sf.y - sf.size * 0.3, sf.size * 0.35, 0, Math.PI * 2);
+        c.arc(sf.x - sf.size * 0.25, sf.y - sf.size * 0.25, sf.size * 0.3, 0, Math.PI * 2);
         c.fill();
         c.restore();
       }
     }
-    // Kar fırtınası: yogun beyaz sis + gorunus kaybi + kuvvetli yatay ruzgar
+    // Kar fırtınası: dalgalı sis perdesi + soğuk ton
     if (this.weather === "blizzard") {
-      const haze = 0.22 + 0.15 * Math.sin(this.time * 0.7) * Math.sin(this.time * 0.23);
-      c.fillStyle = "rgba(225,236,248," + Math.max(0.08, haze).toFixed(3) + ")";
-      c.fillRect(0, 0, CANVAS_W, CANVAS_H);
-      // Ruzgar cizgileri
+      const haze = 0.10 + 0.06 * Math.sin(this.time * 0.5);
       c.save();
-      c.globalAlpha = 0.12;
-      c.strokeStyle = "#e0eaf4";
-      c.lineWidth = 1.2;
-      for (let i = 0; i < 12; i++) {
-        const wy = (i / 12) * CANVAS_H + Math.sin(this.time * 2 + i) * 30;
-        const wx = ((this.time * 400 + i * 200) % (CANVAS_W + 300)) - 150;
-        c.beginPath();
-        c.moveTo(wx, wy);
-        c.lineTo(wx + 80 + Math.sin(this.time + i) * 30, wy + 4);
-        c.stroke();
-      }
+      // Üstten inen sis tabakası
+      const sg = c.createLinearGradient(0, 0, 0, CANVAS_H * 0.6);
+      sg.addColorStop(0, "rgba(200,215,230," + (haze * 1.2).toFixed(3) + ")");
+      sg.addColorStop(0.5, "rgba(180,200,220," + (haze * 0.6).toFixed(3) + ")");
+      sg.addColorStop(1, "rgba(160,185,210,0)");
+      c.fillStyle = sg;
+      c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      // Soğuk mavi tonu
+      c.globalAlpha = 0.06;
+      c.fillStyle = "#8ab0d0";
+      c.fillRect(0, 0, CANVAS_W, CANVAS_H);
       c.restore();
     }
     // Rüzgar: çizgiler + savrulan toz
