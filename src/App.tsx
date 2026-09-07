@@ -79,7 +79,7 @@ export default function App() {
         )}
         {showMenu && (
           <div className="mode-menu-overlay">
-            <div className="mode-title">Ötüken Mahjong</div>
+            <div className="mode-title">Kadim Taş Eşleştirme</div>
             <div className="mode-subtitle">Oyun Modu Seç</div>
             <div className="mode-grid">
               {MODES.map((m) => (

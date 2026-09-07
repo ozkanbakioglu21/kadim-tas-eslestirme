@@ -2522,9 +2522,9 @@ this.endlessRound = 1;
     c.textAlign = "center";
     c.font = "bold 38px Georgia";
     c.fillStyle = "rgba(255,220,170,0.25)";
-    c.fillText("Ötüken Mahjong", CANVAS_W / 2, 61.5);
+    c.fillText("Kadim Taş Eşleştirme", CANVAS_W / 2, 61.5);
     c.fillStyle = "#31200e";
-    c.fillText("Ötüken Mahjong", CANVAS_W / 2, 60);
+    c.fillText("Kadim Taş Eşleştirme", CANVAS_W / 2, 60);
     // Seviye: bakir kazima
     const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
     c.font = "bold 22px Georgia";
