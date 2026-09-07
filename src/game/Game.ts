@@ -2644,23 +2644,23 @@ export class Game {
     c.textAlign = "center";
     // Ust bilgi: mod + seviye
     const modeNames: Record<string, string> = { classic: "Klasik", zen: "Zen", race: "Yarış", puzzle: "Bulmaca", endless: "Kolay" };
-    c.font = "bold 14px Georgia";
-    c.fillStyle = "rgba(200,145,80,0.6)";
-    c.fillText(modeNames[this.gameMode] ?? this.gameMode, CANVAS_W / 2, 20);
-    // Seviye: bakir kazima
+    c.font = "bold 13px Georgia";
+    c.fillStyle = "rgba(200,145,80,0.55)";
+    c.fillText(modeNames[this.gameMode] ?? this.gameMode, CANVAS_W / 2, 18);
+    // Seviye
     const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
-    c.font = "bold 14px Georgia";
-    c.fillStyle = "rgba(20,10,4,0.5)";
-    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 40);
+    c.font = "bold 13px Georgia";
+    c.fillStyle = "rgba(20,10,4,0.45)";
+    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 36);
     c.fillStyle = "#c89050";
-    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 39);
+    c.fillText(`Seviye ${diff + 1} · ${def.name}`, CANVAS_W / 2, 35);
     this.drawFates(c);
 
     // Meditasyon motosu
     if (this.motto) {
       c.font = "italic 11px Georgia";
-      c.fillStyle = "rgba(200,150,90,0.4)";
-      c.fillText(this.motto, CANVAS_W / 2, 56);
+      c.fillStyle = "rgba(200,150,90,0.38)";
+      c.fillText(this.motto, CANVAS_W / 2, 52);
     }
 
     // Uyum madalyonu: yin-yang + surun cozulme yayi (tamamlanma arayisi).
@@ -2854,7 +2854,7 @@ export class Game {
     c.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
     // ---- Hazne (maxTray slotlu yuva) — ust kisim ----
-    const trayY = 80;
+    const trayY = 105;
     const trayCx = CANVAS_W / 2;
     const slotW = 72;
     const gapSlot = 10;
@@ -2871,9 +2871,9 @@ export class Game {
     c.fillStyle = "rgba(20,10,4,0.5)";
     c.font = "bold 16px Georgia";
     c.textAlign = "center";
-    c.fillText("Kadim Taş Eşleştirme", trayCx, trayY - 48);
+    c.fillText("Kadim Taş Eşleştirme", trayCx, trayY - 50);
     c.fillStyle = "#c89050";
-    c.fillText("Kadim Taş Eşleştirme", trayCx, trayY - 49);
+    c.fillText("Kadim Taş Eşleştirme", trayCx, trayY - 51);
     for (let i = 0; i < traySlots; i++) {
       const sx = trayCx - trayW / 2 + i * (slotW + gapSlot);
       c.fillStyle = "rgba(255,255,255,0.06)";
