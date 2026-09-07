@@ -1219,10 +1219,11 @@ export class Game {
     const oy = layer * -th * 0.14;
     const boardW = this.layoutCols * (tw + gap);
     const boardH = this.layoutRows * (th + gap);
-    const sx0 = this.boardOriginX() - boardW / 2;
+    // Tas MERKEZLERINI tahta ortasina hizala (izgara sonundaki boslugu sayma).
+    const sx0 = this.boardOriginX() - (boardW - (tw + gap)) / 2;
     const topLimit = 100;
     const botLimit = CANVAS_H - 80;
-    const sy0 = topLimit + (botLimit - topLimit - boardH) / 2;
+    const sy0 = (topLimit + botLimit) / 2 - (boardH - (th + gap)) / 2;
     const sx = sx0 + col * (tw + gap) + ox;
     const sy = sy0 + row * (th + gap) + oy;
     return {
