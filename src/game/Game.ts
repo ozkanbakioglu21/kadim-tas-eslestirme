@@ -404,44 +404,6 @@ const RANDOM_BG: Array<[string, string]> = [
   ["#33221f", "#4a3130"],
 ];
 
-// Gun/ gece renk paletleri: [ust, alt] gradient (kis teması)
-const DAY_NIGHT: Array<{ top: string; mid: string; bot: string; amb: string }> = [
-  { top: "#0a1525", mid: "#0d1e30", bot: "#060e18", amb: "#0a1525" }, // 0.00 - gece (koyu lacivert)
-  { top: "#0e1828", mid: "#142538", bot: "#081220", amb: "#0e1828" }, // 0.15 - gece sonu
-  { top: "#1a1520", mid: "#2a2030", bot: "#120e18", amb: "#1a1520" }, // 0.25 - sabah (puslu)
-  { top: "#1e2528", mid: "#2a3538", bot: "#141e20", amb: "#1e2528" }, // 0.35 - sabah (soguk)
-  { top: "#151e28", mid: "#1e2a35", bot: "#0e1520", amb: "#151e28" }, // 0.50 - gun (karli)
-  { top: "#1e2528", mid: "#2a3538", bot: "#141e20", amb: "#1e2528" }, // 0.65 - ogle
-  { top: "#1a1520", mid: "#2a2030", bot: "#120e18", amb: "#1a1520" }, // 0.75 - aksam
-  { top: "#12101e", mid: "#1a1530", bot: "#0a0814", amb: "#12101e" }, // 0.85 - aksam sonu
-  { top: "#0a1525", mid: "#0d1e30", bot: "#060e18", amb: "#0a1525" }, // 1.00 - gece
-];
-
-function lerpHex(a: string, b: string, t: number): string {
-  const parse = (h: string) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-  const [ar, ag, ab] = parse(a);
-  const [br, bg2, bb] = parse(b);
-  const r = Math.round(ar + (br - ar) * t);
-  const g = Math.round(ag + (bg2 - ag) * t);
-  const bv = Math.round(ab + (bb - ab) * t);
-  return "#" + [r, g, bv].map((v) => v.toString(16).padStart(2, "0")).join("");
-}
-
-function getDayNightColors(phase: number): { top: string; mid: string; bot: string; amb: string } {
-  const idx = phase * (DAY_NIGHT.length - 1);
-  const i = Math.floor(idx);
-  const frac = idx - i;
-  if (i >= DAY_NIGHT.length - 1) return DAY_NIGHT[DAY_NIGHT.length - 1];
-  const a = DAY_NIGHT[i];
-  const b = DAY_NIGHT[i + 1];
-  return {
-    top: lerpHex(a.top, b.top, frac),
-    mid: lerpHex(a.mid, b.mid, frac),
-    bot: lerpHex(a.bot, b.bot, frac),
-    amb: lerpHex(a.amb, b.amb, frac),
-  };
-}
-
 export class Game {
   private ctx: CanvasRenderingContext2D;
   private raf = 0;
@@ -510,8 +472,6 @@ export class Game {
   private victoryTiles: Array<{ x: number; y: number; vx: number; vy: number; rot: number; vr: number; alpha: number; symbol: string }> = [];
   private victoryRays: Array<{ angle: number; len: number; alpha: number }> = [];
   private victoryStarted = false;
-  private dayPhase = 0.3;
-  private DAY_CYCLE = 90;
   private nightAlpha = 0;
   private dawnDusk = 0;
   private snowflakes: Array<{ x: number; y: number; speed: number; size: number; wobble: number; alpha: number }> = [];
@@ -1355,8 +1315,6 @@ export class Game {
       this.hudTimer = 0;
       this.emitHud();
     }
-    // Gun/gece donusu
-    this.dayPhase = (this.time % this.DAY_CYCLE) / this.DAY_CYCLE;
     if (this.comboTimer > 0) {
       this.comboTimer -= dt;
       if (this.comboTimer <= 0) this.combo = 0;
@@ -2359,26 +2317,22 @@ export class Game {
   private render(): void {
     const c = this.ctx;
     const def = this.level();
-    // Arka plan: gun/gece donusumlu gradient
-    const dn = getDayNightColors(this.dayPhase);
+    // Minimalist koyu ahshap zemin
     const g = c.createLinearGradient(0, 0, 0, CANVAS_H);
-    g.addColorStop(0, dn.top);
-    g.addColorStop(0.5, dn.mid);
-    g.addColorStop(1, dn.bot);
+    g.addColorStop(0, "#1a1410");
+    g.addColorStop(0.5, "#1e1814");
+    g.addColorStop(1, "#161210");
     c.fillStyle = g;
     c.fillRect(0, 0, CANVAS_W, CANVAS_H);
-    // Gun/gece evre hesaplari
-    this.nightAlpha = this.dayPhase < 0.3 ? 1 - this.dayPhase / 0.3 : this.dayPhase > 0.7 ? (this.dayPhase - 0.7) / 0.3 : 0;
-    this.dawnDusk = this.dayPhase < 0.4 ? Math.sin(this.dayPhase / 0.4 * Math.PI) : this.dayPhase > 0.6 ? Math.sin((this.dayPhase - 0.6) / 0.4 * Math.PI) : 0;
-    // Kece dokusu: ince yatay cizgiler (kis tonlari)
+    // Ince ahshap damarlari (yatay)
     c.save();
-    c.globalAlpha = 0.04;
-    for (let i = 0; i < CANVAS_H; i += 4) {
-      c.strokeStyle = i % 8 === 0 ? "#2a3a4a" : "#1a2a3a";
-      c.lineWidth = 0.5;
+    c.globalAlpha = 0.035;
+    for (let i = 0; i < CANVAS_H; i += 6) {
+      c.strokeStyle = i % 12 === 0 ? "#3a2a1a" : "#2a1a0a";
+      c.lineWidth = 0.4;
       c.beginPath();
       c.moveTo(0, i);
-      c.lineTo(CANVAS_W, i);
+      c.lineTo(CANVAS_W, i + (Math.sin(i * 0.1) * 0.5));
       c.stroke();
     }
     c.restore();

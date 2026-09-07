@@ -25,21 +25,18 @@ body,
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   padding: env(safe-area-inset-top, 8px) env(safe-area-inset-right, 8px) env(safe-area-inset-bottom, 8px) env(safe-area-inset-left, 8px);
-  padding-top: calc(env(safe-area-inset-top, 8px) + 4px);
-  padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 4px);
 }
 
 .arena {
   position: relative;
   width: min(440px, 96vw);
   aspect-ratio: 9 / 16;
-  max-height: calc(100dvh - 140px);
+  max-height: calc(100dvh - 16px);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 22px 70px rgba(0, 0, 0, 0.65);
-  background: #0e2433;
+  background: #1a1410;
   cursor: pointer;
   user-select: none;
   touch-action: manipulation;
@@ -56,7 +53,7 @@ body,
 .win-banner {
   position: absolute;
   inset: 0;
-  background: rgba(8, 24, 32, 0.92);
+  background: rgba(10, 10, 8, 0.92);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -505,4 +502,127 @@ body,
   background: rgba(212,175,55,0.12);
   border: 1px solid rgba(212,175,55,0.3);
   border-radius: 8px;
+}
+
+/* ---- Minimalist UI ---- */
+.mode-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  background: rgba(20, 16, 12, 0.7);
+  backdrop-filter: blur(4px);
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mode-badge-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e8dcc0;
+  font-family: Georgia, serif;
+}
+.mode-badge-icons {
+  display: flex;
+  gap: 6px;
+}
+.mode-badge-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255,255,255,0.08);
+  color: #c8b890;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.mode-badge-btn:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+.action-buttons {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.action-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(20, 16, 12, 0.65);
+  backdrop-filter: blur(4px);
+  color: #c8b890;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s;
+  position: relative;
+}
+.action-btn:hover {
+  transform: scale(1.08);
+  background: rgba(40, 32, 24, 0.8);
+}
+.action-btn:active {
+  transform: scale(0.95);
+}
+.action-btn.primary {
+  background: rgba(180, 140, 60, 0.5);
+  color: #f5ecd8;
+}
+.action-btn.primary:hover {
+  background: rgba(200, 160, 70, 0.65);
+}
+.action-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background: #cc3333;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.race-timer {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  font-size: 22px;
+  font-weight: 800;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  font-family: Georgia, serif;
+  background: rgba(20, 16, 12, 0.6);
+  padding: 6px 12px;
+  border-radius: 10px;
+}
+.wrong-moves-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  font-size: 20px;
+  font-weight: 800;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  font-family: Georgia, serif;
+  background: rgba(20, 16, 12, 0.6);
+  padding: 6px 12px;
+  border-radius: 10px;
 }
