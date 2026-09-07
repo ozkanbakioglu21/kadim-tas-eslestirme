@@ -1876,6 +1876,7 @@ export class Game {
 
   private maxTray(): number {
     if (this.gameMode === "puzzle") return 2;
+    if (this.gameMode === "endless") return 5;
     return 4;
   }
 
