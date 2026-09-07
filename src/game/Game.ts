@@ -840,15 +840,17 @@ export class Game {
   }
 
   private makeTile(symbol: string, col: number, row: number, layer: number): Tile {
-    // Üst katman aynı hücrenin üzerine hafifçe kayarak biner (mahjong hissi).
     const tw = this.tw;
     const th = this.th;
     const gap = this.gap;
     const ox = layer * tw * 0.17;
     const oy = layer * -th * 0.14;
     const boardW = this.layoutCols * (tw + gap);
+    const boardH = this.layoutRows * (th + gap);
     const sx0 = this.boardOriginX() - boardW / 2;
-    const sy0 = 150; // hazne asagisindan basla
+    const topLimit = 100;
+    const botLimit = CANVAS_H - 80;
+    const sy0 = topLimit + (botLimit - topLimit - boardH) / 2;
     const sx = sx0 + col * (tw + gap) + ox;
     const sy = sy0 + row * (th + gap) + oy;
     return {
@@ -2589,7 +2591,9 @@ export class Game {
     const boxW = this.layoutCols * (this.tw + this.gap) + this.gap;
     const boxH = this.layoutRows * (this.th + this.gap) + this.gap;
     const bx = this.boardOriginX() - boxW / 2;
-    const by = 150; // hazne asagisindan basla
+    const topLim = 100;
+    const botLim = CANVAS_H - 80;
+    const by = topLim + (botLim - topLim - boxH) / 2;
     c.strokeStyle = "rgba(255,255,255,0.08)";
     c.lineWidth = 2;
     c.strokeRect(bx - 12, by - 12, boxW + 24, boxH + 24);
