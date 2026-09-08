@@ -1515,6 +1515,7 @@ export class Game {
     this.running = true;
     this.last = performance.now();
     this.bind();
+    window.addEventListener("resize", this.onResize);
     this.raf = requestAnimationFrame(this.loop);
   }
 
@@ -1522,6 +1523,8 @@ export class Game {
     this.running = false;
     cancelAnimationFrame(this.raf);
     this.unbind();
+    window.removeEventListener("resize", this.onResize);
+    if (this.resizeTimer != null) window.clearTimeout(this.resizeTimer);
   }
 
   private bind(): void {
@@ -1606,6 +1609,7 @@ export class Game {
 
 
   private buildLayout(): void {
+    this.measureView();
     const def = this.level();
     const cells = def.cells;
     const isTurtle = def.name === "Klasik 144";
@@ -1813,17 +1817,86 @@ export class Game {
   private layoutCols = 4;
   private layoutRows = 4;
   private maxLayerIdx = 0;
+  private viewS = 0.42;
+  private resizeTimer: number | null = null;
+
+  /** Canvas'ın DOM'daki gercek olcegi (arena genisligi / 720). HTML paneller
+   *  CSS pikselde oldugu icin canvas koordinatlarina bu olcek ile cevrilir. */
+  private measureView(): void {
+    try {
+      const w = this.canvas.getBoundingClientRect().width;
+      if (w > 1) this.viewS = Math.max(0.35, Math.min(0.85, w / CANVAS_W));
+    } catch {
+      /* varsayilan degeri koru */
+    }
+  }
 
   /** Sağ panelin sol kenarına göre, tahtanın ortalanacağı x merkezi. */
   private boardOriginX(): number {
     return CANVAS_W / 2;
   }
 
-  /** Guvenli tahta bolgesi: ustte baslik/hazne/fate rozetleri, altta metin/buton,
-   *  kenarlarda ekran disina uzanmama boslugu. Tahta bu bolgeye sigdirilir. */
+  /** Guvenli tahta bolgesi. Ustte canvas icinde baslik/hazne/fate rozetleri VE
+   *  HTML overlay panelleri (mode-badge sol-ust, race-timer sag-ust), altta
+   *  canvas metni VE HTML panel (score-bar + action-buttons). HTML paneller
+   *  CSS pikselde oldugu icin gorme olcegi (viewS) ile canvas birimine cevrilir:
+   *  mobilde olcek kucuk -> paneller canvas'ta buyuk -> bolge otomatik daralir. */
   private boardSafe(): { L: number; R: number; T: number; B: number } {
-    return { L: 34, R: CANVAS_W - 34, T: 196, B: CANVAS_H - 96 };
+    const s = this.viewS;
+    const px = (v: number) => v / s;
+    const top = Math.max(182, px(84), 150); // fate rozetleri / mode-badge alt / race-timer alt
+    const bottom = Math.min(1245, CANVAS_H - px(100)); // alt metin / score-bar+action butonlari ust
+    return { L: 30, R: CANVAS_W - 30, T: top, B: Math.max(top + 300, bottom) };
   }
+
+  /** Ekranda/panellerde degisiklik oldugunda mevcut tahtayi (ortadan kaldirma,
+   *  semboller, katmanlar korunarak) yeni olcege yeniden siktir. */
+  private refitBoard(): void {
+    if (!this.tiles.length || this.won || this.lost) return;
+    const safe = this.boardSafe();
+    const availW = safe.R - safe.L;
+    const availH = safe.B - safe.T;
+    const ar = 100 / 72;
+    const gp = (w: number) => Math.max(3, Math.round(w * 0.14));
+    const cols = this.layoutCols - 1;
+    const rows = this.layoutRows - 1;
+    const mli = this.maxLayerIdx;
+    let tw = 72;
+    const fits = (t: number): boolean => {
+      const th = Math.round(t * ar);
+      const g = gp(t);
+      const offX = mli * t * 0.17;
+      const offY = mli * th * 0.14;
+      const baseW = cols * (t + g) + t;
+      const baseH = rows * (th + g) + th;
+      return baseW + offX <= availW && baseH + offY <= availH;
+    };
+    while (tw > 24 && !fits(tw)) tw -= 2;
+    this.tw = tw;
+    this.th = Math.round(tw * ar);
+    this.gap = gp(tw);
+    const offX = mli * tw * 0.17;
+    const offY = mli * this.th * 0.14;
+    const spanX = cols * (tw + this.gap);
+    const spanY = rows * (this.th + this.gap);
+    const sx0 = (safe.L + safe.R) / 2 - offX / 2 - spanX / 2;
+    const sy0 = (safe.T + safe.B) / 2 + offY / 2 - spanY / 2;
+    for (const t of this.tiles) {
+      const ox = t.layer * tw * 0.17;
+      const oy = t.layer * -this.th * 0.14;
+      t.sx = sx0 + t.x * (tw + this.gap) + ox;
+      t.sy = sy0 + t.y * (this.th + this.gap) + oy;
+    }
+  }
+
+  private onResize = (): void => {
+    if (this.resizeTimer != null) window.clearTimeout(this.resizeTimer);
+    this.resizeTimer = window.setTimeout(() => {
+      this.resizeTimer = null;
+      this.measureView();
+      this.refitBoard();
+    }, 150);
+  };
 
   private makeTile(symbol: string, col: number, row: number, layer: number, flip = 0): Tile {
     const tw = this.tw;
