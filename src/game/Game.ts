@@ -1025,62 +1025,59 @@ function mStar(a: number): Array<[number, number]> {
 function placeAt(cells: Array<[number, number]>, dx: number, dy: number): Array<[number, number]> {
   return cells.map(([c, r]) => [c + dx, r + dy] as [number, number]);
 }
-// Seviye indeksi (0'dan baslar) -> deterministik, benzersiz prosedürel dizim.
-// 5 benzersiz motif x 7 sablon x 3 boyut = 105+ farkli dizim (sonlu, dongulenmez).
-function genFantasticLayout(n: number): FantasticLayout {
-  const template = n % 7;
-  const motifType = n % 5;
-  const sizeTier = Math.floor(n / 35) % 3;
-  const size = 1 + sizeTier;
-  const off = Math.min(5, size + 2);
-  const motif = (kind: number): Array<[number, number]> => {
+// (sablon, motif, boyut, ofset) -> hucrelari birlestirip normalize eder.
+function buildShape(template: number, motifType: number, sz: number, off: number): Array<[number, number]> {
+  const motif = (kind: number, s: number): Array<[number, number]> => {
     switch (kind) {
-      case 0: return mDiamond(size);
-      case 1: return mRing(size * 2 + 1);
-      case 2: return mX(size);
-      case 3: return mBar(2 * size + 2, size + 1);
-      default: return mStar(size);
+      case 0: return mDiamond(s);
+      case 1: return mRing(s * 2 + 1);
+      case 2: return mX(s);
+      case 3: return mBar(2 * s + 2, s + 1);
+      default: return mStar(s);
     }
   };
+  const m = motif(motifType, sz);
   let cells: Array<[number, number]> = [];
-  const m = motif(motifType);
-  if (template === 0) {
-    // merkez motif
-    cells = m;
-  } else if (template === 1) {
-    // cerceve + merkez motif
-    cells = [...mRing(size * 2 + 3), ...m];
-  } else if (template === 2) {
-    // motif + 4 kose noktasi
-    cells = [...m];
-    for (const [dx, dy] of [[-off, -off], [off, -off], [-off, off], [off, off]] as Array<[number, number]>) cells.push([dx, dy]);
-  } else if (template === 3) {
-    // iki motif yan yana
-    const off3 = off + 1;
-    cells = [...placeAt(m, -off3, 0), ...placeAt(m, off3, 0)];
-  } else if (template === 4) {
-    // totem: motif merkezde + altta diktirlik
-    cells = [...m, [0, 1], [0, 2], [0, 3]];
-  } else if (template === 5) {
-    // gunes patlamasi: motif + 8 radyal nokta
-    cells = [...m];
-    for (const [dx, dy] of [[-off, 0], [off, 0], [0, -off], [0, off], [-off, -off], [off, -off], [-off, off], [off, off]] as Array<[number, number]>) cells.push([dx, dy]);
-  } else {
-    // motif + 4 cerceve kolu (yukari/asagi/sol/sag)
-    cells = [...m, [0, -off], [0, off], [-off, 0], [off, 0]];
-  }
-  cells = normCells(cells);
-  if (cells.length < 8) cells = [...cells, ...mDiamond(1).map(([c, r]) => [c + 3, r + 3] as [number, number])];
-  const flip = n % 5;
-  const depth = 2 + (n % 6);
-  const ring = (n % 4) === 0;
-  return { name: `Sihir Dizimi ${n + 1}`, cells, flip, depth, ring };
+  if (template === 0) cells = m;
+  else if (template === 1) cells = [...mRing(sz * 2 + 3), ...m];
+  else if (template === 2) { cells = [...m]; for (const [dx, dy] of [[-off, -off], [off, -off], [-off, off], [off, off]] as Array<[number, number]>) cells.push([dx, dy]); }
+  else if (template === 3) { const off3 = off + 1; cells = [...placeAt(m, -off3, 0), ...placeAt(m, off3, 0)]; }
+  else if (template === 4) cells = [...m, [0, 1], [0, 2], [0, 3]];
+  else if (template === 5) { cells = [...m]; for (const [dx, dy] of [[-off, 0], [off, 0], [0, -off], [0, off], [-off, -off], [off, -off], [-off, off], [off, off]] as Array<[number, number]>) cells.push([dx, dy]); }
+  else cells = [...m, [0, -off], [0, off], [-off, 0], [off, 0]];
+  const normed = normCells(cells);
+  if (normed.length < 8) return [...normed, ...mDiamond(1).map(([c, r]) => [c + 3, r + 3] as [number, number])];
+  return normed;
 }
 
-// Seviye -> fantastik dizim. Ilk 26 kurate, sonrasindan prosedürel (sonsuz benzersiz).
+// Benzersiz prosedürel dizim tablosu (yuklenirken teklik kontrolu ile uretilir).
+// 5 motif x 7 sablon x 3 boyut x 3 ofset = 315 aday; 12x10'e sigmayanlar ve
+// tekrarlayanlar atilir. Sonuc: 120 farkli dizim.
+const PROCEDURAL_FANTASTIC: FantasticLayout[] = (() => {
+  const out: FantasticLayout[] = [];
+  const seen = new Set<string>();
+  const sigOf = (cells: Array<[number, number]>) => cells.map(([c, r]) => c + "," + r).sort().join(";");
+  const bbOk = (cells: Array<[number, number]>) => { let mx = 0, my = 0; for (const [c, r] of cells) { if (c > mx) mx = c; if (r > my) my = r; } return mx + 1 <= 12 && my + 1 <= 10; };
+  for (let sz = 1; sz <= 3 && out.length < 120; sz++)
+    for (let off = 3; off <= 5 && out.length < 120; off++)
+      for (let template = 0; template < 7 && out.length < 120; template++)
+        for (let motifType = 0; motifType < 5 && out.length < 120; motifType++) {
+          const cells = buildShape(template, motifType, sz, off);
+          if (!bbOk(cells)) continue;
+          const sig = sigOf(cells);
+          if (seen.has(sig)) continue;
+          seen.add(sig);
+          const i = out.length;
+          out.push({ name: `Sihir Dizimi ${i + 1}`, cells, flip: i % 5, depth: 2 + (i % 6), ring: (i % 4) === 0 });
+        }
+  return out;
+})();
+
+// Seviye -> fantastik dizim. Ilk 26 kurate, sonrasindan prosedürel tablo (dongu).
 function fantasticLayoutForLevel(level: number): FantasticLayout {
   if (level < CURATED_FANTASTIC.length) return CURATED_FANTASTIC[level];
-  return genFantasticLayout(level - CURATED_FANTASTIC.length);
+  const n = level - CURATED_FANTASTIC.length;
+  return PROCEDURAL_FANTASTIC[n % PROCEDURAL_FANTASTIC.length];
 }
 
 
@@ -1622,13 +1619,40 @@ export class Game {
     this.layoutCols = cols + 1;
     this.layoutRows = rows + 1;
 
-    // Dinamik tas boyutu: tahta tuvale sigmayacak kadar genis/yuksekse kucult.
-    const maxW = CANVAS_W - 40;
-    const maxH = CANVAS_H - 200; // ust: hazne, alt: buton alani
-    let tw = 72;
+    // Maksimum katman sayisi (tahta boyutlandirmada ofset icin) - tas boyutundan ONCE.
+    let maxLayersCount: number;
+    if (isTurtle) {
+      maxLayersCount = 5;
+    } else if (this.gameMode === "fantastic") {
+      const flDepth = def.fl?.depth ?? 4;
+      maxLayersCount = Math.min(flDepth, Math.max(2, Math.floor(240 / Math.max(1, cells.length)) - 1));
+    } else {
+      const maxLayers = this.gameMode === "zen" ? 2 : this.gameMode === "race" ? 2 : this.gameMode === "puzzle" ? 2 : this.gameMode === "steppe" ? 2 : this.gameMode === "egypt" ? 3 : this.gameMode === "endless" ? 3 : 4;
+      const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
+      maxLayersCount = Math.min(maxLayers, diff >= 49 ? 4 : diff >= 9 ? 3 : 2);
+    }
+    const maxLayerIdx = Math.max(0, maxLayersCount - 1);
+    this.maxLayerIdx = maxLayerIdx;
+
+    // Guvenli bolge: ustte baslik/hazne/fate, altta metin/buton, kenarlarda ekran disi.
+    const safe = this.boardSafe();
+    const availW = safe.R - safe.L;
+    const availH = safe.B - safe.T;
     const ar = 100 / 72;
     const gp = (w: number) => Math.max(3, Math.round(w * 0.14));
-    while (tw > 24 && (cols * (tw + gp(tw)) > maxW || rows * (tw * ar + gp(tw)) > maxH)) tw -= 2;
+    // Tas boyutu: yuksek katmanlar tasi sag+yukari kaydirir (ofset), efektif
+    // tahta (ofset dahil) guvenli bolgeye siginacak kadar kucult.
+    let tw = 72;
+    const fits = (t: number): boolean => {
+      const th = Math.round(t * ar);
+      const g = gp(t);
+      const offX = maxLayerIdx * t * 0.17;
+      const offY = maxLayerIdx * th * 0.14;
+      const baseW = cols * (t + g) + t;
+      const baseH = rows * (th + g) + th;
+      return baseW + offX <= availW && baseH + offY <= availH;
+    };
+    while (tw > 24 && !fits(tw)) tw -= 2;
     this.tw = tw;
     this.th = Math.round(tw * ar);
     this.gap = gp(tw);
@@ -1647,10 +1671,8 @@ export class Game {
     } else {
       const even = <T,>(a: T[]): T[] => (a.length % 2 === 0 ? a : a.slice(0, -1));
       if (this.gameMode === "fantastic") {
-        // Konsantrik derinlik: merkeze dogru derin (fl.depth katmana kadar),
-        // hucre sayisina gore sinirlanir (toplam tas 144'u asmaz).
-        const flDepth = def.fl?.depth ?? 4;
-        const maxL = Math.min(flDepth, Math.max(2, Math.floor(240 / Math.max(1, cells.length)) - 1));
+        // Konsantrik derinlik: merkeze dogru derin (maxLayersCount katmana kadar).
+        const maxL = maxLayersCount;
         const cx = cols / 2, cy = rows / 2;
         const maxD = Math.max(1, Math.max(cx, cy));
         const depthOf = (c: number, r: number) => {
@@ -1790,10 +1812,17 @@ export class Game {
   }
   private layoutCols = 4;
   private layoutRows = 4;
+  private maxLayerIdx = 0;
 
   /** Sağ panelin sol kenarına göre, tahtanın ortalanacağı x merkezi. */
   private boardOriginX(): number {
     return CANVAS_W / 2;
+  }
+
+  /** Guvenli tahta bolgesi: ustte baslik/hazne/fate rozetleri, altta metin/buton,
+   *  kenarlarda ekran disina uzanmama boslugu. Tahta bu bolgeye sigdirilir. */
+  private boardSafe(): { L: number; R: number; T: number; B: number } {
+    return { L: 34, R: CANVAS_W - 34, T: 196, B: CANVAS_H - 96 };
   }
 
   private makeTile(symbol: string, col: number, row: number, layer: number, flip = 0): Tile {
@@ -1802,13 +1831,15 @@ export class Game {
     const gap = this.gap;
     const ox = layer * tw * 0.17;
     const oy = layer * -th * 0.14;
-    const boardW = this.layoutCols * (tw + gap);
-    const boardH = this.layoutRows * (th + gap);
-    // Tas MERKEZLERINI tahta ortasina hizala (izgara sonundaki boslugu sayma).
-    const sx0 = this.boardOriginX() - (boardW - (tw + gap)) / 2;
-    const topLimit = 100;
-    const botLimit = CANVAS_H - 80;
-    const sy0 = (topLimit + botLimit) / 2 - (boardH - (th + gap)) / 2;
+    // Guvenli bolge (buildLayout ile ayni) + katman ofseti dahil efektif tahtayi
+    // bolgenin ortasina hizala. Boylece tahta ekrana/panellere degmez.
+    const safe = this.boardSafe();
+    const offX = this.maxLayerIdx * tw * 0.17;
+    const offY = this.maxLayerIdx * th * 0.14;
+    const spanX = Math.max(0, this.layoutCols - 1) * (tw + gap);
+    const spanY = Math.max(0, this.layoutRows - 1) * (th + gap);
+    const sx0 = (safe.L + safe.R) / 2 - offX / 2 - spanX / 2;
+    const sy0 = (safe.T + safe.B) / 2 + offY / 2 - spanY / 2;
     const sx = sx0 + col * (tw + gap) + ox;
     const sy = sy0 + row * (th + gap) + oy;
     return {
@@ -3547,12 +3578,15 @@ export class Game {
   private drawMagicRing(c: CanvasRenderingContext2D): void {
     if (!this.magicRingActive) return;
     const cx = this.boardOriginX();
-    const cy = (100 + (CANVAS_H - 80)) / 2;
-    const bw = this.layoutCols * (this.tw + this.gap);
-    const bh = this.layoutRows * (this.th + this.gap);
+    const safe = this.boardSafe();
+    const cy = (safe.T + safe.B) / 2;
+    const offX = this.maxLayerIdx * this.tw * 0.17;
+    const offY = this.maxLayerIdx * this.th * 0.14;
+    const bw = (this.layoutCols - 1) * (this.tw + this.gap) + this.tw + offX;
+    const bh = (this.layoutRows - 1) * (this.th + this.gap) + this.th + offY;
     let R = Math.max(bw, bh) / 2 + this.tw * 0.5;
-    R = Math.min(R, CANVAS_W / 2 - 16);
-    const Rv = Math.min(R * 0.92, (CANVAS_H - 170) / 2);
+    R = Math.min(R, (safe.R - safe.L) / 2);
+    const Rv = Math.min(R * 0.92, (safe.B - safe.T) / 2);
     const N = 16;
     const ts = Math.max(15, this.tw * 0.42);
     const glyphs = ["magiccircle", "orb", "crystal", "sparkle", "wand", "potion", "sword", "shield"];
@@ -3866,13 +3900,16 @@ export class Game {
     // Uyum madalyonu: yin-yang + surun cozulme yayi (tamamlanma arayisi).
     this.drawYinYangMedallion(c);
 
-    // Yerleşimin çerçevesi (taş alanına göre).
-    const boxW = this.layoutCols * (this.tw + this.gap) + this.gap;
-    const boxH = this.layoutRows * (this.th + this.gap) + this.gap;
-    const bx = this.boardOriginX() - boxW / 2;
-    const topLim = 100;
-    const botLim = CANVAS_H - 80;
-    const by = topLim + (botLim - topLim - boxH) / 2;
+    // Yerleşimin çerçevesi (taş alanına + katman ofsetine göre, güvenli bölgede).
+    const fOffX = this.maxLayerIdx * this.tw * 0.17;
+    const fOffY = this.maxLayerIdx * this.th * 0.14;
+    const fSpanX = Math.max(0, this.layoutCols - 1) * (this.tw + this.gap);
+    const fSpanY = Math.max(0, this.layoutRows - 1) * (this.th + this.gap);
+    const boxW = fSpanX + fOffX + this.tw;
+    const boxH = fSpanY + fOffY + this.th;
+    const safe = this.boardSafe();
+    const bx = (safe.L + safe.R) / 2 - boxW / 2;
+    const by = (safe.T + safe.B) / 2 - boxH / 2;
     c.strokeStyle = "rgba(255,255,255,0.08)";
     c.lineWidth = 2;
     c.strokeRect(bx - 12, by - 12, boxW + 24, boxH + 24);
