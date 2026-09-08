@@ -707,6 +707,133 @@ function fantasticShape(): Array<[number, number]> {
   return out;
 }
 
+// ==================== Fantastik dizimler (her seviyede farkli) ====================
+// Her dizim bir ad + hucre listesi tasir. Seviye indeksiyle dongusel secilir,
+// boylece her seviyede farkli bir fantastik duzen uygulanir.
+
+function swordLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let r = 0; r <= 5; r++) out.push([2, r]);                    // namlu
+  for (let c = 0; c <= 4; c++) out.push([c, 6]);                    // kirmen (tig)
+  for (let r = 7; r <= 8; r++) out.push([2, r]);                    // kabza
+  for (let c = 1; c <= 3; c++) out.push([c, 9]);                    // topuz
+  return out;
+}
+
+function gemLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  out.push([3, 0]);
+  for (const c of [2, 3, 4]) out.push([c, 1]);
+  for (const c of [1, 2, 3, 4, 5]) out.push([c, 2]);
+  for (const c of [1, 2, 3, 4, 5]) out.push([c, 3]);
+  for (const c of [2, 3, 4]) out.push([c, 4]);
+  out.push([3, 5]);
+  return out;
+}
+
+function crossLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let r = 0; r <= 5; r++) { out.push([2, r]); out.push([3, r]); }   // dikey kol
+  for (const c of [0, 1, 4, 5]) { out.push([c, 2]); out.push([c, 3]); }  // yatay kol
+  return out;
+}
+
+function treeLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (const c of [2, 3]) out.push([c, 0]);                 // tegin tepe
+  for (let c = 1; c <= 5; c++) out.push([c, 1]);            // tegin
+  for (let c = 1; c <= 5; c++) out.push([c, 2]);            // tegin
+  for (const c of [2, 3]) { out.push([c, 3]); out.push([c, 4]); } // govde
+  for (const c of [0, 1, 4, 5]) out.push([c, 5]);           // kokler
+  return out;
+}
+
+function hatLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  out.push([3, 0]);                                        // uc
+  out.push([3, 1]);
+  for (const c of [2, 3, 4]) out.push([c, 2]);             // koni
+  for (const c of [2, 3, 4]) out.push([c, 3]);
+  for (let c = 1; c <= 5; c++) out.push([c, 4]);
+  for (let c = 0; c <= 6; c++) out.push([c, 5]);           // simsek (brim)
+  return out;
+}
+
+function chaliceLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let c = 0; c <= 5; c++) out.push([c, 0]);           // agiz
+  for (const c of [1, 2, 3, 4]) out.push([c, 1]);          // kase
+  for (const c of [2, 3, 4]) out.push([c, 2]);
+  out.push([3, 3]); out.push([3, 4]);                      // sap
+  for (let c = 1; c <= 5; c++) out.push([c, 5]);           // taban
+  return out;
+}
+
+function portalLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let r = 0; r <= 6; r++) { out.push([1, r]); out.push([5, r]); }  // sutunlar
+  for (const c of [2, 3, 4]) { out.push([c, 0]); out.push([c, 1]); }    // kemer
+  out.push([0, 6]); out.push([6, 6]);                          // taban
+  return out;
+}
+
+function spiresLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let r = 0; r <= 5; r++) { out.push([0, r]); out.push([1, r]); }  // sol kule (uzun)
+  for (let r = 2; r <= 5; r++) { out.push([3, r]); out.push([4, r]); }  // orta kule (kisa)
+  for (let r = 1; r <= 5; r++) { out.push([6, r]); out.push([7, r]); }  // sag kule (orta)
+  for (let c = 0; c <= 7; c++) out.push([c, 6]);                    // zemin
+  return out;
+}
+
+function lightningLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (const c of [3, 4]) out.push([c, 0]);
+  for (const c of [3, 4]) out.push([c, 1]);
+  for (const c of [2, 3, 4]) out.push([c, 2]);
+  for (const c of [1, 2, 3]) out.push([c, 3]);
+  for (const c of [2, 3, 4]) out.push([c, 4]);
+  for (const c of [1, 2, 3]) out.push([c, 5]);
+  for (const c of [1, 2]) out.push([c, 6]);
+  return out;
+}
+
+function islandLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let c = 1; c <= 5; c++) out.push([c, 0]);          // ada tepesi
+  for (let c = 0; c <= 6; c++) out.push([c, 1]);
+  for (let c = 1; c <= 5; c++) out.push([c, 2]);
+  for (const c of [2, 3, 4]) out.push([c, 3]);            // kaya cadi
+  out.push([3, 4]); out.push([3, 5]);                     // dip tasin
+  return out;
+}
+
+function heartLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (const c of [1, 2, 4, 5]) out.push([c, 0]);         // iki tene
+  for (let c = 0; c <= 6; c++) out.push([c, 1]);
+  for (let c = 1; c <= 5; c++) out.push([c, 2]);
+  for (const c of [2, 3, 4]) out.push([c, 3]);
+  out.push([3, 4]);                                       // uclu
+  return out;
+}
+
+// Seviyeye gore dongusel secilen fantastik dizimler.
+const FANTASTIC_LAYOUTS: Array<{ name: string; cells: Array<[number, number]> }> = [
+  { name: "Kale", cells: fantasticShape() },
+  { name: "Kılıç", cells: swordLayout() },
+  { name: "Elmas", cells: gemLayout() },
+  { name: "Büyü Haçı", cells: crossLayout() },
+  { name: "Yaşam Ağacı", cells: treeLayout() },
+  { name: "Cadı Şapkası", cells: hatLayout() },
+  { name: "Büyü Kupası", cells: chaliceLayout() },
+  { name: "Puslu Portal", cells: portalLayout() },
+  { name: "Üç Kule", cells: spiresLayout() },
+  { name: "Şimşek", cells: lightningLayout() },
+  { name: "Yüzen Ada", cells: islandLayout() },
+  { name: "Aşk Kalbi", cells: heartLayout() },
+];
+
 // Deterministik (seeded) rastgele sayı üretici: aynı seviye her zaman
 // aynı dizim üretir, böylece "yeniden oyna" seviyeyi değiştirmez.
 function mulberry32(seed: number): () => number {
@@ -833,7 +960,7 @@ function modeRandomShape(mode: GameMode, levelIndex: number, seedOffset = 0): Ar
       ];
       break;
     case "fantastic":
-      return fantasticShape();
+      return FANTASTIC_LAYOUTS[levelIndex % FANTASTIC_LAYOUTS.length].cells;
     default:
       return randomShape(levelIndex, seedOffset);
   }
@@ -1210,7 +1337,12 @@ export class Game {
       } else {
         cells = modeRandomShape(this.gameMode, diff, Math.floor(Math.random() * 100000) + 1);
         const modeNames: Record<string, string> = { zen: "Zen", race: "Yarış", endless: "Kolay", viking: "Viking", egypt: "Mısır", steppe: "Bozkır", fantastic: "Fantastik" };
-        name = `${modeNames[this.gameMode] ?? this.gameMode} #${diff + 1}`;
+        if (this.gameMode === "fantastic") {
+          const layout = FANTASTIC_LAYOUTS[diff % FANTASTIC_LAYOUTS.length];
+          name = `${layout.name} #${diff + 1}`;
+        } else {
+          name = `${modeNames[this.gameMode] ?? this.gameMode} #${diff + 1}`;
+        }
       }
       const special = this.specialArt();
       const mixedBg = ["#2f3b1c", "#4a5b2a"] as [string, string];
