@@ -30,6 +30,7 @@ export interface Tile {
   removed: boolean;
   sx: number; // ekran x merkez
   sy: number; // ekran y merkez
+  flip: number; // 0 normal, 1 ters(180°), 2 ayna(sag-sol), 3 yaris(90°)
 }
 
 export type GameMode = "classic" | "zen" | "race" | "puzzle" | "endless" | "viking" | "egypt" | "steppe" | "fantastic";
@@ -818,21 +819,270 @@ function heartLayout(): Array<[number, number]> {
   return out;
 }
 
-// Seviyeye gore dongusel secilen fantastik dizimler.
-const FANTASTIC_LAYOUTS: Array<{ name: string; cells: Array<[number, number]> }> = [
-  { name: "Kale", cells: fantasticShape() },
-  { name: "Kılıç", cells: swordLayout() },
-  { name: "Elmas", cells: gemLayout() },
-  { name: "Büyü Haçı", cells: crossLayout() },
-  { name: "Yaşam Ağacı", cells: treeLayout() },
-  { name: "Cadı Şapkası", cells: hatLayout() },
-  { name: "Büyü Kupası", cells: chaliceLayout() },
-  { name: "Puslu Portal", cells: portalLayout() },
-  { name: "Üç Kule", cells: spiresLayout() },
-  { name: "Şimşek", cells: lightningLayout() },
-  { name: "Yüzen Ada", cells: islandLayout() },
-  { name: "Aşk Kalbi", cells: heartLayout() },
+// ---- Ek fantastik dizimler (kreatif / tematik) ----
+function starLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  out.push([3, 0]); out.push([3, 1]);
+  for (const c of [2, 3, 4]) out.push([c, 2]);
+  for (let c = 0; c <= 6; c++) out.push([c, 3]);
+  for (const c of [2, 3, 4]) out.push([c, 4]);
+  out.push([3, 5]); out.push([3, 6]);
+  return out;
+}
+function spiralLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (const c of [2, 3, 4]) out.push([c, 0]);
+  out.push([1, 1]); out.push([5, 1]);
+  out.push([1, 2]); out.push([3, 2]); out.push([5, 2]);
+  for (let c = 1; c <= 5; c++) out.push([c, 3]);
+  for (const c of [2, 3, 4]) out.push([c, 4]);
+  return out;
+}
+function snowflakeLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  out.push([3, 0]);
+  for (const c of [2, 4]) out.push([c, 1]);
+  out.push([3, 2]);
+  for (let c = 0; c <= 6; c++) out.push([c, 3]);
+  out.push([3, 4]);
+  for (const c of [2, 4]) out.push([c, 5]);
+  out.push([3, 6]);
+  return out;
+}
+function compassLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  out.push([3, 0]); out.push([3, 1]);
+  for (const c of [2, 4]) out.push([c, 2]);
+  for (const c of [0, 1, 3, 5, 6]) out.push([c, 3]);
+  for (const c of [2, 4]) out.push([c, 4]);
+  out.push([3, 5]); out.push([3, 6]);
+  return out;
+}
+function bowtieLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (const [c, r] of [[0, 0], [0, 4], [1, 1], [1, 3], [2, 2]] as Array<[number, number]>) out.push([c, r]);
+  for (const [c, r] of [[6, 0], [6, 4], [5, 1], [5, 3], [4, 2]] as Array<[number, number]>) out.push([c, r]);
+  return out;
+}
+function hourglassLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let c = 0; c <= 4; c++) out.push([c, 0]);
+  for (const c of [1, 3]) out.push([c, 1]);
+  out.push([2, 2]);
+  for (const c of [1, 3]) out.push([c, 3]);
+  for (let c = 0; c <= 4; c++) out.push([c, 4]);
+  return out;
+}
+function doubleDiamondLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  out.push([1, 0]);
+  for (const c of [0, 1, 2]) out.push([c, 1]);
+  out.push([1, 2]);
+  out.push([5, 0]);
+  for (const c of [4, 5, 6]) out.push([c, 1]);
+  out.push([5, 2]);
+  return out;
+}
+function nestedSquareLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  const seen = new Set<string>();
+  const add = (c: number, r: number) => { const k = c + "," + r; if (!seen.has(k)) { seen.add(k); out.push([c, r]); } };
+  for (let i = 0; i < 5; i++) { add(i, 0); add(i, 4); add(0, i); add(4, i); }
+  for (let i = 1; i < 4; i++) { add(i, 1); add(i, 3); add(1, i); add(3, i); }
+  add(2, 2);
+  return out;
+}
+function bigKeyLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (const c of [1, 3]) out.push([c, 0]);
+  for (const c of [0, 4]) { out.push([c, 1]); out.push([c, 2]); }
+  for (const c of [1, 3]) out.push([c, 3]);
+  for (let r = 4; r <= 6; r++) out.push([2, r]);
+  for (const r of [5, 6]) out.push([3, r]);
+  return out;
+}
+function crownLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (const c of [0, 2, 4]) out.push([c, 0]);
+  for (let r = 1; r <= 3; r++) for (let c = 0; c <= 4; c++) out.push([c, r]);
+  return out;
+}
+function boatLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let r = 0; r <= 3; r++) out.push([2, r]);
+  for (const [c, r] of [[3, 1], [4, 1], [3, 2], [4, 2], [5, 2]] as Array<[number, number]>) out.push([c, r]);
+  for (let c = 0; c <= 5; c++) out.push([c, 4]);
+  return out;
+}
+function runeRingLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let i = 0; i < 6; i++) { out.push([i, 0]); out.push([i, 5]); out.push([0, i]); out.push([5, i]); }
+  for (const [c, r] of [[2, 2], [3, 2], [2, 3], [3, 3]] as Array<[number, number]>) out.push([c, r]);
+  return out;
+}
+function waveLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let i = 0; i < 7; i++) { out.push([i, (i % 2) + 0]); out.push([i, (i % 2) + 2]); }
+  return out;
+}
+function arrowLayout(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  out.push([4, 0]);
+  for (const c of [3, 5]) out.push([c, 1]);
+  for (let c = 0; c <= 5; c++) out.push([c, 2]);
+  for (const c of [3, 5]) out.push([c, 3]);
+  out.push([4, 4]);
+  return out;
+}
+
+// ---- Fantastik dizim tipi: hucreler + tasariom ozellikleri ----
+export interface FantasticLayout {
+  name: string;
+  cells: Array<[number, number]>;
+  flip: number;   // 0 yok, 1 dama(180), 2 cerceve(180), 3 sutun(ayna), 4 rastgele(30%)
+  depth: number;  // istenen maksimum katman (2-7)
+  ring: boolean;  // hamlede ilerleyen yuzen tas cercevesi
+}
+
+// 26 kurate fantastik dizim (her biri benzersiz + tasariom ozelligi).
+const CURATED_FANTASTIC: FantasticLayout[] = [
+  { name: "Kale", cells: fantasticShape(), flip: 2, depth: 5, ring: false },
+  { name: "Kılıç", cells: swordLayout(), flip: 3, depth: 4, ring: false },
+  { name: "Elmas", cells: gemLayout(), flip: 0, depth: 6, ring: false },
+  { name: "Büyü Haçı", cells: crossLayout(), flip: 1, depth: 5, ring: false },
+  { name: "Yaşam Ağacı", cells: treeLayout(), flip: 0, depth: 5, ring: false },
+  { name: "Cadı Şapkası", cells: hatLayout(), flip: 1, depth: 4, ring: false },
+  { name: "Büyü Kupası", cells: chaliceLayout(), flip: 2, depth: 4, ring: false },
+  { name: "Puslu Portal", cells: portalLayout(), flip: 2, depth: 5, ring: true },
+  { name: "Üç Kule", cells: spiresLayout(), flip: 3, depth: 4, ring: false },
+  { name: "Şimşek", cells: lightningLayout(), flip: 0, depth: 3, ring: false },
+  { name: "Yüzen Ada", cells: islandLayout(), flip: 1, depth: 4, ring: false },
+  { name: "Aşk Kalbi", cells: heartLayout(), flip: 1, depth: 4, ring: false },
+  { name: "Yıldız", cells: starLayout(), flip: 0, depth: 6, ring: false },
+  { name: "Sarmal", cells: spiralLayout(), flip: 0, depth: 5, ring: true },
+  { name: "Kara Kar Tanesi", cells: snowflakeLayout(), flip: 4, depth: 5, ring: false },
+  { name: "Pusula", cells: compassLayout(), flip: 0, depth: 5, ring: false },
+  { name: "Kelebek", cells: bowtieLayout(), flip: 1, depth: 4, ring: false },
+  { name: "Kum Saati", cells: hourglassLayout(), flip: 2, depth: 5, ring: false },
+  { name: "İkiz Elmas", cells: doubleDiamondLayout(), flip: 3, depth: 5, ring: false },
+  { name: "Taht Çerçevesi", cells: nestedSquareLayout(), flip: 2, depth: 6, ring: true },
+  { name: "Efsane Anahtarı", cells: bigKeyLayout(), flip: 0, depth: 4, ring: false },
+  { name: "Kral Taç", cells: crownLayout(), flip: 1, depth: 4, ring: false },
+  { name: "Cadı Gemi", cells: boatLayout(), flip: 0, depth: 4, ring: false },
+  { name: "Büyü Dairesi", cells: runeRingLayout(), flip: 1, depth: 4, ring: true },
+  { name: "Sihirli Dalgalar", cells: waveLayout(), flip: 4, depth: 3, ring: false },
+  { name: "Hedef Oku", cells: arrowLayout(), flip: 0, depth: 4, ring: false },
 ];
+
+// ---- Prosedürel motif uretecileri (merkeze dayali, negatif koordinatli) ----
+function normCells(cells: Array<[number, number]>): Array<[number, number]> {
+  const seen = new Set<string>();
+  const out: Array<[number, number]> = [];
+  for (const [c, r] of cells) {
+    const k = c + "," + r;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push([c, r]);
+  }
+  let mnC = 99, mnR = 99;
+  for (const [c, r] of out) { if (c < mnC) mnC = c; if (r < mnR) mnR = r; }
+  return out.map(([c, r]) => [c - mnC, r - mnR] as [number, number]);
+}
+function mRing(n: number): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  const h = Math.floor(n / 2);
+  for (let r = -h; r < n - h; r++) for (let c = -h; c < n - h; c++)
+    if (r === -h || r === n - 1 - h || c === -h || c === n - 1 - h) out.push([c, r]);
+  return out;
+}
+function mDiamond(n: number): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let r = -n; r <= n; r++) for (let c = -n; c <= n; c++)
+    if (Math.abs(c) + Math.abs(r) <= n) out.push([c, r]);
+  return out;
+}
+function mPlus(a: number): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let r = -a; r <= a; r++) out.push([0, r]);
+  for (let c = -a; c <= a; c++) out.push([c, 0]);
+  return out;
+}
+function mX(a: number): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let i = -a; i <= a; i++) { out.push([i, i]); out.push([i, -i]); }
+  return out;
+}
+function mBar(w: number, h: number): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) out.push([c - Math.floor(w / 2), r - Math.floor(h / 2)]);
+  return out;
+}
+function mStar(a: number): Array<[number, number]> {
+  const out = mPlus(a);
+  for (let i = 1; i <= a; i++) { out.push([i, i]); out.push([i, -i]); out.push([-i, i]); out.push([-i, -i]); }
+  return out;
+}
+function placeAt(cells: Array<[number, number]>, dx: number, dy: number): Array<[number, number]> {
+  return cells.map(([c, r]) => [c + dx, r + dy] as [number, number]);
+}
+// Seviye indeksi (0'dan baslar) -> deterministik, benzersiz prosedürel dizim.
+// 5 benzersiz motif x 7 sablon x 3 boyut = 105+ farkli dizim (sonlu, dongulenmez).
+function genFantasticLayout(n: number): FantasticLayout {
+  const template = n % 7;
+  const motifType = n % 5;
+  const sizeTier = Math.floor(n / 35) % 3;
+  const size = 1 + sizeTier;
+  const off = Math.min(5, size + 2);
+  const motif = (kind: number): Array<[number, number]> => {
+    switch (kind) {
+      case 0: return mDiamond(size);
+      case 1: return mRing(size * 2 + 1);
+      case 2: return mX(size);
+      case 3: return mBar(2 * size + 2, size + 1);
+      default: return mStar(size);
+    }
+  };
+  let cells: Array<[number, number]> = [];
+  const m = motif(motifType);
+  if (template === 0) {
+    // merkez motif
+    cells = m;
+  } else if (template === 1) {
+    // cerceve + merkez motif
+    cells = [...mRing(size * 2 + 3), ...m];
+  } else if (template === 2) {
+    // motif + 4 kose noktasi
+    cells = [...m];
+    for (const [dx, dy] of [[-off, -off], [off, -off], [-off, off], [off, off]] as Array<[number, number]>) cells.push([dx, dy]);
+  } else if (template === 3) {
+    // iki motif yan yana
+    const off3 = off + 1;
+    cells = [...placeAt(m, -off3, 0), ...placeAt(m, off3, 0)];
+  } else if (template === 4) {
+    // totem: motif merkezde + altta diktirlik
+    cells = [...m, [0, 1], [0, 2], [0, 3]];
+  } else if (template === 5) {
+    // gunes patlamasi: motif + 8 radyal nokta
+    cells = [...m];
+    for (const [dx, dy] of [[-off, 0], [off, 0], [0, -off], [0, off], [-off, -off], [off, -off], [-off, off], [off, off]] as Array<[number, number]>) cells.push([dx, dy]);
+  } else {
+    // motif + 4 cerceve kolu (yukari/asagi/sol/sag)
+    cells = [...m, [0, -off], [0, off], [-off, 0], [off, 0]];
+  }
+  cells = normCells(cells);
+  if (cells.length < 8) cells = [...cells, ...mDiamond(1).map(([c, r]) => [c + 3, r + 3] as [number, number])];
+  const flip = n % 5;
+  const depth = 2 + (n % 6);
+  const ring = (n % 4) === 0;
+  return { name: `Sihir Dizimi ${n + 1}`, cells, flip, depth, ring };
+}
+
+// Seviye -> fantastik dizim. Ilk 26 kurate, sonrasindan prosedürel (sonsuz benzersiz).
+function fantasticLayoutForLevel(level: number): FantasticLayout {
+  if (level < CURATED_FANTASTIC.length) return CURATED_FANTASTIC[level];
+  return genFantasticLayout(level - CURATED_FANTASTIC.length);
+}
+
 
 // Deterministik (seeded) rastgele sayı üretici: aynı seviye her zaman
 // aynı dizim üretir, böylece "yeniden oyna" seviyeyi değiştirmez.
@@ -960,7 +1210,7 @@ function modeRandomShape(mode: GameMode, levelIndex: number, seedOffset = 0): Ar
       ];
       break;
     case "fantastic":
-      return FANTASTIC_LAYOUTS[levelIndex % FANTASTIC_LAYOUTS.length].cells;
+      return fantasticLayoutForLevel(levelIndex).cells;
     default:
       return randomShape(levelIndex, seedOffset);
   }
@@ -1060,7 +1310,7 @@ export class Game {
   private seconds = 0;
   private won = false;
   private lost = false;
-  private currentLevel: { name: string; cells: Array<[number, number]>; bg: [string, string] } | null = null;
+  private currentLevel: { name: string; cells: Array<[number, number]>; bg: [string, string]; fl?: FantasticLayout } | null = null;
   private history: Array<{ a: number; b: number }> = [];
   private levelIndex = 0;
   private tray: Array<{ id: number; symbol: string }> = []; // hazneye düşen eşlenen taşlar (max 4)
@@ -1154,6 +1404,10 @@ export class Game {
   private starRain: Array<{ x: number; y: number; vy: number; vx: number; rot: number; vr: number; size: number; alpha: number; color: string }> = [];
   private gateOpen = 0;
   private gatePhase = 0;
+  // Fantastik mod: hamlede ilerleyen yuzen tas cercevesi
+  private magicRingAngle = 0;
+  private magicRingTarget = 0;
+  private magicRingActive = false;
   private mistParticles: Array<{ x: number; y: number; r: number; alpha: number; vx: number }> = [];
   private achievements: Set<string> = new Set();
   private showAchievement = "";
@@ -1322,11 +1576,12 @@ export class Game {
   };
 
   // ---- Yerleşim ----
-  private level(): { name: string; cells: Array<[number, number]>; bg: [string, string] } {
+  private level(): { name: string; cells: Array<[number, number]>; bg: [string, string]; fl?: FantasticLayout } {
     if (!this.currentLevel) {
       const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
       let cells: Array<[number, number]>;
       let name: string;
+      let fl: FantasticLayout | undefined;
       if (this.gameMode === "puzzle") {
         const layout = PUZZLE_LAYOUTS[diff % PUZZLE_LAYOUTS.length];
         cells = layout.cells;
@@ -1334,20 +1589,20 @@ export class Game {
       } else if (this.gameMode === "classic") {
         cells = randomShape(diff, Math.floor(Math.random() * 100000) + 1);
         name = diff < LEVELS.length ? LEVELS[diff].name : `Rastgele #${diff + 1}`;
+      } else if (this.gameMode === "fantastic") {
+        const layout = fantasticLayoutForLevel(diff);
+        fl = layout;
+        cells = layout.cells;
+        name = `${layout.name} #${diff + 1}`;
       } else {
         cells = modeRandomShape(this.gameMode, diff, Math.floor(Math.random() * 100000) + 1);
         const modeNames: Record<string, string> = { zen: "Zen", race: "Yarış", endless: "Kolay", viking: "Viking", egypt: "Mısır", steppe: "Bozkır", fantastic: "Fantastik" };
-        if (this.gameMode === "fantastic") {
-          const layout = FANTASTIC_LAYOUTS[diff % FANTASTIC_LAYOUTS.length];
-          name = `${layout.name} #${diff + 1}`;
-        } else {
-          name = `${modeNames[this.gameMode] ?? this.gameMode} #${diff + 1}`;
-        }
+        name = `${modeNames[this.gameMode] ?? this.gameMode} #${diff + 1}`;
       }
       const special = this.specialArt();
       const mixedBg = ["#2f3b1c", "#4a5b2a"] as [string, string];
       const bg = special === "mixed" ? mixedBg : RANDOM_BG[diff % RANDOM_BG.length];
-      this.currentLevel = { name, cells, bg };
+      this.currentLevel = { name, cells, bg, fl };
     }
     return this.currentLevel;
   }
@@ -1390,33 +1645,64 @@ export class Game {
       };
       layers = [cells.slice(), rect(4, 9, 1, 6), rect(5, 8, 2, 5), rect(6, 7, 3, 4), [[6, 3]]];
     } else {
-      // Moda gore katman derinligi: zen/yarisi/bulmaca icin 2, bozkir 2, kolay/misir 3, klasik/viking 4.
-      const maxLayers = this.gameMode === "zen" ? 2 : this.gameMode === "race" ? 2 : this.gameMode === "puzzle" ? 2 : this.gameMode === "steppe" ? 2 : this.gameMode === "egypt" ? 3 : this.gameMode === "endless" ? 3 : this.gameMode === "fantastic" ? 4 : 4;
-      const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
-      const coreDepth = Math.min(maxLayers, diff >= 49 ? 4 : diff >= 9 ? 3 : 2);
-      const cMn = Math.max(0, Math.floor((cols + 1) / 3));
-      const cMx = Math.min(cols, cols - 1 - Math.floor((cols + 1) / 3));
-      const rMn = Math.max(0, Math.floor((rows + 1) / 3));
-      const rMx = Math.min(rows, rows - 1 - Math.floor((rows + 1) / 3));
-      const isCore = (c: number, r: number) => c >= cMn && c <= cMx && r >= rMn && r <= rMx;
-      const isRing = (c: number, r: number) => c === 0 || r === 0 || c === cols || r === rows;
-      const midCount = cells.filter(([c, r]) => !isRing(c, r)).length;
-      const depthOf = (c: number, r: number) => {
-        if (isCore(c, r)) return coreDepth;
-        if (isRing(c, r) && midCount >= 4) return 1;
-        return 2;
-      };
       const even = <T,>(a: T[]): T[] => (a.length % 2 === 0 ? a : a.slice(0, -1));
-      layers = [];
-      for (let L = 0; L < coreDepth; L++) {
-        layers.push(even(cells.filter(([c, r]) => depthOf(c, r) >= L + 1)));
+      if (this.gameMode === "fantastic") {
+        // Konsantrik derinlik: merkeze dogru derin (fl.depth katmana kadar),
+        // hucre sayisina gore sinirlanir (toplam tas 144'u asmaz).
+        const flDepth = def.fl?.depth ?? 4;
+        const maxL = Math.min(flDepth, Math.max(2, Math.floor(240 / Math.max(1, cells.length)) - 1));
+        const cx = cols / 2, cy = rows / 2;
+        const maxD = Math.max(1, Math.max(cx, cy));
+        const depthOf = (c: number, r: number) => {
+          const d = Math.max(Math.abs(c - cx), Math.abs(r - cy));
+          const t = d / maxD;
+          return Math.max(1, Math.round(maxL - t * (maxL - 1)));
+        };
+        layers = [];
+        for (let L = 0; L < maxL; L++) {
+          layers.push(even(cells.filter(([c, r]) => depthOf(c, r) >= L + 1)));
+        }
+      } else {
+        // Moda gore katman derinligi: zen/yarisi/bulmaca icin 2, bozkir 2, kolay/misir 3, klasik/viking 4.
+        const maxLayers = this.gameMode === "zen" ? 2 : this.gameMode === "race" ? 2 : this.gameMode === "puzzle" ? 2 : this.gameMode === "steppe" ? 2 : this.gameMode === "egypt" ? 3 : this.gameMode === "endless" ? 3 : 4;
+        const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
+        const coreDepth = Math.min(maxLayers, diff >= 49 ? 4 : diff >= 9 ? 3 : 2);
+        const cMn = Math.max(0, Math.floor((cols + 1) / 3));
+        const cMx = Math.min(cols, cols - 1 - Math.floor((cols + 1) / 3));
+        const rMn = Math.max(0, Math.floor((rows + 1) / 3));
+        const rMx = Math.min(rows, rows - 1 - Math.floor((rows + 1) / 3));
+        const isCore = (c: number, r: number) => c >= cMn && c <= cMx && r >= rMn && r <= rMx;
+        const isRing = (c: number, r: number) => c === 0 || r === 0 || c === cols || r === rows;
+        const midCount = cells.filter(([c, r]) => !isRing(c, r)).length;
+        const depthOf = (c: number, r: number) => {
+          if (isCore(c, r)) return coreDepth;
+          if (isRing(c, r) && midCount >= 4) return 1;
+          return 2;
+        };
+        layers = [];
+        for (let L = 0; L < coreDepth; L++) {
+          layers.push(even(cells.filter(([c, r]) => depthOf(c, r) >= L + 1)));
+        }
       }
     }
 
-    // Tum yerlesim hucreleri (katmanli).
-    const slots: Array<{ c: number; r: number; L: number }> = [];
+    // Ters cevrili tas deseni (sadece fantastik modda dizim bazli).
+    const fl = this.gameMode === "fantastic" ? def.fl : undefined;
+    const flipOf = (c: number, r: number): number => {
+      if (!fl) return 0;
+      switch (fl.flip) {
+        case 1: return ((c + r) % 2 === 0) ? 1 : 0; // dama (180°)
+        case 2: return (c === 0 || r === 0 || c === cols || r === rows) ? 1 : 0; // cerceve (180°)
+        case 3: return (c % 2 === 0) ? 2 : 0; // sutunlar (ayna)
+        case 4: { const h = Math.sin(c * 127.1 + r * 311.7) * 43758.5453; return (h - Math.floor(h)) < 0.3 ? 1 : 0; }
+        default: return 0;
+      }
+    };
+
+    // Tum yerlesim hucreleri (katmanli + flip).
+    const slots: Array<{ c: number; r: number; L: number; flip: number }> = [];
     for (let L = 0; L < layers.length; L++)
-      for (const [c, r] of layers[L]) slots.push({ c, r, L });
+      for (const [c, r] of layers[L]) slots.push({ c, r, L, flip: flipOf(c, r) });
     if (slots.length % 2 === 1) slots.pop();
 
     // Sembol atamasi: kaldirma simulasyonu ile cozulebilirlik garantisi.
@@ -1438,7 +1724,7 @@ export class Game {
     }
     for (let i = 0; i < slots.length; i++) {
       const sl = slots[i];
-      this.tiles.push(this.makeTile(assigned[i], sl.c, sl.r, sl.L));
+      this.tiles.push(this.makeTile(assigned[i], sl.c, sl.r, sl.L, sl.flip));
     }
     // Taslarin tahtaya sirayla konma animasyonu (alt katmanlardan baslar).
     this.dealDelay = new Map<number, number>();
@@ -1510,7 +1796,7 @@ export class Game {
     return CANVAS_W / 2;
   }
 
-  private makeTile(symbol: string, col: number, row: number, layer: number): Tile {
+  private makeTile(symbol: string, col: number, row: number, layer: number, flip = 0): Tile {
     const tw = this.tw;
     const th = this.th;
     const gap = this.gap;
@@ -1534,6 +1820,7 @@ export class Game {
       removed: false,
       sx,
       sy,
+      flip,
     };
   }
 
@@ -1595,6 +1882,8 @@ export class Game {
     this.gateOpen = 0;
     this.gatePhase = 0;
     this.mistParticles = [];
+    this.magicRingAngle = 0;
+    this.magicRingTarget = 0;
     this.showAchievement = "";
     this.achievementTimer = 0;
     this.raceTimeLeft = this.raceDuration;
@@ -1606,6 +1895,7 @@ export class Game {
     this.wrongMoves = 0;
     this.maxWrongMoves = this.gameMode === "endless" ? 5 : 0;
     this.buildLayout();
+    this.magicRingActive = this.gameMode === "fantastic" && (this.level().fl?.ring ?? false);
     this.emitHud();
   }
 
@@ -1836,6 +2126,8 @@ export class Game {
         this.clickPops.push({ x: mx, y: my, life: 0.4, max: 0.4, r: 30 });
       }
       this.breakPair(pairIdx, lastIdx);
+      // Fantastik mod: her hamlede yuzen tas cercevesi bir adim ilerler.
+      if (this.magicRingActive) this.magicRingTarget += Math.PI / 6;
     } else if (this.tray.length >= this.maxTray()) {
       // Hazne dolu ve eslesme yok → kaybetme (tum modlar)
       this.lost = true;
@@ -1924,6 +2216,10 @@ export class Game {
   private hudTimer = 0;
   private update(dt: number): void {
     this.time += dt;
+    // Fantastik cerceve acisini hedefe yumusak yaklastir.
+    if (this.magicRingActive) {
+      this.magicRingAngle += (this.magicRingTarget - this.magicRingAngle) * Math.min(1, dt * 7);
+    }
     if (!this.won && !this.lost) {
       this.seconds += dt;
       if (this.gameMode === "race" && this.moves > 0) {
@@ -3247,6 +3543,56 @@ export class Game {
     c.restore();
   }
 
+  // Fantastik mod: tahtani cerceveleyen, hamlede ilerleyen yuzen tas cercevesi.
+  private drawMagicRing(c: CanvasRenderingContext2D): void {
+    if (!this.magicRingActive) return;
+    const cx = this.boardOriginX();
+    const cy = (100 + (CANVAS_H - 80)) / 2;
+    const bw = this.layoutCols * (this.tw + this.gap);
+    const bh = this.layoutRows * (this.th + this.gap);
+    let R = Math.max(bw, bh) / 2 + this.tw * 0.5;
+    R = Math.min(R, CANVAS_W / 2 - 16);
+    const Rv = Math.min(R * 0.92, (CANVAS_H - 170) / 2);
+    const N = 16;
+    const ts = Math.max(15, this.tw * 0.42);
+    const glyphs = ["magiccircle", "orb", "crystal", "sparkle", "wand", "potion", "sword", "shield"];
+    const baseA = this.magicRingAngle + this.time * 0.12;
+    // Ince kesikli baglanti dairesi
+    c.save();
+    c.globalAlpha = 0.14;
+    c.strokeStyle = "#b080ff";
+    c.lineWidth = 1.5;
+    c.setLineDash([4, 9]);
+    c.beginPath();
+    c.ellipse(cx, cy, R, Rv, 0, 0, Math.PI * 2);
+    c.stroke();
+    c.restore();
+    for (let i = 0; i < N; i++) {
+      const a = baseA + (i / N) * Math.PI * 2;
+      const x = cx + Math.cos(a) * R;
+      const y = cy + Math.sin(a) * Rv;
+      const pulse = 0.5 + 0.5 * Math.sin(this.time * 2 + i * 0.5);
+      c.save();
+      c.translate(x, y);
+      c.rotate(a + Math.PI / 2);
+      c.shadowColor = "rgba(180,120,255," + (0.5 + 0.4 * pulse).toFixed(2) + ")";
+      c.shadowBlur = 12;
+      const g = c.createLinearGradient(-ts / 2, -ts * 0.7, ts / 2, ts * 0.7);
+      g.addColorStop(0, "#5a4a8a");
+      g.addColorStop(1, "#2e2450");
+      c.fillStyle = g;
+      c.beginPath();
+      c.roundRect(-ts / 2, -ts * 0.7, ts, ts * 1.4, 4);
+      c.fill();
+      c.shadowBlur = 0;
+      c.strokeStyle = "rgba(200,160,255," + (0.5 + 0.3 * pulse).toFixed(2) + ")";
+      c.lineWidth = 1.5;
+      c.stroke();
+      strokeFantastic(c, glyphs[i % glyphs.length], 0, 0, ts * 0.5, 1.6, "#e6d4f5");
+      c.restore();
+    }
+  }
+
   private render(): void {
     const c = this.ctx;
     const def = this.level();
@@ -3265,6 +3611,8 @@ export class Game {
     this.drawSteppe(c);
     // Fantastik modu: arka planda gece + ay + yuzen kale
     this.drawFantastic(c);
+    // Fantastik modu: hamlede ilerleyen yuzen tas cercevesi (taslari arkasinda)
+    this.drawMagicRing(c);
     // Ambient dust: ucusan transparan tanecikler
     for (const d of this.dustParticles) {
       c.globalAlpha = d.alpha * (0.5 + 0.5 * Math.sin(this.time * 0.8 + d.ph));
@@ -4817,7 +5165,18 @@ export class Game {
       c.translate(-bx, -by);
     }
 
-    c.drawImage(this.getFaceCanvas(t.symbol, open), bx - w / 2, by - h / 2, w, h);
+    const face = this.getFaceCanvas(t.symbol, open);
+    if (t.flip) {
+      c.save();
+      c.translate(bx, by);
+      if (t.flip === 1) c.rotate(Math.PI);        // ters (180°)
+      else if (t.flip === 2) c.scale(-1, 1);      // ayna (sag-sol)
+      else if (t.flip === 3) c.rotate(Math.PI / 2); // yaris (90°)
+      c.drawImage(face, -w / 2, -h / 2, w, h);
+      c.restore();
+    } else {
+      c.drawImage(face, bx - w / 2, by - h / 2, w, h);
+    }
 
     if (open) {
       const sym = t.symbol;
