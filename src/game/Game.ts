@@ -32,7 +32,7 @@ export interface Tile {
   sy: number; // ekran y merkez
 }
 
-export type GameMode = "classic" | "zen" | "race" | "puzzle" | "endless" | "viking" | "egypt" | "steppe";
+export type GameMode = "classic" | "zen" | "race" | "puzzle" | "endless" | "viking" | "egypt" | "steppe" | "fantastic";
 
 export type WeatherType = "rain" | "snow" | "wind" | "storm" | "aurora" | "fireflies";
 
@@ -467,6 +467,153 @@ function steppeFaceSpec(kind: string): SteppeSpec {
   return { type: "glyph", glyph: "kurt", color: ink };
 }
 
+// ---- Fantastik: ejder, kilic, suru, buyulu esyalar (vektorel, font bagimli degil) ----
+type FantasticGlyph = {
+  lines?: number[][][];
+  circles?: number[][];
+  discs?: number[][];
+  polys?: number[][][];
+  fills?: number[][][];
+};
+const FANTASTIC_GLYPHS: Record<string, FantasticGlyph> = {
+  // Ejder (profil kafa + boynuz)
+  dragon: {
+    polys: [[[-0.55, 0.45], [-0.6, -0.15], [-0.35, -0.6], [0.05, -0.72], [0.3, -0.45], [0.85, -0.15], [0.45, 0.0], [0.3, 0.3], [0.05, 0.55], [-0.35, 0.55], [-0.55, 0.45]]],
+    lines: [[[ -0.05, -0.7], [-0.2, -0.98], [-0.42, -1.0]], [[0.85, -0.15], [0.5, -0.02]]],
+    discs: [[0.15, -0.28, 0.06]],
+  },
+  // Kilic (diku, ustte)
+  sword: {
+    polys: [[[0, -1], [-0.13, -0.6], [0.13, -0.6], [0, -1]]],
+    lines: [[[-0.13, -0.6], [-0.13, 0.45]], [[0.13, -0.6], [0.13, 0.45]], [[-0.42, 0.45], [0.42, 0.45]], [[0, 0.45], [0, 0.85]]],
+    discs: [[0, 0.92, 0.09]],
+  },
+  // Kalkan (sahit kalkan + asa)
+  shield: {
+    polys: [[[0, -0.95], [0.72, -0.6], [0.72, 0.1], [0, 1], [-0.72, 0.1], [-0.72, -0.6], [0, -0.95]]],
+    lines: [[[0, -0.5], [0, 0.55]], [[-0.4, 0.0], [0.4, 0.0]]],
+  },
+  // Kale kulesi (siperler + kapili)
+  castle: {
+    polys: [
+      [[-0.45, -0.35], [0.45, -0.35], [0.45, 0.95], [-0.45, 0.95], [-0.45, -0.35]],
+      [[-0.15, 0.95], [-0.15, 0.5], [0, 0.34], [0.15, 0.5], [0.15, 0.95], [-0.15, 0.95]],
+    ],
+    lines: [[[-0.45, -0.35], [-0.45, -0.62], [-0.28, -0.62], [-0.28, -0.44], [-0.1, -0.44], [-0.1, -0.62], [0.1, -0.62], [0.1, -0.44], [0.28, -0.44], [0.28, -0.62], [0.45, -0.62], [0.45, -0.35]]],
+  },
+  // Buyu topu (stand uzerinde + parlama)
+  orb: {
+    circles: [[0, -0.25, 0.5]],
+    lines: [[[-0.3, 0.45], [0.3, 0.45]], [[-0.2, 0.25], [-0.3, 0.45]], [[0.2, 0.25], [0.3, 0.45]]],
+    discs: [[-0.15, -0.4, 0.1]],
+  },
+  // Iksir (bikon)
+  potion: {
+    circles: [[0, 0.2, 0.6]],
+    lines: [[[-0.18, -0.9], [-0.18, -0.3]], [[0.18, -0.9], [0.18, -0.3]], [[-0.18, -0.9], [0.18, -0.9]], [[-0.18, -0.3], [-0.5, 0.1]], [[0.18, -0.3], [0.5, 0.1]]],
+    discs: [[0, 0.45, 0.2]],
+  },
+  // Buyu asasi (isikli)
+  wand: {
+    lines: [[[0.5, 0.95], [-0.2, -0.1]]],
+    polys: [[[-0.2, -0.9], [-0.08, -0.62], [0.2, -0.5], [-0.08, -0.38], [-0.2, -0.1], [-0.32, -0.38], [-0.6, -0.5], [-0.32, -0.62], [-0.2, -0.9]]],
+  },
+  // Tac (3 sivri)
+  crown: {
+    polys: [[[-0.75, 0.55], [-0.75, -0.5], [-0.4, -0.05], [0, -0.85], [0.4, -0.05], [0.75, -0.5], [0.75, 0.55], [-0.75, 0.55]]],
+    discs: [[0, 0.2, 0.09]],
+  },
+  // Cadı sapkasi
+  witchhat: {
+    polys: [[[-0.28, 0.3], [0.05, -1], [0.4, -0.2], [0.28, 0.3], [-0.28, 0.3]]],
+    lines: [[[-0.8, 0.55], [0.8, 0.55]], [[-0.8, 0.55], [-0.5, 0.35]], [[0.8, 0.55], [0.5, 0.35]]],
+  },
+  // Kristal (facetli elmas)
+  crystal: {
+    polys: [
+      [[-0.6, -0.2], [-0.3, -0.7], [0.3, -0.7], [0.6, -0.2], [-0.6, -0.2]],
+      [[-0.6, -0.2], [0, 0.9], [0.6, -0.2], [-0.6, -0.2]],
+    ],
+    lines: [[[-0.3, -0.7], [-0.15, -0.2]], [[0.3, -0.7], [0.15, -0.2]], [[0, -0.7], [0, -0.2]]],
+  },
+  // Buyu yildizi (4 uc)
+  sparkle: {
+    polys: [[[0, -1], [0.28, -0.28], [1, 0], [0.28, 0.28], [0, 1], [-0.28, 0.28], [-1, 0], [-0.28, -0.28], [0, -1]]],
+  },
+  // Anahtar
+  key: {
+    circles: [[0, -0.5, 0.35]],
+    lines: [[[0, -0.15], [0, 0.85]], [[0, 0.6], [0.3, 0.6]], [[0, 0.85], [0.35, 0.85]]],
+  },
+  // Buyu kitabı
+  book: {
+    polys: [[[-0.55, -0.8], [0.55, -0.8], [0.55, 0.8], [-0.55, 0.8], [-0.55, -0.8]]],
+    lines: [[[-0.35, -0.8], [-0.35, 0.8]], [[-0.05, -0.3], [0.1, 0.0], [0.0, 0.3], [-0.15, 0.0], [-0.05, -0.3]]],
+    discs: [[0, 0, 0.05]],
+  },
+  // Buyu halkasi (hexagram)
+  magiccircle: {
+    circles: [[0, 0, 0.9], [0, 0, 0.5]],
+    lines: [[[0, -0.5], [0.45, 0.35], [-0.45, 0.35], [0, -0.5]], [[0, 0.5], [0.45, -0.35], [-0.45, -0.35], [0, 0.5]]],
+  },
+  // Unicorn (at kafa + boynuz)
+  unicorn: {
+    polys: [[[-0.5, 0.5], [-0.55, -0.1], [-0.35, -0.5], [0.0, -0.55], [0.45, -0.3], [0.6, -0.05], [0.3, 0.1], [0.2, 0.4], [0.0, 0.55], [-0.3, 0.55], [-0.5, 0.5]]],
+    lines: [[[-0.1, -0.5], [-0.35, -1]], [[-0.22, -0.75], [-0.05, -0.7]], [[-0.3, -0.88], [-0.12, -0.84]]],
+    discs: [[0.15, -0.25, 0.05]],
+  },
+  // Sayi birimleri
+  orb_small: { discs: [[0, 0, 0.5]] },
+  crystal_small: { polys: [[[0, -0.75], [0.45, 0.0], [0, 0.75], [-0.45, 0.0], [0, -0.75]]] },
+  sparkle_small: { polys: [[[0, -0.9], [0.25, -0.25], [0.9, 0], [0.25, 0.25], [0, 0.9], [-0.25, 0.25], [-0.9, 0], [-0.25, -0.25], [0, -0.9]]] },
+};
+
+function strokeFantastic(m: CanvasRenderingContext2D, glyphId: string, cx: number, cy: number, size: number, lineWidth: number, color: string): void {
+  const g = FANTASTIC_GLYPHS[glyphId];
+  if (!g) return;
+  m.save();
+  m.lineCap = "round";
+  m.lineJoin = "round";
+  m.strokeStyle = color;
+  m.fillStyle = color;
+  m.lineWidth = lineWidth;
+  const X = (lx: number) => cx + lx * size;
+  const Y = (ly: number) => cy + ly * size;
+  for (const pl of g.lines ?? []) { m.beginPath(); pl.forEach(([lx, ly], i) => (i ? m.lineTo(X(lx), Y(ly)) : m.moveTo(X(lx), Y(ly)))); m.stroke(); }
+  for (const [ax, ay, r] of g.circles ?? []) { m.beginPath(); m.arc(X(ax), Y(ay), r * size, 0, Math.PI * 2); m.stroke(); }
+  for (const pl of g.polys ?? []) { m.beginPath(); pl.forEach(([lx, ly], i) => (i ? m.lineTo(X(lx), Y(ly)) : m.moveTo(X(lx), Y(ly)))); m.closePath(); m.stroke(); }
+  for (const [dx, dy, r] of g.discs ?? []) { m.beginPath(); m.arc(X(dx), Y(dy), r * size, 0, Math.PI * 2); m.fill(); }
+  for (const pl of g.fills ?? []) { m.beginPath(); pl.forEach(([lx, ly], i) => (i ? m.lineTo(X(lx), Y(ly)) : m.moveTo(X(lx), Y(ly)))); m.closePath(); m.fill(); }
+  m.restore();
+}
+
+// Fantastik modu icin mahjong sembolu -> fantastik spesifikasyonu.
+type FantasticSpec =
+  | { type: "count"; suit: "c" | "b" | "w"; n: number }
+  | { type: "glyph"; glyph: string; color: string; marker?: "flower" | "season" };
+function fantasticFaceSpec(kind: string): FantasticSpec {
+  const ink = "#e6d4f5";
+  if (kind[0] === "c") return { type: "count", suit: "c", n: Number(kind.slice(1)) };
+  if (kind[0] === "b") return { type: "count", suit: "b", n: Number(kind.slice(1)) };
+  if (kind[0] === "w") return { type: "count", suit: "w", n: Number(kind.slice(1)) };
+  if (kind === "E") return { type: "glyph", glyph: "dragon", color: ink };
+  if (kind === "S") return { type: "glyph", glyph: "sword", color: ink };
+  if (kind === "W") return { type: "glyph", glyph: "shield", color: ink };
+  if (kind === "N") return { type: "glyph", glyph: "castle", color: ink };
+  if (kind === "DR") return { type: "glyph", glyph: "orb", color: ink };
+  if (kind === "DG") return { type: "glyph", glyph: "potion", color: ink };
+  if (kind === "DW") return { type: "glyph", glyph: "wand", color: ink };
+  if (kind[0] === "f") {
+    const f = { 1: "crown", 2: "witchhat", 3: "crystal", 4: "sparkle" }[Number(kind.slice(1))] ?? "crown";
+    return { type: "glyph", glyph: f, color: ink, marker: "flower" };
+  }
+  if (kind[0] === "s") {
+    const s = { 1: "key", 2: "book", 3: "magiccircle", 4: "unicorn" }[Number(kind.slice(1))] ?? "key";
+    return { type: "glyph", glyph: s, color: ink, marker: "season" };
+  }
+  return { type: "glyph", glyph: "magiccircle", color: ink };
+}
+
 
 // Seviye dizimleri. Taşlar standart 144 taslik mahjong setinden dogrulanir;
 // sembol atamasi kaldirma simulasyonu ile cozulebilirlik garantisi verir.
@@ -540,6 +687,24 @@ function ringShape(cols: number, rows: number): Array<[number, number]> {
     ([c, r]): [number, number] => [c + 1, r + 1],
   );
   return [...outer, ...inner];
+}
+
+// Fantastik mod: orta kule + 4 köşe kulesi + sur duvarlari + kapili kale dizimi.
+function fantasticShape(): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  const add = (c: number, r: number) => out.push([c, r]);
+  // 4 kose kulesi (2x2)
+  for (const [c0, r0] of [[0, 0], [9, 0], [0, 7], [9, 7]] as Array<[number, number]>)
+    for (let r = 0; r < 2; r++) for (let c = 0; c < 2; c++) add(c0 + c, r0 + r);
+  // Ust sur duvarı (2. satir, 2-8)
+  for (let c = 2; c <= 8; c++) add(c, 2);
+  // Sol/sag sur duvarlari (2 ve 8. sutun, 3-6)
+  for (let r = 3; r <= 6; r++) { add(2, r); add(8, r); }
+  // Alt sur duvarı (7. satir, kapida 5. sutun acik)
+  for (const c of [3, 4, 6, 7]) add(c, 7);
+  // Orta kule (3x3, sutun 4-6, satir 4-6)
+  for (let r = 4; r <= 6; r++) for (let c = 4; c <= 6; c++) add(c, r);
+  return out;
 }
 
 // Deterministik (seeded) rastgele sayı üretici: aynı seviye her zaman
@@ -667,6 +832,8 @@ function modeRandomShape(mode: GameMode, levelIndex: number, seedOffset = 0): Ar
         { w: 4, h: 3, cells: tShape() },
       ];
       break;
+    case "fantastic":
+      return fantasticShape();
     default:
       return randomShape(levelIndex, seedOffset);
   }
@@ -786,8 +953,8 @@ export class Game {
   private pops: Array<{ x: number; y: number; life: number; max: number; symbol: string; open: boolean }> = [];
   private time = 0;
   private score = 0;
-  private modeScores: Record<GameMode, number> = { classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0, viking: 0, egypt: 0, steppe: 0 };
-  private modeLevels: Record<GameMode, number> = { classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0, viking: 0, egypt: 0, steppe: 0 };
+  private modeScores: Record<GameMode, number> = { classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0, viking: 0, egypt: 0, steppe: 0, fantastic: 0 };
+  private modeLevels: Record<GameMode, number> = { classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0, viking: 0, egypt: 0, steppe: 0, fantastic: 0 };
   private combo = 0;
   private comboTimer = 0;
   private fates: string[] = [];
@@ -1042,7 +1209,7 @@ export class Game {
         name = diff < LEVELS.length ? LEVELS[diff].name : `Rastgele #${diff + 1}`;
       } else {
         cells = modeRandomShape(this.gameMode, diff, Math.floor(Math.random() * 100000) + 1);
-        const modeNames: Record<string, string> = { zen: "Zen", race: "Yarış", endless: "Kolay", viking: "Viking", egypt: "Mısır", steppe: "Bozkır" };
+        const modeNames: Record<string, string> = { zen: "Zen", race: "Yarış", endless: "Kolay", viking: "Viking", egypt: "Mısır", steppe: "Bozkır", fantastic: "Fantastik" };
         name = `${modeNames[this.gameMode] ?? this.gameMode} #${diff + 1}`;
       }
       const special = this.specialArt();
@@ -1092,7 +1259,7 @@ export class Game {
       layers = [cells.slice(), rect(4, 9, 1, 6), rect(5, 8, 2, 5), rect(6, 7, 3, 4), [[6, 3]]];
     } else {
       // Moda gore katman derinligi: zen/yarisi/bulmaca icin 2, bozkir 2, kolay/misir 3, klasik/viking 4.
-      const maxLayers = this.gameMode === "zen" ? 2 : this.gameMode === "race" ? 2 : this.gameMode === "puzzle" ? 2 : this.gameMode === "steppe" ? 2 : this.gameMode === "egypt" ? 3 : this.gameMode === "endless" ? 3 : 4;
+      const maxLayers = this.gameMode === "zen" ? 2 : this.gameMode === "race" ? 2 : this.gameMode === "puzzle" ? 2 : this.gameMode === "steppe" ? 2 : this.gameMode === "egypt" ? 3 : this.gameMode === "endless" ? 3 : this.gameMode === "fantastic" ? 4 : 4;
       const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
       const coreDepth = Math.min(maxLayers, diff >= 49 ? 4 : diff >= 9 ? 3 : 2);
       const cMn = Math.max(0, Math.floor((cols + 1) / 3));
@@ -2876,6 +3043,78 @@ export class Game {
     c.restore();
   }
 
+  /** Fantastik modu: arka planda yildizli gece, ay, yuzen kale adasi, aurora. */
+  private drawFantastic(c: CanvasRenderingContext2D): void {
+    if (this.gameMode !== "fantastic") return;
+    c.save();
+
+    // Yildizlar (pariltili)
+    c.fillStyle = "#ffffff";
+    for (let i = 0; i < 42; i++) {
+      const sx = (i * 97 % 690) + 15;
+      const sy = (i * 53 % 380) + 25;
+      const tw = 0.3 + 0.7 * Math.abs(Math.sin(this.time * 0.5 + i));
+      c.globalAlpha = 0.16 * tw;
+      c.beginPath();
+      c.arc(sx, sy, 1 + (i % 3) * 0.5, 0, Math.PI * 2);
+      c.fill();
+    }
+    c.globalAlpha = 1;
+
+    // Hilal ay (sag ust)
+    const mx = CANVAS_W * 0.72, my = CANVAS_H * 0.15, mr = 58;
+    const mg = c.createRadialGradient(mx, my, 8, mx, my, mr * 2.2);
+    mg.addColorStop(0, "rgba(230,220,255,0.3)");
+    mg.addColorStop(1, "rgba(230,220,255,0)");
+    c.fillStyle = mg;
+    c.beginPath(); c.arc(mx, my, mr * 2.2, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 0.32;
+    c.fillStyle = "#e8e0f5";
+    c.beginPath(); c.arc(mx, my, mr * 0.55, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#1a1410";
+    c.beginPath(); c.arc(mx - mr * 0.28, my - mr * 0.12, mr * 0.5, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 1;
+
+    // Yuzen kale adasi (sola orta)
+    const ix = CANVAS_W * 0.28, iy = CANVAS_H * 0.4;
+    c.fillStyle = "rgba(90,70,130,0.16)";
+    c.beginPath();
+    c.moveTo(ix - 85, iy);
+    c.lineTo(ix + 85, iy);
+    c.lineTo(ix + 32, iy + 55);
+    c.lineTo(ix - 18, iy + 44);
+    c.closePath();
+    c.fill();
+    c.fillStyle = "rgba(130,105,175,0.2)";
+    for (const [tx, th] of [[-52, 42], [-8, 60], [42, 48]] as Array<[number, number]>) {
+      c.fillRect(ix + tx - 9, iy - th, 18, th);
+      c.fillRect(ix + tx - 13, iy - th - 7, 26, 7);
+    }
+
+    // Buyu aurorası (renkli bant)
+    const aurora = c.createLinearGradient(0, 0, CANVAS_W, 0);
+    aurora.addColorStop(0, "rgba(120,80,200,0)");
+    aurora.addColorStop(0.5, "rgba(150,100,220,0.08)");
+    aurora.addColorStop(1, "rgba(80,150,200,0)");
+    c.fillStyle = aurora;
+    c.fillRect(0, CANVAS_H * 0.08, CANVAS_W, CANVAS_H * 0.22);
+
+    // Yuzen buyu toplari
+    for (let i = 0; i < 6; i++) {
+      const ox = CANVAS_W * (0.14 + i * 0.15);
+      const oy = CANVAS_H * 0.52 + Math.sin(this.time * 0.6 + i * 1.3) * 30;
+      c.globalAlpha = 0.12 + 0.06 * Math.sin(this.time + i);
+      const og = c.createRadialGradient(ox, oy, 2, ox, oy, 22);
+      og.addColorStop(0, "rgba(180,140,255,0.55)");
+      og.addColorStop(1, "rgba(180,140,255,0)");
+      c.fillStyle = og;
+      c.beginPath(); c.arc(ox, oy, 22, 0, Math.PI * 2); c.fill();
+    }
+    c.globalAlpha = 1;
+
+    c.restore();
+  }
+
   private render(): void {
     const c = this.ctx;
     const def = this.level();
@@ -2892,6 +3131,8 @@ export class Game {
     this.drawPyramids(c);
     // Bozkır modu: arka planda cayir + gunes + yari
     this.drawSteppe(c);
+    // Fantastik modu: arka planda gece + ay + yuzen kale
+    this.drawFantastic(c);
     // Ambient dust: ucusan transparan tanecikler
     for (const d of this.dustParticles) {
       c.globalAlpha = d.alpha * (0.5 + 0.5 * Math.sin(this.time * 0.8 + d.ph));
@@ -3127,7 +3368,7 @@ export class Game {
 
     // Baslik: minimal ust bilgi
     c.textAlign = "center";
-    const modeNames: Record<string, string> = { classic: "Klasik", zen: "Zen", race: "Yarış", puzzle: "Bulmaca", endless: "Kolay", viking: "Viking", egypt: "Mısır", steppe: "Bozkır" };
+    const modeNames: Record<string, string> = { classic: "Klasik", zen: "Zen", race: "Yarış", puzzle: "Bulmaca", endless: "Kolay", viking: "Viking", egypt: "Mısır", steppe: "Bozkır", fantastic: "Fantastik" };
     // Seviye + mod
     const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
     c.font = "bold 13px Georgia";
@@ -3316,6 +3557,10 @@ export class Game {
         const spec = steppeFaceSpec(pp.symbol);
         const gid = spec.type === "glyph" ? spec.glyph : "kurt";
         strokeSteppe(c, gid, pp.x, pp.y, 15, 2.5, tileColor(pp.symbol));
+      } else if (this.gameMode === "fantastic") {
+        const spec = fantasticFaceSpec(pp.symbol);
+        const gid = spec.type === "glyph" ? spec.glyph : "magiccircle";
+        strokeFantastic(c, gid, pp.x, pp.y, 15, 2.5, tileColor(pp.symbol));
       } else {
         c.fillStyle = tileColor(pp.symbol);
         c.font = "bold 30px " + CJK_FONT;
@@ -3506,6 +3751,22 @@ export class Game {
           const spec = steppeFaceSpec(vt.symbol);
           const gid = spec.type === "glyph" ? spec.glyph : "kurt";
           strokeSteppe(c, gid, 0, 0, sz * 0.42, 2, "#e8d8b8");
+        } else if (this.gameMode === "fantastic") {
+          const fg = c.createLinearGradient(-sz/2, -sz*0.7, sz/2, sz*0.7);
+          fg.addColorStop(0, "#4a3a72");
+          fg.addColorStop(1, "#2a1f4a");
+          c.fillStyle = fg;
+          c.beginPath();
+          c.roundRect(-sz/2, -sz*0.7, sz, sz*1.4, R);
+          c.fill();
+          c.strokeStyle = "#1e1632";
+          c.lineWidth = 1.5;
+          c.beginPath();
+          c.roundRect(-sz/2, -sz*0.7, sz, sz*1.4, R);
+          c.stroke();
+          const spec = fantasticFaceSpec(vt.symbol);
+          const gid = spec.type === "glyph" ? spec.glyph : "magiccircle";
+          strokeFantastic(c, gid, 0, 0, sz * 0.42, 2, "#e6d4f5");
         } else {
           const fg = c.createLinearGradient(-sz/2, -sz*0.7, sz/2, sz*0.7);
           fg.addColorStop(0, "#faf4e6");
@@ -3669,6 +3930,10 @@ export class Game {
     }
     if (this.gameMode === "steppe") {
       this.paintFaceSteppe(m, kind, open, w, h);
+      return;
+    }
+    if (this.gameMode === "fantastic") {
+      this.paintFaceFantastic(m, kind, open, w, h);
       return;
     }
     const R = Math.max(4, Math.round(w * 0.125));
@@ -4262,6 +4527,114 @@ export class Game {
         const mx = px + pw - 12, my = py + 12, mr = 6;
         if (spec.marker === "flower") {
           m.fillStyle = "#d8607a";
+          for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2 - Math.PI / 2; m.beginPath(); m.arc(mx + Math.cos(a) * mr * 0.7, my + Math.sin(a) * mr * 0.7, mr * 0.5, 0, Math.PI * 2); m.fill(); }
+          m.fillStyle = "#ffd75e"; m.beginPath(); m.arc(mx, my, mr * 0.45, 0, Math.PI * 2); m.fill();
+        } else {
+          m.strokeStyle = "#e0b040"; m.lineWidth = 1.5;
+          m.beginPath(); m.arc(mx, my, mr * 0.45, 0, Math.PI * 2); m.stroke();
+          for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; m.beginPath(); m.moveTo(mx + Math.cos(a) * mr * 0.55, my + Math.sin(a) * mr * 0.55); m.lineTo(mx + Math.cos(a) * mr, my + Math.sin(a) * mr); m.stroke(); }
+        }
+      }
+    }
+  }
+
+  /** Fantastik yuzu: karanlik buyu tas + isikli fantastik sembol (parlama). */
+  private paintFaceFantastic(m: CanvasRenderingContext2D, kind: string, open: boolean, w: number, h: number): void {
+    const R = Math.max(4, Math.round(w * 0.125));
+    // ---- Koyu buyu tasi (indigo/mor) ----
+    const bg = m.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, open ? "#4a3a72" : "#332648");
+    bg.addColorStop(0.5, open ? "#382a5e" : "#281d3e");
+    bg.addColorStop(1, open ? "#2a1f4a" : "#1e1632");
+    m.fillStyle = bg;
+    m.beginPath();
+    m.roundRect(0, 0, w, h, R);
+    m.fill();
+    // Ince buyu damari (rastgele cizgiler)
+    let seed = kind.charCodeAt(0) * 31 + kind.charCodeAt(kind.length - 1) * 7;
+    const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    m.save();
+    m.beginPath();
+    m.roundRect(1, 1, w - 2, h - 2, R - 1);
+    m.clip();
+    m.globalAlpha = 0.08;
+    for (let i = 0; i < 8; i++) {
+      const y0 = (h / 8) * i + rnd() * 4;
+      m.strokeStyle = i % 2 ? "#8a6fc0" : "#1a1230";
+      m.lineWidth = 0.5 + rnd() * 0.6;
+      m.beginPath();
+      m.moveTo(-2, y0);
+      const step = (w + 4) / 3;
+      for (let x = 0; x < w + 4; x += step) {
+        m.quadraticCurveTo(x + step / 2, y0 + (rnd() - 0.5) * 4, x + step, y0 + (rnd() - 0.5) * 3);
+      }
+      m.stroke();
+    }
+    m.restore();
+    // ---- Ick cekirde ----
+    const px = w * 0.09, py = h * 0.075, pw = w - px * 2, ph = h - py * 2, pR = Math.max(3, R - 2);
+    m.fillStyle = "rgba(0,0,0,0.3)";
+    m.beginPath(); m.roundRect(px + 1, py + 1.4, pw, ph, pR); m.fill();
+    const pg = m.createLinearGradient(0, py, 0, py + ph);
+    pg.addColorStop(0, open ? "#3d2f66" : "#2b2044");
+    pg.addColorStop(1, open ? "#2a1f4c" : "#1d1532");
+    m.fillStyle = pg;
+    m.beginPath(); m.roundRect(px, py, pw, ph, pR); m.fill();
+    m.strokeStyle = "rgba(0,0,0,0.55)"; m.lineWidth = 1.5;
+    m.beginPath(); m.roundRect(px, py, pw, ph, pR); m.stroke();
+    m.strokeStyle = "rgba(180,150,255,0.22)"; m.lineWidth = 0.8;
+    m.beginPath(); m.roundRect(px + 1, py + 1, pw - 2, ph - 2, pR - 1); m.stroke();
+
+    // ---- Buyu cizim helper'i (parlama + ana) ----
+    const carve = (gid: string, gx: number, gy: number, size: number, color: string) => {
+      m.save();
+      m.shadowColor = "rgba(170,130,255,0.7)";
+      m.shadowBlur = 7;
+      strokeFantastic(m, gid, gx, gy, size, Math.max(2.2, size * 0.16), color);
+      m.restore();
+    };
+
+    if (!open) {
+      // Kapali tas: merkezde buyu halkasi
+      carve("magiccircle", w / 2, h / 2, h * 0.15, "rgba(200,170,255,0.5)");
+      return;
+    }
+
+    const spec = fantasticFaceSpec(kind);
+    const cx = w / 2, cy = h / 2;
+
+    if (spec.type === "count") {
+      const fx = w * 0.36, fy = h * 0.32;
+      if (spec.suit === "c") {
+        // Daire: kucuk buyu toplari (altin)
+        const n = spec.n;
+        const r = n === 1 ? fy * 0.5 : n === 2 ? fy * 0.36 : n === 3 ? fy * 0.3 : n === 4 ? fy * 0.27 : fy * 0.24;
+        for (const [dx, dy] of DOT_POS[n]) carve("orb_small", cx + dx * fx, cy + dy * fy, r, "#e8c860");
+      } else if (spec.suit === "b") {
+        // Bambu: kucuk kristaller (yesil)
+        const n = spec.n;
+        const sz = n === 1 ? fy * 0.6 : fy * 0.4;
+        for (const [dx, dy] of DOT_POS[n]) carve("crystal_small", cx + dx * fx, cy + dy * fy, sz, "#7fd8a0");
+      } else {
+        // Karakter: buyuk sayi + ustte yildiz (mor)
+        carve("sparkle_small", cx, py + ph * 0.16, h * 0.07, "#c9a0e8");
+        const num = String(spec.n);
+        m.font = "bold " + Math.round(h * 0.5) + "px Georgia";
+        m.textAlign = "center"; m.textBaseline = "middle";
+        m.save();
+        m.shadowColor = "rgba(170,130,255,0.7)"; m.shadowBlur = 7;
+        m.fillStyle = "#e0b8f0";
+        m.fillText(num, cx, cy + h * 0.1);
+        m.restore();
+      }
+    } else {
+      // Tek buyuk sembol
+      carve(spec.glyph, cx, cy, h * 0.3, spec.color);
+      // Cornel grup isareti (cicek/mevsim)
+      if (spec.marker) {
+        const mx = px + pw - 12, my = py + 12, mr = 6;
+        if (spec.marker === "flower") {
+          m.fillStyle = "#e878a0";
           for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2 - Math.PI / 2; m.beginPath(); m.arc(mx + Math.cos(a) * mr * 0.7, my + Math.sin(a) * mr * 0.7, mr * 0.5, 0, Math.PI * 2); m.fill(); }
           m.fillStyle = "#ffd75e"; m.beginPath(); m.arc(mx, my, mr * 0.45, 0, Math.PI * 2); m.fill();
         } else {

@@ -10,6 +10,7 @@ const MODES: Array<{ id: GameMode; name: string; icon: string; desc: string }> =
   { id: "viking", name: "Viking", icon: "🛡️", desc: "Geniş tahta, derin katmanlar, zorlu meydan" },
   { id: "egypt", name: "Mısır", icon: "🏺", desc: "Piramit dizimi, orta derinlik" },
   { id: "steppe", name: "Bozkır", icon: "🐎", desc: "Geniş alçak tahta, rahat oyun" },
+  { id: "fantastic", name: "Fantastik", icon: "🐉", desc: "Kale dizimi, ejder & büyülü tahta" },
 ];
 
 export default function App() {
