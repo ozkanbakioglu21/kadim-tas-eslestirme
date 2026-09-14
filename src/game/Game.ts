@@ -71,8 +71,8 @@ const RUNES = [
 // Standart mahjong seti (144 tas):
 //   Sayilar (108): bambu b1-b9, daire c1-c9, karakter w1-w9 (her turunden 4 adet)
 //   Onur (28):     ruzgarlar E/S/W/N, ejderhalar DR/DG/DW (her birinden 4 adet)
-//   Bonus (8):     cicekler f1-f4, mevsimler s1-s4 (cicekler aralarinda,
-//                  mevsimler aralarinda eslesir)
+//   Bonus (8):     cicekler (f1, f2) ve mevsimler (s1, s2) — her sembol
+//                  yalnizca ayni sekille eslesir (begeni kurali yok).
 const NUM_CH = ["一", "二", "三", "四", "五", "六", "七", "八", "九"];
 const WIND_CH: Record<string, string> = { E: "東", S: "南", W: "西", N: "北" };
 const DRAGON_CH: Record<string, string> = { DR: "中", DG: "發", DW: "白" };
@@ -114,8 +114,7 @@ function faceLabel(kind: string): string {
 }
 
 function matchKey(kind: string): string {
-  if (kind[0] === "f") return "flower";
-  if (kind[0] === "s") return "season";
+  // Begeni kurali yok: yalnizca ayni sekil (ayni sembol) eslesir.
   return kind;
 }
 
@@ -131,8 +130,8 @@ function buildPoolPairs(): Array<[string, string]> {
     pairs.push([k, k]);
     pairs.push([k, k]);
   }
-  pairs.push(["f1", "f2"], ["f3", "f4"]);
-  pairs.push(["s1", "s2"], ["s3", "s4"]);
+  pairs.push(["f1", "f1"], ["f2", "f2"]);
+  pairs.push(["s1", "s1"], ["s2", "s2"]);
   return pairs;
 }
 
