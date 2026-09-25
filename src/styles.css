@@ -941,3 +941,72 @@ body,
   letter-spacing: 0.5px;
   animation: fadeIn 0.8s 0.2s ease both;
 }
+
+/* ---- Motto (oyun basindaki ara sayfa) ---- */
+.motto-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px 28px;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(60, 40, 90, 0.55), transparent 60%),
+    linear-gradient(160deg, #0a1a24 0%, #14202e 45%, #1a1430 100%);
+  cursor: pointer;
+  overflow: hidden;
+  animation: splashIn 0.5s ease both;
+}
+.motto-mode {
+  font-size: 14px;
+  font-weight: 700;
+  color: #9db4c8;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  animation: fadeIn 0.6s ease both;
+}
+.motto-quote {
+  position: relative;
+  max-width: 92%;
+  font-size: clamp(20px, 5.4vw, 30px);
+  font-weight: 600;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: #f0e6d2;
+  line-height: 1.5;
+  text-align: center;
+  letter-spacing: 0.3px;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.5);
+  animation: mottoIn 0.9s cubic-bezier(0.2, 1, 0.4, 1) both;
+}
+@keyframes mottoIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.motto-bar {
+  width: min(60%, 260px);
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+.motto-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffd75e, #e8a93e);
+  animation: mottoBar 5s linear forwards;
+}
+@keyframes mottoBar { from { width: 100%; } to { width: 0%; } }
+.motto-hint {
+  position: absolute;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  right: 0;
+  font-size: 12px;
+  color: #9db4c8;
+  opacity: 0.7;
+  letter-spacing: 1px;
+  text-align: center;
+}

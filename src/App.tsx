@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, FormEvent } from "react";
 import { Game, HudState, GameMode } from "./game/Game";
+import { QUOTES } from "./quotes";
 
 const MODES: Array<{ id: GameMode; name: string; icon: string; desc: string }> = [
   { id: "standard", name: "Standart", icon: "🀄", desc: "Klasik kaplumbağa 144, saf mahjong" },
@@ -53,7 +54,7 @@ export default function App() {
   const [muted, setMuted] = useState(false);
   const [mode, setMode] = useState<GameMode>("classic");
   const [showMenu, setShowMenu] = useState(true);
-  const [stage, setStage] = useState<"splash" | "register" | "menu">("splash");
+  const [stage, setStage] = useState<"splash" | "register" | "motto" | "menu">("splash");
   const stageRef = useRef(stage);
   useEffect(() => {
     stageRef.current = stage;
@@ -62,7 +63,10 @@ export default function App() {
   const [name, setName] = useState("");
   const [pass, setPass] = useState("");
   const [formErr, setFormErr] = useState("");
+  const [mottoText, setMottoText] = useState("");
   const splashDone = useRef(false);
+  const mottoDone = useRef(false);
+  const lastMotto = useRef(-1);
 
   const afterSplash = useCallback(() => {
     if (splashDone.current) return;
@@ -75,6 +79,19 @@ export default function App() {
     const t = setTimeout(afterSplash, 4200);
     return () => clearTimeout(t);
   }, [stage, afterSplash]);
+
+  const afterMotto = useCallback(() => {
+    if (mottoDone.current) return;
+    mottoDone.current = true;
+    setStage("menu");
+    setShowMenu(false);
+  }, []);
+
+  useEffect(() => {
+    if (stage !== "motto") return;
+    const t = setTimeout(afterMotto, 5000);
+    return () => clearTimeout(t);
+  }, [stage, afterMotto]);
 
   const submitRegister = (e: FormEvent) => {
     e.preventDefault();
@@ -120,7 +137,7 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      game.stop();
+      (gameRef.current ?? game).stop();
       gameRef.current = null;
       window.removeEventListener("keydown", onKey);
     };
@@ -128,8 +145,27 @@ export default function App() {
 
   const selectMode = (selectedMode: GameMode) => {
     setMode(selectedMode);
+    // Oyun durdurulmustu (menu'ye donulduyse) — yeniden olustur
+    if (!gameRef.current) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const game = new Game(canvas);
+        game.onHud = setHud;
+        setMuted(game.isMuted());
+        game.start();
+        gameRef.current = game;
+      }
+    }
     gameRef.current?.setMode(selectedMode);
-    setShowMenu(false);
+    // Rastgele ilham cümlesi (öncekiyle aynı olmasın)
+    let idx = Math.floor(Math.random() * QUOTES.length);
+    if (QUOTES.length > 1 && idx === lastMotto.current) {
+      idx = (idx + 1) % QUOTES.length;
+    }
+    lastMotto.current = idx;
+    setMottoText(QUOTES[idx]);
+    mottoDone.current = false;
+    setStage("motto");
   };
 
   const goToMenu = () => {
@@ -320,6 +356,14 @@ export default function App() {
                 <button className="register-btn" type="submit">Oyuna Başla</button>
               </form>
             </div>
+          </div>
+        )}
+        {stage === "motto" && (
+          <div className="motto-overlay" onClick={afterMotto}>
+            <div className="motto-mode">🀄 {MODES.find((m) => m.id === mode)?.name}</div>
+            <div className="motto-quote">“{mottoText}”</div>
+            <div className="motto-bar"><div className="motto-bar-fill" /></div>
+            <div className="motto-hint">Oyuna geçmek için dokun</div>
           </div>
         )}
       </div>
