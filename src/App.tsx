@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, FormEvent } from "react";
 import { Game, HudState, GameMode } from "./game/Game";
 
 const MODES: Array<{ id: GameMode; name: string; icon: string; desc: string }> = [
@@ -14,6 +14,38 @@ const MODES: Array<{ id: GameMode; name: string; icon: string; desc: string }> =
   { id: "fantastic", name: "Fantastik", icon: "🐉", desc: "Kale dizimi, ejder & büyülü tahta" },
 ];
 
+type Player = { name: string; pass: string };
+const PLAYER_KEY = "kadm_player_v1";
+
+function loadPlayer(): Player | null {
+  try {
+    const raw = localStorage.getItem(PLAYER_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (p && typeof p.name === "string" && typeof p.pass === "string" && p.name.length >= 2) return p;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function hashPass(p: string): string {
+  let h = 5381;
+  for (let i = 0; i < p.length; i++) h = ((h << 5) + h + p.charCodeAt(i)) >>> 0;
+  return "h" + h.toString(16);
+}
+
+// Acilis sayfasinda dolasan oyun figurleri: mevsimler, cicekler, ruzgarlar,
+// ejderhalar, sayilar + mod emojileri.
+const SPLASH_FIGS: Array<{ ch?: string; color?: string; emoji?: string }> = [
+  { ch: "春", color: "#b8860b" }, { ch: "夏", color: "#b8860b" }, { ch: "秋", color: "#b8860b" }, { ch: "冬", color: "#b8860b" },
+  { ch: "梅", color: "#c2185b" }, { ch: "蘭", color: "#c2185b" }, { ch: "菊", color: "#c2185b" }, { ch: "竹", color: "#2e8b57" },
+  { ch: "東", color: "#203a63" }, { ch: "南", color: "#203a63" }, { ch: "西", color: "#203a63" }, { ch: "北", color: "#203a63" },
+  { ch: "中", color: "#c0392b" }, { ch: "發", color: "#2e8b57" }, { ch: "白", color: "#3b6ea5" },
+  { ch: "一", color: "#1b5faa" }, { ch: "九", color: "#c0392b" }, { ch: "五", color: "#2e8b57" },
+  { emoji: "🀄" }, { emoji: "🐉" }, { emoji: "🏮" }, { emoji: "✨" },
+];
+
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<Game | null>(null);
@@ -21,6 +53,50 @@ export default function App() {
   const [muted, setMuted] = useState(false);
   const [mode, setMode] = useState<GameMode>("classic");
   const [showMenu, setShowMenu] = useState(true);
+  const [stage, setStage] = useState<"splash" | "register" | "menu">("splash");
+  const stageRef = useRef(stage);
+  useEffect(() => {
+    stageRef.current = stage;
+  }, [stage]);
+  const [player, setPlayer] = useState<Player | null>(() => loadPlayer());
+  const [name, setName] = useState("");
+  const [pass, setPass] = useState("");
+  const [formErr, setFormErr] = useState("");
+  const splashDone = useRef(false);
+
+  const afterSplash = useCallback(() => {
+    if (splashDone.current) return;
+    splashDone.current = true;
+    setStage(player ? "menu" : "register");
+  }, [player]);
+
+  useEffect(() => {
+    if (stage !== "splash") return;
+    const t = setTimeout(afterSplash, 4200);
+    return () => clearTimeout(t);
+  }, [stage, afterSplash]);
+
+  const submitRegister = (e: FormEvent) => {
+    e.preventDefault();
+    const n = name.trim();
+    if (n.length < 2) {
+      setFormErr("Oyuncu adı en az 2 karakter olmalı.");
+      return;
+    }
+    if (pass.length < 4) {
+      setFormErr("Şifre en az 4 karakter olmalı.");
+      return;
+    }
+    const p: Player = { name: n, pass: hashPass(pass) };
+    try {
+      localStorage.setItem(PLAYER_KEY, JSON.stringify(p));
+    } catch {
+      // depolama yoksa bile oturum icinde devam et
+    }
+    setPlayer(p);
+    setFormErr("");
+    setStage("menu");
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -32,6 +108,9 @@ export default function App() {
     game.start();
 
     const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      if (stageRef.current !== "menu") return;
       if (e.key === "n" || e.key === "N") game.newGame();
       else if (e.key === "u" || e.key === "U") game.undo();
       else if (e.key === "l" || e.key === "L") game.nextLevel();
@@ -111,7 +190,7 @@ export default function App() {
             {Math.ceil(hud.raceTimeLeft)}
           </div>
         )}
-        {showMenu && (
+        {stage === "menu" && showMenu && (
           <div className="mode-menu-overlay">
             <div className="menu-fx" aria-hidden="true">
               {Array.from({ length: 16 }).map((_, i) => (
@@ -132,6 +211,7 @@ export default function App() {
             </div>
             <div className="mode-title">Kadim Taş</div>
             <div className="mode-subtitle">Eşleştirme</div>
+            {player && <div className="menu-player">🀄 Oyuncu: {player.name}</div>}
             <div className="mode-grid">
               {MODES.map((m, i) => (
                 <button key={m.id} className="mode-card" style={{ animationDelay: `${(0.06 * i).toFixed(2)}s` }} onClick={() => selectMode(m.id)}>
@@ -157,6 +237,88 @@ export default function App() {
               <button className="btn" onClick={() => (mode === "classic" ? gameRef.current?.nextLevel() : gameRef.current?.newGame())}>Sonraki Seviye</button>
               <button className="btn ghost" onClick={() => gameRef.current?.newGame()}>Tekrar Oyna</button>
               <button className="btn ghost" onClick={() => goToMenu()}>Mod Değiştir</button>
+            </div>
+          </div>
+        )}
+        {stage === "splash" && (
+          <div className="splash-overlay" onClick={afterSplash}>
+            <div className="splash-figs" aria-hidden="true">
+              {SPLASH_FIGS.map((f, i) =>
+                f.emoji ? (
+                  <span
+                    key={i}
+                    className="splash-fig"
+                    style={{
+                      left: `${(i * 53 + 11) % 100}%`,
+                      top: `${(i * 37 + 17) % 100}%`,
+                      fontSize: `${30 + (i % 5) * 8}px`,
+                      animationDelay: `${((i * 0.71) % 5).toFixed(2)}s`,
+                      animationDuration: `${7 + (i % 6)}s`,
+                    }}
+                  >
+                    {f.emoji}
+                  </span>
+                ) : (
+                  (() => {
+                    const sz = 34 + (i % 4) * 12;
+                    return (
+                      <span
+                        key={i}
+                        className="splash-tile"
+                        style={{
+                          left: `${(i * 41 + 13) % 100}%`,
+                          top: `${(i * 53 + 29) % 100}%`,
+                          width: `${sz}px`,
+                          height: `${Math.round(sz * 1.4)}px`,
+                          fontSize: `${Math.round(sz * 0.62)}px`,
+                          color: f.color,
+                          animationDelay: `${((i * 0.71) % 5).toFixed(2)}s`,
+                          animationDuration: `${7 + (i % 6)}s`,
+                        }}
+                      >
+                        {f.ch}
+                      </span>
+                    );
+                  })()
+                )
+              )}
+            </div>
+            <div className="splash-title">Kadim Taş</div>
+            <div className="splash-sub">Eşleştirme</div>
+            <div className="splash-tag">144 taş · 10 mod · kadim figürler</div>
+            <div className="splash-hint">Devam için dokun</div>
+          </div>
+        )}
+        {stage === "register" && (
+          <div className="register-overlay">
+            <div className="register-card">
+              <div className="register-title">Oyuncu Oluştur</div>
+              <div className="register-sub">Oyuna başlamak için adını ve şifreni belirle.</div>
+              <form onSubmit={submitRegister}>
+                <label className="register-label" htmlFor="reg-name">Oyuncu Adı</label>
+                <input
+                  id="reg-name"
+                  className="register-input"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Örn: TasUstasi"
+                  maxLength={20}
+                  autoComplete="off"
+                  autoFocus
+                />
+                <label className="register-label" htmlFor="reg-pass">Şifre</label>
+                <input
+                  id="reg-pass"
+                  className="register-input"
+                  type="password"
+                  value={pass}
+                  onChange={(e) => setPass(e.target.value)}
+                  placeholder="En az 4 karakter"
+                  maxLength={40}
+                />
+                <div className="register-err">{formErr}</div>
+                <button className="register-btn" type="submit">Oyuna Başla</button>
+              </form>
             </div>
           </div>
         )}

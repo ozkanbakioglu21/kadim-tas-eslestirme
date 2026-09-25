@@ -761,3 +761,183 @@ body,
   color: #ffd75e;
   font-family: Georgia, serif;
 }
+
+/* ---- Splash (acilis sayfası) ---- */
+.splash-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(60, 40, 90, 0.55), transparent 60%),
+    linear-gradient(160deg, #0a1a24 0%, #14202e 45%, #1a1430 100%);
+  cursor: pointer;
+  overflow: hidden;
+  animation: splashIn 0.7s ease both;
+}
+@keyframes splashIn { from { opacity: 0; } to { opacity: 1; } }
+.splash-figs { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.splash-tile {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #f7efdd 0%, #e6d8b8 100%);
+  border-radius: 12%;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45), inset 0 -4px 0 rgba(120, 90, 40, 0.25);
+  font-family: 'Segoe UI','Microsoft YaHei','Noto Sans CJK SC','Noto Sans SC',serif;
+  font-weight: 700;
+  opacity: 0;
+  animation: fxFloat linear infinite;
+}
+.splash-fig {
+  position: absolute;
+  opacity: 0;
+  filter: drop-shadow(0 0 12px rgba(255, 200, 90, 0.3));
+  animation: fxFloat linear infinite;
+}
+.splash-title {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(44px, 12vw, 72px);
+  font-weight: 800;
+  background: linear-gradient(90deg, #ffd75e, #ff9d5e, #ffe9a8, #ffd75e);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-align: center;
+  line-height: 1.1;
+  filter: drop-shadow(0 4px 18px rgba(255, 180, 60, 0.35));
+  animation: titleShine 4s linear infinite, splashZoom 0.9s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+@keyframes splashZoom { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.splash-sub {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(22px, 6vw, 38px);
+  color: #c89050;
+  font-weight: 600;
+  letter-spacing: 4px;
+  text-align: center;
+  animation: fadeIn 0.9s 0.25s ease both;
+}
+.splash-tag {
+  position: relative;
+  z-index: 1;
+  margin-top: 10px;
+  font-size: clamp(12px, 3.4vw, 15px);
+  color: #9db4c8;
+  letter-spacing: 1px;
+  text-align: center;
+  animation: fadeIn 0.9s 0.45s ease both;
+}
+.splash-hint {
+  position: absolute;
+  bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  right: 0;
+  z-index: 1;
+  text-align: center;
+  font-size: 13px;
+  color: #e8dcc0;
+  letter-spacing: 1px;
+  animation: hintPulse 1.6s ease-in-out infinite;
+}
+@keyframes hintPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.9; } }
+
+/* ---- Register (oyuncu olusturma) ---- */
+.register-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(60, 40, 90, 0.55), transparent 60%),
+    linear-gradient(160deg, #0a1a24 0%, #14202e 45%, #1a1430 100%);
+  backdrop-filter: blur(6px);
+  overflow-y: auto;
+  animation: splashIn 0.5s ease both;
+}
+.register-card {
+  width: min(100%, 360px);
+  background: rgba(8, 16, 26, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 18px;
+  padding: 26px 22px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
+  animation: cardPop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.register-card form { display: flex; flex-direction: column; gap: 10px; }
+.register-title {
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  color: #ffd75e;
+  margin-bottom: 4px;
+}
+.register-sub {
+  font-size: 13px;
+  color: #c89050;
+  text-align: center;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+.register-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #9db4c8;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.register-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: rgba(0, 0, 0, 0.35);
+  color: #f0e6d2;
+  font-size: 16px;
+}
+.register-input::placeholder { color: #6b7d8f; }
+.register-input:focus { outline: none; border-color: #ffd75e; box-shadow: 0 0 0 3px rgba(255, 215, 94, 0.15); }
+.register-err { min-height: 16px; font-size: 13px; color: #ff7b6b; text-align: center; }
+.register-btn {
+  margin-top: 4px;
+  padding: 13px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(160deg, #ffd75e, #e8a93e);
+  color: #241a08;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 8px 24px rgba(255, 200, 90, 0.25);
+}
+.register-btn:active { transform: scale(0.98); }
+
+/* Menu'de oyuncu rozeti */
+.menu-player {
+  position: relative;
+  z-index: 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffe9a8;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  padding: 5px 14px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+  animation: fadeIn 0.8s 0.2s ease both;
+}
