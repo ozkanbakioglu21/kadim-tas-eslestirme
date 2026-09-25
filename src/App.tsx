@@ -3,7 +3,7 @@ import { Game, HudState, GameMode } from "./game/Game";
 import { QUOTES } from "./quotes";
 
 const MODES: Array<{ id: GameMode; name: string; icon: string; desc: string }> = [
-  { id: "standard", name: "Standart", icon: "🀄", desc: "Klasik kaplumbağa 144, saf mahjong" },
+  { id: "standard", name: "Standart", icon: "🀄", desc: "Klasik kaplumbağa 142, saf mahjong" },
   { id: "classic", name: "Klasik", icon: "🏛️", desc: "Seviyelerle ilerle, derin katmanlar" },
   { id: "zen", name: "Zen", icon: "🧘", desc: "Küçük tahta, sınırsız rahat oyun" },
   { id: "race", name: "Yarış", icon: "⏱️", desc: "Küçük tahta, 60sn'de max skor" },
@@ -321,7 +321,7 @@ export default function App() {
             </div>
             <div className="splash-title">Kadim Taş</div>
             <div className="splash-sub">Eşleştirme</div>
-            <div className="splash-tag">144 taş · 10 mod · kadim figürler</div>
+            <div className="splash-tag">142 taş · 10 mod · kadim figürler</div>
             <div className="splash-hint">Devam için dokun</div>
           </div>
         )}

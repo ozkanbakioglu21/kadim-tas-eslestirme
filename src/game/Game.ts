@@ -93,11 +93,13 @@ const MOTTOS = [
 ];
 
 // Taht olcekleme sabitleri (tas genisligi oraninda): bosluk, katman ofseti,
-// max tas genisligi. Tum yerlesim/cerceve hesaplari bunlari kullanir.
+// SABIT tas genisligi. Tas boyutu hicbir zaman kuculmez; tahtalar bu boyuta
+// sigacak sekilde dizilir. (Guvence: hic sigmayan bir dizim oldugunda butun
+// modlarda asgari 46 korunmak uzere kuculme dongusu sakli kalir.)
 const TILE_GAP_K = 0.06;
 const LAYER_OFF_X_K = 0.09;
 const LAYER_OFF_Y_K = 0.08;
-const TILE_MAX = 110;
+const TILE_FIXED = 46;
 
 function tileColor(kind: string): string {
   if (kind[0] === "b") return "#2e8b57";
@@ -644,7 +646,7 @@ const LEVELS: Array<{ name: string; cells: Array<[number, number]>; bg: [string,
     { name: "Halka", cells: ringShape(5, 5), bg: ["#1f3a33", "#2c5448"] },
     { name: "Geniş Alan 2", cells: rowShape(7, 4), bg: ["#3a2030", "#542d45"] },
     { name: "Büyük Kare", cells: rowShape(8, 4), bg: ["#2a1f3f", "#3d2a5c"] },
-    { name: "Klasik 144", cells: turtleShape(), bg: ["#10241c", "#1c4530"] },
+    { name: "Klasik 142", cells: turtleShape(), bg: ["#10241c", "#1c4530"] },
   ];
 
 function rowShape(cols: number, rows: number): Array<[number, number]> {
@@ -1278,8 +1280,10 @@ function tower(): [number, number][] {
 }
 
 function turtleShape(): Array<[number, number]> {
-  // Klasik kaplumbaganin taban katmani (87 tas). Ust katmanlar
-  // (36 + 16 + 4 + 1) buildLayout icinde eklenir; toplam 144 tas.
+  // Klasik kaplumbaganin taban katmani (85 tas). Ust katmanlar
+  // (36 + 16 + 4 + 1) buildLayout icinde eklenir; toplam 142 tas.
+  // Orta satirin iki ucu (0,3) ve (14,3) alinir: boylece 15 sutun yerine
+  // 13 sutun kalir ve taht sabit 46px tas boyutunda guvenli bolgeye siger.
   const out: Array<[number, number]> = [];
   const rowSpan = (r: number, c0: number, c1: number) => {
     for (let c = c0; c <= c1; c++) out.push([c, r]);
@@ -1287,7 +1291,7 @@ function turtleShape(): Array<[number, number]> {
   rowSpan(0, 2, 11);
   rowSpan(1, 1, 13);
   rowSpan(2, 1, 13);
-  rowSpan(3, 0, 14);
+  rowSpan(3, 1, 13);
   rowSpan(4, 1, 13);
   rowSpan(5, 1, 13);
   rowSpan(6, 2, 11);
@@ -1348,7 +1352,7 @@ export class Game {
   private maxShuffles = 3;
   private hintIds: number[] = [];
   private audio: AudioContext | null = null;
-  private tw = TILE_MAX;
+  private tw = TILE_FIXED;
   private th = 100;
   private gap = 10;
   private flash = 0;
@@ -1595,7 +1599,7 @@ export class Game {
       let name: string;
       let fl: FantasticLayout | undefined;
       if (this.gameMode === "standard") {
-        // Saf mahjong: klasik kaplumbağa (144 tas), her yeni oyunda taze duvar.
+        // Saf mahjong: klasik kaplumbağa (142 tas), her yeni oyunda taze duvar.
         cells = turtleShape();
         name = "Standart";
       } else if (this.gameMode === "puzzle") {
@@ -1628,16 +1632,22 @@ export class Game {
     this.measureView();
     const def = this.level();
     const cells = def.cells;
-    const isTurtle = def.name === "Klasik 144" || this.gameMode === "standard";
+    const isTurtle = def.name === "Klasik 142" || this.gameMode === "standard";
 
-    let cols = 0;
-    let rows = 0;
+    let cLo = Infinity, cHi = 0, rLo = Infinity, rHi = 0;
     for (const [c, r] of cells) {
-      if (c > cols) cols = c;
-      if (r > rows) rows = r;
+      if (c < cLo) cLo = c;
+      if (c > cHi) cHi = c;
+      if (r < rLo) rLo = r;
+      if (r > rHi) rHi = r;
     }
-    this.layoutCols = cols + 1;
-    this.layoutRows = rows + 1;
+    const spanCols = Math.max(0, cHi - cLo);
+    const spanRows = Math.max(0, rHi - rLo);
+    const W = spanCols + 1, H = spanRows + 1;
+    this.layoutCols = W;
+    this.layoutRows = H;
+    this.layCol0 = cLo;
+    this.layRow0 = rLo;
 
     // Maksimum katman sayisi (tahta boyutlandirmada ofset icin) - tas boyutundan ONCE.
     // 10. seviyeden itibaren TUM modlarda bir katman daha eklenir (daha derin tahta).
@@ -1664,16 +1674,16 @@ export class Game {
     const availH = safe.B - safe.T;
     const ar = 100 / 72;
     const gp = (w: number) => Math.max(3, Math.round(w * TILE_GAP_K));
-    // Tas boyutu: yuksek katmanlar tasi sag+yukari kaydirir (ofset), efektif
-    // tahta (ofset dahil) guvenli bolgeye siginacak kadar kucult.
-    let tw = TILE_MAX;
+    // Sabit tas boyutu: hicbir zaman kuculmez. (Guvence: hic sigmayan bir
+    // dizim oldugunda 46'ya inmek uzere kuculme dongusu sakli kalir.)
+    let tw = TILE_FIXED;
     const fits = (t: number): boolean => {
       const th = Math.round(t * ar);
       const g = gp(t);
       const offX = maxLayerIdx * t * LAYER_OFF_X_K;
       const offY = maxLayerIdx * th * LAYER_OFF_Y_K;
-      const baseW = cols * (t + g) + t;
-      const baseH = rows * (th + g) + th;
+      const baseW = spanCols * (t + g) + t;
+      const baseH = spanRows * (th + g) + th;
       return baseW + offX <= availW && baseH + offY <= availH;
     };
     while (tw > 24 && !fits(tw)) tw -= 2;
@@ -1693,9 +1703,9 @@ export class Game {
       };
       let base = cells.slice();
       if (deep) {
-        // 6. katman: tepede 1 tas daha. Toplam 144 (cift) kalsin diye katman
+        // 6. katman: tepede 1 tas daha. Toplam 142 (cift) kalsin diye katman
         // altinda kalmayan taban ucundan 1 tas alinir.
-        base = base.filter(([c, r]) => !(c === 14 && r === 3));
+        base = base.filter(([c, r]) => !(c === 13 && r === 3));
       }
       layers = deep
         ? [base, rect(4, 9, 1, 6), rect(5, 8, 2, 5), rect(6, 7, 3, 4), [[6, 3]], [[6, 3]]]
@@ -1706,8 +1716,8 @@ export class Game {
         // Katmanlar ic ice alt kume (usttasin alti her zaman dolu); ciftlik
         // slots.pop() ile saglanir, boylece havada tas olmaz.
         const maxL = maxLayersCount;
-        const cx = cols / 2, cy = rows / 2;
-        const maxD = Math.max(1, Math.max(cx, cy));
+        const cx = (cLo + cHi) / 2, cy = (rLo + rHi) / 2;
+        const maxD = Math.max(1, Math.max(cHi - cx, cy - rLo));
         const depthOf = (c: number, r: number) => {
           const d = Math.max(Math.abs(c - cx), Math.abs(r - cy));
           const t = d / maxD;
@@ -1723,12 +1733,16 @@ export class Game {
         const coreDepth = maxLayersCount;
         // Deep (10+ seviye) tahtalarda cekirdek merkez yarisi kadar genisler,
         // boylece ek katman rasgele dizimde de gorunur kalir.
-        const cMn = deep ? Math.max(0, Math.floor((cols + 1) / 4)) : Math.max(0, Math.floor((cols + 1) / 3));
-        const cMx = deep ? Math.min(cols, cols - Math.floor((cols + 1) / 4)) : Math.min(cols, cols - 1 - Math.floor((cols + 1) / 3));
-        const rMn = deep ? Math.max(0, Math.floor((rows + 1) / 4)) : Math.max(0, Math.floor((rows + 1) / 3));
-        const rMx = deep ? Math.min(rows, rows - Math.floor((rows + 1) / 4)) : Math.min(rows, rows - 1 - Math.floor((rows + 1) / 3));
-        const isCore = (c: number, r: number) => c >= cMn && c <= cMx && r >= rMn && r <= rMx;
-        const isRing = (c: number, r: number) => c === 0 || r === 0 || c === cols || r === rows;
+        const coreX0 = deep ? Math.floor(W / 4) : Math.floor(W / 3);
+        const coreX1 = deep ? Math.floor(W / 4) : Math.floor(W / 3) + 1;
+        const coreY0 = deep ? Math.floor(H / 4) : Math.floor(H / 3);
+        const coreY1 = deep ? Math.floor(H / 4) : Math.floor(H / 3) + 1;
+        const cCoreMn = cLo + coreX0;
+        const cCoreMx = cHi - coreX1;
+        const rCoreMn = rLo + coreY0;
+        const rCoreMx = rHi - coreY1;
+        const isCore = (c: number, r: number) => c >= cCoreMn && c <= cCoreMx && r >= rCoreMn && r <= rCoreMx;
+        const isRing = (c: number, r: number) => c === cLo || r === rLo || c === cHi || r === rHi;
         const midCount = cells.filter(([c, r]) => !isRing(c, r)).length;
         const depthOf = (c: number, r: number) => {
           if (isCore(c, r)) return coreDepth;
@@ -1748,7 +1762,7 @@ export class Game {
       if (!fl) return 0;
       switch (fl.flip) {
         case 1: return ((c + r) % 2 === 0) ? 1 : 0; // dama (180°)
-        case 2: return (c === 0 || r === 0 || c === cols || r === rows) ? 1 : 0; // cerceve (180°)
+        case 2: return (c === cLo || r === rLo || c === cHi || r === rHi) ? 1 : 0; // cerceve (180°)
         case 3: return (c % 2 === 0) ? 2 : 0; // sutunlar (ayna)
         case 4: { const h = Math.sin(c * 127.1 + r * 311.7) * 43758.5453; return (h - Math.floor(h)) < 0.3 ? 1 : 0; }
         default: return 0;
@@ -1887,6 +1901,8 @@ export class Game {
   }
   private layoutCols = 4;
   private layoutRows = 4;
+  private layCol0 = 0;
+  private layRow0 = 0;
   private maxLayerIdx = 0;
   private viewS = 0.42;
   private resizeTimer: number | null = null;
@@ -1932,7 +1948,8 @@ export class Game {
     const cols = this.layoutCols - 1;
     const rows = this.layoutRows - 1;
     const mli = this.maxLayerIdx;
-    let tw = TILE_MAX;
+    // Sabit tas boyutu (refit hic kucultmez; guvenlik dongusu ayni kalir).
+    let tw = TILE_FIXED;
     const fits = (t: number): boolean => {
       const th = Math.round(t * ar);
       const g = gp(t);
@@ -1955,8 +1972,8 @@ export class Game {
     for (const t of this.tiles) {
       const ox = t.layer * tw * LAYER_OFF_X_K;
       const oy = t.layer * -this.th * LAYER_OFF_Y_K;
-      t.sx = sx0 + t.x * (tw + this.gap) + ox;
-      t.sy = sy0 + t.y * (this.th + this.gap) + oy;
+      t.sx = sx0 + (t.x - this.layCol0) * (tw + this.gap) + ox;
+      t.sy = sy0 + (t.y - this.layRow0) * (this.th + this.gap) + oy;
     }
   }
 
@@ -1984,8 +2001,8 @@ export class Game {
     const spanY = Math.max(0, this.layoutRows - 1) * (th + gap);
     const sx0 = (safe.L + safe.R) / 2 - offX / 2 - spanX / 2;
     const sy0 = (safe.T + safe.B) / 2 + offY / 2 - spanY / 2;
-    const sx = sx0 + col * (tw + gap) + ox;
-    const sy = sy0 + row * (th + gap) + oy;
+    const sx = sx0 + (col - this.layCol0) * (tw + gap) + ox;
+    const sy = sy0 + (row - this.layRow0) * (th + gap) + oy;
     return {
       id: col * 1000 + row * 10 + layer,
       symbol,
