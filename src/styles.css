@@ -544,19 +544,40 @@ body,
 }
 
 @media (max-width: 560px) {
+  /* Ana menü: mobil uygulama hissi (dokunma dostu, 2 sutun, safe-area) */
+  .mode-menu-overlay {
+    gap: 12px;
+    padding: 18px 14px calc(env(safe-area-inset-bottom, 16px) + 16px);
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mode-title { font-size: clamp(30px, 9vw, 44px); }
+  .mode-subtitle { font-size: clamp(16px, 5vw, 24px); margin-bottom: 2px; }
+  .mode-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    max-width: 440px;
+  }
   .mode-card {
-    min-width: 100px;
-    padding: 12px 14px;
+    min-width: 0;
+    width: 100%;
+    min-height: 84px;
+    padding: 12px 10px;
+    justify-content: center;
+    border-radius: 16px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
-  .mode-icon {
-    font-size: 26px;
+  .mode-card:active {
+    transform: scale(0.96);
+    background: linear-gradient(145deg, #27485c, #1a3340);
   }
-  .mode-name {
-    font-size: 14px;
-  }
-  .race-timer {
-    font-size: 16px;
-  }
+  .mode-icon { font-size: 30px; }
+  .mode-name { font-size: 15px; }
+  .mode-desc { font-size: 10px; line-height: 1.3; }
+  .menu-tip { font-size: 11px; padding: 8px 10px; }
+  .race-timer { font-size: 16px; }
 }
 .mode-info {
   font-size: 13px;
