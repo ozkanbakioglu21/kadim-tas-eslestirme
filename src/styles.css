@@ -30,7 +30,7 @@ body,
 
 .arena {
   position: relative;
-  width: min(440px, 96vw);
+  width: min(96vw, calc((100dvh - 16px) * 9 / 16), 720px);
   aspect-ratio: 9 / 16;
   max-height: calc(100dvh - 16px);
   border-radius: 16px;
@@ -578,6 +578,29 @@ body,
   .mode-desc { font-size: 10px; line-height: 1.3; }
   .menu-tip { font-size: 11px; padding: 8px 10px; }
   .race-timer { font-size: 16px; }
+}
+/* Tablette: 2 sutun, bol dokunma hedefli menü */
+@media (min-width: 561px) and (max-width: 900px) {
+  .mode-menu-overlay { gap: 18px; }
+  .mode-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    max-width: 560px;
+  }
+  .mode-card {
+    min-width: 0;
+    width: 100%;
+    min-height: 96px;
+    padding: 18px 16px;
+    justify-content: center;
+    border-radius: 16px;
+    touch-action: manipulation;
+  }
+  .mode-icon { font-size: 36px; }
+  .mode-name { font-size: 17px; }
+  .mode-desc { font-size: 12px; line-height: 1.35; }
+  .menu-tip { font-size: 12px; }
 }
 .mode-info {
   font-size: 13px;
