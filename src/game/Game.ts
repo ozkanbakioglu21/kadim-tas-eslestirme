@@ -92,6 +92,13 @@ const MOTTOS = [
   "Her hamle bir penceredir.",
 ];
 
+// Taht olcekleme sabitleri (tas genisligi oraninda): bosluk, katman ofseti,
+// max tas genisligi. Tum yerlesim/cerceve hesaplari bunlari kullanir.
+const TILE_GAP_K = 0.1;
+const LAYER_OFF_X_K = 0.13;
+const LAYER_OFF_Y_K = 0.11;
+const TILE_MAX = 90;
+
 function tileColor(kind: string): string {
   if (kind[0] === "b") return "#2e8b57";
   if (kind[0] === "c") return "#1b5faa";
@@ -1341,7 +1348,7 @@ export class Game {
   private maxShuffles = 3;
   private hintIds: number[] = [];
   private audio: AudioContext | null = null;
-  private tw = 72;
+  private tw = TILE_MAX;
   private th = 100;
   private gap = 10;
   private flash = 0;
@@ -1652,15 +1659,15 @@ export class Game {
     const availW = safe.R - safe.L;
     const availH = safe.B - safe.T;
     const ar = 100 / 72;
-    const gp = (w: number) => Math.max(3, Math.round(w * 0.14));
+    const gp = (w: number) => Math.max(3, Math.round(w * TILE_GAP_K));
     // Tas boyutu: yuksek katmanlar tasi sag+yukari kaydirir (ofset), efektif
     // tahta (ofset dahil) guvenli bolgeye siginacak kadar kucult.
-    let tw = 72;
+    let tw = TILE_MAX;
     const fits = (t: number): boolean => {
       const th = Math.round(t * ar);
       const g = gp(t);
-      const offX = maxLayerIdx * t * 0.17;
-      const offY = maxLayerIdx * th * 0.14;
+      const offX = maxLayerIdx * t * LAYER_OFF_X_K;
+      const offY = maxLayerIdx * th * LAYER_OFF_Y_K;
       const baseW = cols * (t + g) + t;
       const baseH = rows * (th + g) + th;
       return baseW + offX <= availW && baseH + offY <= availH;
@@ -1891,7 +1898,7 @@ export class Game {
     const px = (v: number) => v / s;
     const top = Math.max(182, px(84), 150); // fate rozetleri / mode-badge alt / race-timer alt
     const bottom = Math.min(1245, CANVAS_H - px(100)); // alt metin / score-bar+action butonlari ust
-    return { L: 30, R: CANVAS_W - 30, T: top, B: Math.max(top + 300, bottom) };
+    return { L: 16, R: CANVAS_W - 16, T: top, B: Math.max(top + 300, bottom) };
   }
 
   /** Ekranda/panellerde degisiklik oldugunda mevcut tahtayi (ortadan kaldirma,
@@ -1902,16 +1909,16 @@ export class Game {
     const availW = safe.R - safe.L;
     const availH = safe.B - safe.T;
     const ar = 100 / 72;
-    const gp = (w: number) => Math.max(3, Math.round(w * 0.14));
+    const gp = (w: number) => Math.max(3, Math.round(w * TILE_GAP_K));
     const cols = this.layoutCols - 1;
     const rows = this.layoutRows - 1;
     const mli = this.maxLayerIdx;
-    let tw = 72;
+    let tw = TILE_MAX;
     const fits = (t: number): boolean => {
       const th = Math.round(t * ar);
       const g = gp(t);
-      const offX = mli * t * 0.17;
-      const offY = mli * th * 0.14;
+      const offX = mli * t * LAYER_OFF_X_K;
+      const offY = mli * th * LAYER_OFF_Y_K;
       const baseW = cols * (t + g) + t;
       const baseH = rows * (th + g) + th;
       return baseW + offX <= availW && baseH + offY <= availH;
@@ -1920,15 +1927,15 @@ export class Game {
     this.tw = tw;
     this.th = Math.round(tw * ar);
     this.gap = gp(tw);
-    const offX = mli * tw * 0.17;
-    const offY = mli * this.th * 0.14;
+    const offX = mli * tw * LAYER_OFF_X_K;
+    const offY = mli * this.th * LAYER_OFF_Y_K;
     const spanX = cols * (tw + this.gap);
     const spanY = rows * (this.th + this.gap);
     const sx0 = (safe.L + safe.R) / 2 - offX / 2 - spanX / 2;
     const sy0 = (safe.T + safe.B) / 2 + offY / 2 - spanY / 2;
     for (const t of this.tiles) {
-      const ox = t.layer * tw * 0.17;
-      const oy = t.layer * -this.th * 0.14;
+      const ox = t.layer * tw * LAYER_OFF_X_K;
+      const oy = t.layer * -this.th * LAYER_OFF_Y_K;
       t.sx = sx0 + t.x * (tw + this.gap) + ox;
       t.sy = sy0 + t.y * (this.th + this.gap) + oy;
     }
@@ -1947,13 +1954,13 @@ export class Game {
     const tw = this.tw;
     const th = this.th;
     const gap = this.gap;
-    const ox = layer * tw * 0.17;
-    const oy = layer * -th * 0.14;
+    const ox = layer * tw * LAYER_OFF_X_K;
+    const oy = layer * -th * LAYER_OFF_Y_K;
     // Guvenli bolge (buildLayout ile ayni) + katman ofseti dahil efektif tahtayi
     // bolgenin ortasina hizala. Boylece tahta ekrana/panellere degmez.
     const safe = this.boardSafe();
-    const offX = this.maxLayerIdx * tw * 0.17;
-    const offY = this.maxLayerIdx * th * 0.14;
+    const offX = this.maxLayerIdx * tw * LAYER_OFF_X_K;
+    const offY = this.maxLayerIdx * th * LAYER_OFF_Y_K;
     const spanX = Math.max(0, this.layoutCols - 1) * (tw + gap);
     const spanY = Math.max(0, this.layoutRows - 1) * (th + gap);
     const sx0 = (safe.L + safe.R) / 2 - offX / 2 - spanX / 2;
@@ -3708,8 +3715,8 @@ export class Game {
     const cx = this.boardOriginX();
     const safe = this.boardSafe();
     const cy = (safe.T + safe.B) / 2;
-    const offX = this.maxLayerIdx * this.tw * 0.17;
-    const offY = this.maxLayerIdx * this.th * 0.14;
+    const offX = this.maxLayerIdx * this.tw * LAYER_OFF_X_K;
+    const offY = this.maxLayerIdx * this.th * LAYER_OFF_Y_K;
     const bw = (this.layoutCols - 1) * (this.tw + this.gap) + this.tw + offX;
     const bh = (this.layoutRows - 1) * (this.th + this.gap) + this.th + offY;
     let R = Math.max(bw, bh) / 2 + this.tw * 0.5;
@@ -4029,8 +4036,8 @@ export class Game {
     this.drawYinYangMedallion(c);
 
     // Yerleşimin çerçevesi (taş alanına + katman ofsetine göre, güvenli bölgede).
-    const fOffX = this.maxLayerIdx * this.tw * 0.17;
-    const fOffY = this.maxLayerIdx * this.th * 0.14;
+    const fOffX = this.maxLayerIdx * this.tw * LAYER_OFF_X_K;
+    const fOffY = this.maxLayerIdx * this.th * LAYER_OFF_Y_K;
     const fSpanX = Math.max(0, this.layoutCols - 1) * (this.tw + this.gap);
     const fSpanY = Math.max(0, this.layoutRows - 1) * (this.th + this.gap);
     const boxW = fSpanX + fOffX + this.tw;
