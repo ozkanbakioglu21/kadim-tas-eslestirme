@@ -381,28 +381,66 @@ body,
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 18px;
   padding: 20px;
-  background: rgba(8, 24, 32, 0.94);
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(60, 40, 90, 0.55), transparent 60%),
+    linear-gradient(160deg, #0a1a24 0%, #14202e 45%, #1a1430 100%);
   backdrop-filter: blur(6px);
   overflow-y: auto;
 }
+/* Arkada yukari dogru dolasip donen dekoratif taslar */
+.menu-fx {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.menu-fx-tile {
+  position: absolute;
+  opacity: 0;
+  filter: blur(0.4px) drop-shadow(0 0 12px rgba(255, 200, 90, 0.25));
+  animation: fxFloat linear infinite;
+}
+@keyframes fxFloat {
+  0% { transform: translateY(40px) rotate(-20deg) scale(0.9); opacity: 0; }
+  12% { opacity: 0.5; }
+  85% { opacity: 0.45; }
+  100% { transform: translateY(-140px) rotate(340deg) scale(1.1); opacity: 0; }
+}
 .mode-title {
+  position: relative;
+  z-index: 1;
   font-size: clamp(36px, 10vw, 56px);
   font-weight: 800;
-  color: #ffd75e;
-  text-shadow: 0 4px 20px rgba(255,215,94,0.4);
+  background: linear-gradient(90deg, #ffd75e, #ff9d5e, #ffe9a8, #ffd75e);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   text-align: center;
   line-height: 1.1;
+  filter: drop-shadow(0 4px 18px rgba(255, 180, 60, 0.35));
+  animation: titleShine 4s linear infinite, titleFloat 3.2s ease-in-out infinite;
 }
+@keyframes titleShine { to { background-position: 220% center; } }
+@keyframes titleFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 .mode-subtitle {
+  position: relative;
+  z-index: 1;
   font-size: clamp(20px, 5vw, 32px);
   color: #c89050;
   font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   text-align: center;
+  letter-spacing: 2px;
+  animation: fadeIn 0.6s ease both;
 }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .mode-grid {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -420,20 +458,32 @@ body,
   border: 2px solid rgba(212,175,55,0.3);
   border-radius: 14px;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  animation: cardPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+@keyframes cardPop {
+  0% { opacity: 0; transform: translateY(24px) scale(0.7) rotate(-4deg); }
+  60% { opacity: 1; transform: translateY(-5px) scale(1.06) rotate(2deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
 }
 .mode-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(212,175,55,0.7);
-  box-shadow: 0 8px 24px rgba(212,175,55,0.2);
+  transform: translateY(-6px) scale(1.04) rotate(-1deg);
+  border-color: rgba(212,175,55,0.85);
+  box-shadow: 0 12px 30px rgba(212,175,55,0.3), 0 0 0 2px rgba(212,175,55,0.15) inset;
 }
 .mode-card:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
 }
 .mode-icon {
   font-size: 32px;
+  animation: iconBob 2.6s ease-in-out infinite;
 }
+@keyframes iconBob { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-5px) rotate(8deg); } }
+.mode-card:hover .mode-icon {
+  animation: iconSpin 0.6s ease;
+}
+@keyframes iconSpin { 0% { transform: scale(1) rotate(0); } 50% { transform: scale(1.35) rotate(180deg); } 100% { transform: scale(1) rotate(360deg); } }
 .mode-name {
   font-size: 16px;
   font-weight: 700;
@@ -442,6 +492,20 @@ body,
 .mode-desc {
   font-size: 11px;
   color: #8ab4c8;
+}
+.menu-tip {
+  position: relative;
+  z-index: 1;
+  margin-top: 4px;
+  max-width: 560px;
+  text-align: center;
+  font-size: 12px;
+  color: #a9c6d6;
+  background: rgba(212,175,55,0.1);
+  border: 1px solid rgba(212,175,55,0.25);
+  padding: 8px 14px;
+  border-radius: 10px;
+  animation: fadeIn 0.8s ease 0.5s both;
 }
 .race-timer {
   position: absolute;

@@ -112,17 +112,35 @@ export default function App() {
         )}
         {showMenu && (
           <div className="mode-menu-overlay">
+            <div className="menu-fx" aria-hidden="true">
+              {Array.from({ length: 16 }).map((_, i) => (
+                <span
+                  key={i}
+                  className="menu-fx-tile"
+                  style={{
+                    left: `${(i * 61 + 7) % 100}%`,
+                    top: `${(i * 37 + 13) % 100}%`,
+                    fontSize: `${26 + (i % 5) * 10}px`,
+                    animationDelay: `${((i * 0.53) % 4).toFixed(2)}s`,
+                    animationDuration: `${7 + (i % 6)}s`,
+                  }}
+                >
+                  {["🀄", "✨", "🐉", "🏮", "🀅", "⭐", "🀆", "🌀"][i % 8]}
+                </span>
+              ))}
+            </div>
             <div className="mode-title">Kadim Taş</div>
             <div className="mode-subtitle">Eşleştirme</div>
             <div className="mode-grid">
-              {MODES.map((m) => (
-                <button key={m.id} className="mode-card" onClick={() => selectMode(m.id)}>
+              {MODES.map((m, i) => (
+                <button key={m.id} className="mode-card" style={{ animationDelay: `${(0.06 * i).toFixed(2)}s` }} onClick={() => selectMode(m.id)}>
                   <span className="mode-icon">{m.icon}</span>
                   <span className="mode-name">{m.name}</span>
                   <span className="mode-desc">{m.desc}</span>
                 </button>
               ))}
             </div>
+            <div className="menu-tip">🀄 İpucu: Aynı şekil + aynı yöndeki iki serbest taşı eşleştir; hazne 4 taşı aşırsa kaybedersin.</div>
           </div>
         )}
         {won && (
