@@ -33,7 +33,7 @@ export interface Tile {
   flip: number; // 0 normal, 1 ters(180°), 2 ayna(sag-sol), 3 yaris(90°)
 }
 
-export type GameMode = "classic" | "zen" | "race" | "puzzle" | "endless" | "viking" | "egypt" | "steppe" | "fantastic";
+export type GameMode = "standard" | "classic" | "zen" | "race" | "puzzle" | "endless" | "viking" | "egypt" | "steppe" | "fantastic";
 
 export type WeatherType = "rain" | "snow" | "wind" | "storm" | "aurora" | "fireflies";
 
@@ -1332,8 +1332,8 @@ export class Game {
   private pops: Array<{ x: number; y: number; life: number; max: number; symbol: string; open: boolean }> = [];
   private time = 0;
   private score = 0;
-  private modeScores: Record<GameMode, number> = { classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0, viking: 0, egypt: 0, steppe: 0, fantastic: 0 };
-  private modeLevels: Record<GameMode, number> = { classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0, viking: 0, egypt: 0, steppe: 0, fantastic: 0 };
+  private modeScores: Record<GameMode, number> = { standard: 0, classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0, viking: 0, egypt: 0, steppe: 0, fantastic: 0 };
+  private modeLevels: Record<GameMode, number> = { standard: 0, classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0, viking: 0, egypt: 0, steppe: 0, fantastic: 0 };
   private combo = 0;
   private comboTimer = 0;
   private fates: string[] = [];
@@ -1587,7 +1587,11 @@ export class Game {
       let cells: Array<[number, number]>;
       let name: string;
       let fl: FantasticLayout | undefined;
-      if (this.gameMode === "puzzle") {
+      if (this.gameMode === "standard") {
+        // Saf mahjong: klasik kaplumbağa (144 tas), her yeni oyunda taze duvar.
+        cells = turtleShape();
+        name = "Standart";
+      } else if (this.gameMode === "puzzle") {
         const layout = PUZZLE_LAYOUTS[diff % PUZZLE_LAYOUTS.length];
         cells = layout.cells;
         name = layout.name;
@@ -1617,7 +1621,7 @@ export class Game {
     this.measureView();
     const def = this.level();
     const cells = def.cells;
-    const isTurtle = def.name === "Klasik 144";
+    const isTurtle = def.name === "Klasik 144" || this.gameMode === "standard";
 
     let cols = 0;
     let rows = 0;
@@ -4006,7 +4010,7 @@ export class Game {
 
     // Baslik: minimal ust bilgi
     c.textAlign = "center";
-    const modeNames: Record<string, string> = { classic: "Klasik", zen: "Zen", race: "Yarış", puzzle: "Bulmaca", endless: "Kolay", viking: "Viking", egypt: "Mısır", steppe: "Bozkır", fantastic: "Fantastik" };
+    const modeNames: Record<string, string> = { standard: "Standart", classic: "Klasik", zen: "Zen", race: "Yarış", puzzle: "Bulmaca", endless: "Kolay", viking: "Viking", egypt: "Mısır", steppe: "Bozkır", fantastic: "Fantastik" };
     // Seviye + mod
     const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
     c.font = "bold 13px Georgia";

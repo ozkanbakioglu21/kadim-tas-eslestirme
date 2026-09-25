@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Game, HudState, GameMode } from "./game/Game";
 
 const MODES: Array<{ id: GameMode; name: string; icon: string; desc: string }> = [
+  { id: "standard", name: "Standart", icon: "🀄", desc: "Klasik kaplumbağa 144, saf mahjong" },
   { id: "classic", name: "Klasik", icon: "🏛️", desc: "Seviyelerle ilerle, derin katmanlar" },
   { id: "zen", name: "Zen", icon: "🧘", desc: "Küçük tahta, sınırsız rahat oyun" },
   { id: "race", name: "Yarış", icon: "⏱️", desc: "Küçük tahta, 60sn'de max skor" },
