@@ -94,10 +94,10 @@ const MOTTOS = [
 
 // Taht olcekleme sabitleri (tas genisligi oraninda): bosluk, katman ofseti,
 // max tas genisligi. Tum yerlesim/cerceve hesaplari bunlari kullanir.
-const TILE_GAP_K = 0.1;
-const LAYER_OFF_X_K = 0.13;
-const LAYER_OFF_Y_K = 0.11;
-const TILE_MAX = 90;
+const TILE_GAP_K = 0.06;
+const LAYER_OFF_X_K = 0.09;
+const LAYER_OFF_Y_K = 0.08;
+const TILE_MAX = 110;
 
 function tileColor(kind: string): string {
   if (kind[0] === "b") return "#2e8b57";
@@ -1898,7 +1898,7 @@ export class Game {
     const px = (v: number) => v / s;
     const top = Math.max(182, px(84), 150); // fate rozetleri / mode-badge alt / race-timer alt
     const bottom = Math.min(1245, CANVAS_H - px(100)); // alt metin / score-bar+action butonlari ust
-    return { L: 16, R: CANVAS_W - 16, T: top, B: Math.max(top + 300, bottom) };
+    return { L: 10, R: CANVAS_W - 10, T: top, B: Math.max(top + 300, bottom) };
   }
 
   /** Ekranda/panellerde degisiklik oldugunda mevcut tahtayi (ortadan kaldirma,
