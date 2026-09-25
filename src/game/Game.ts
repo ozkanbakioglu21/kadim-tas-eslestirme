@@ -1601,7 +1601,7 @@ export class Game {
       if (this.gameMode === "standard") {
         // Saf mahjong: klasik kaplumbağa (142 tas), her yeni oyunda taze duvar.
         cells = turtleShape();
-        name = "Standart";
+        name = "Zor";
       } else if (this.gameMode === "puzzle") {
         const layout = PUZZLE_LAYOUTS[diff % PUZZLE_LAYOUTS.length];
         cells = layout.cells;
@@ -4053,7 +4053,7 @@ export class Game {
 
     // Baslik: minimal ust bilgi
     c.textAlign = "center";
-    const modeNames: Record<string, string> = { standard: "Standart", classic: "Klasik", zen: "Zen", race: "Yarış", puzzle: "Bulmaca", endless: "Kolay", viking: "Viking", egypt: "Mısır", steppe: "Bozkır", fantastic: "Fantastik" };
+    const modeNames: Record<string, string> = { standard: "Zor", classic: "Klasik", zen: "Zen", race: "Yarış", puzzle: "Bulmaca", endless: "Kolay", viking: "Viking", egypt: "Mısır", steppe: "Bozkır", fantastic: "Fantastik" };
     // Seviye + mod
     const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
     c.font = "bold 13px Georgia";
