@@ -1640,16 +1640,20 @@ export class Game {
     this.layoutRows = rows + 1;
 
     // Maksimum katman sayisi (tahta boyutlandirmada ofset icin) - tas boyutundan ONCE.
+    // 10. seviyeden itibaren TUM modlarda bir katman daha eklenir (daha derin tahta).
+    const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
+    const deep = diff >= 10;
     let maxLayersCount: number;
     if (isTurtle) {
-      maxLayersCount = 5;
+      maxLayersCount = deep ? 6 : 5;
     } else if (this.gameMode === "fantastic") {
       const flDepth = def.fl?.depth ?? 4;
-      maxLayersCount = Math.min(flDepth, Math.max(2, Math.floor(240 / Math.max(1, cells.length)) - 1));
+      const cap = Math.max(2, Math.floor(240 / Math.max(1, cells.length)) - 1 + (deep ? 1 : 0));
+      maxLayersCount = Math.min(flDepth + (deep ? 1 : 0), cap, 6);
     } else {
-      const maxLayers = this.gameMode === "zen" ? 2 : this.gameMode === "race" ? 2 : this.gameMode === "puzzle" ? 2 : this.gameMode === "steppe" ? 2 : this.gameMode === "egypt" ? 3 : this.gameMode === "endless" ? 3 : 4;
-      const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
-      maxLayersCount = Math.min(maxLayers, diff >= 49 ? 4 : diff >= 9 ? 3 : 2);
+      const modeMax = this.gameMode === "zen" ? 2 : this.gameMode === "race" ? 2 : this.gameMode === "puzzle" ? 2 : this.gameMode === "steppe" ? 2 : this.gameMode === "egypt" ? 3 : this.gameMode === "endless" ? 3 : 4;
+      const baseLayers = Math.min(modeMax, diff >= 49 ? 4 : diff >= 9 ? 3 : 2);
+      maxLayersCount = deep ? Math.min(baseLayers + 1, modeMax + 1, 6) : baseLayers;
     }
     const maxLayerIdx = Math.max(0, maxLayersCount - 1);
     this.maxLayerIdx = maxLayerIdx;
@@ -1687,11 +1691,20 @@ export class Game {
           for (let c = c0; c <= c1; c++) if (has(c, r)) out.push([c, r]);
         return out;
       };
-      layers = [cells.slice(), rect(4, 9, 1, 6), rect(5, 8, 2, 5), rect(6, 7, 3, 4), [[6, 3]]];
+      let base = cells.slice();
+      if (deep) {
+        // 6. katman: tepede 1 tas daha. Toplam 144 (cift) kalsin diye katman
+        // altinda kalmayan taban ucundan 1 tas alinir.
+        base = base.filter(([c, r]) => !(c === 14 && r === 3));
+      }
+      layers = deep
+        ? [base, rect(4, 9, 1, 6), rect(5, 8, 2, 5), rect(6, 7, 3, 4), [[6, 3]], [[6, 3]]]
+        : [base, rect(4, 9, 1, 6), rect(5, 8, 2, 5), rect(6, 7, 3, 4), [[6, 3]]];
     } else {
-      const even = <T,>(a: T[]): T[] => (a.length % 2 === 0 ? a : a.slice(0, -1));
       if (this.gameMode === "fantastic") {
         // Konsantrik derinlik: merkeze dogru derin (maxLayersCount katmana kadar).
+        // Katmanlar ic ice alt kume (usttasin alti her zaman dolu); ciftlik
+        // slots.pop() ile saglanir, boylece havada tas olmaz.
         const maxL = maxLayersCount;
         const cx = cols / 2, cy = rows / 2;
         const maxD = Math.max(1, Math.max(cx, cy));
@@ -1702,17 +1715,18 @@ export class Game {
         };
         layers = [];
         for (let L = 0; L < maxL; L++) {
-          layers.push(even(cells.filter(([c, r]) => depthOf(c, r) >= L + 1)));
+          layers.push(cells.filter(([c, r]) => depthOf(c, r) >= L + 1));
         }
       } else {
-        // Moda gore katman derinligi: zen/yarisi/bulmaca icin 2, bozkir 2, kolay/misir 3, klasik/viking 4.
-        const maxLayers = this.gameMode === "zen" ? 2 : this.gameMode === "race" ? 2 : this.gameMode === "puzzle" ? 2 : this.gameMode === "steppe" ? 2 : this.gameMode === "egypt" ? 3 : this.gameMode === "endless" ? 3 : 4;
-        const diff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
-        const coreDepth = Math.min(maxLayers, diff >= 49 ? 4 : diff >= 9 ? 3 : 2);
-        const cMn = Math.max(0, Math.floor((cols + 1) / 3));
-        const cMx = Math.min(cols, cols - 1 - Math.floor((cols + 1) / 3));
-        const rMn = Math.max(0, Math.floor((rows + 1) / 3));
-        const rMx = Math.min(rows, rows - 1 - Math.floor((rows + 1) / 3));
+        // Katman derinligi ustte hesaplandi (modMax + seviye ilerlemesi +
+        // 10. seviyeden sonraki derin bonus).
+        const coreDepth = maxLayersCount;
+        // Deep (10+ seviye) tahtalarda cekirdek merkez yarisi kadar genisler,
+        // boylece ek katman rasgele dizimde de gorunur kalir.
+        const cMn = deep ? Math.max(0, Math.floor((cols + 1) / 4)) : Math.max(0, Math.floor((cols + 1) / 3));
+        const cMx = deep ? Math.min(cols, cols - Math.floor((cols + 1) / 4)) : Math.min(cols, cols - 1 - Math.floor((cols + 1) / 3));
+        const rMn = deep ? Math.max(0, Math.floor((rows + 1) / 4)) : Math.max(0, Math.floor((rows + 1) / 3));
+        const rMx = deep ? Math.min(rows, rows - Math.floor((rows + 1) / 4)) : Math.min(rows, rows - 1 - Math.floor((rows + 1) / 3));
         const isCore = (c: number, r: number) => c >= cMn && c <= cMx && r >= rMn && r <= rMx;
         const isRing = (c: number, r: number) => c === 0 || r === 0 || c === cols || r === rows;
         const midCount = cells.filter(([c, r]) => !isRing(c, r)).length;
@@ -1723,7 +1737,7 @@ export class Game {
         };
         layers = [];
         for (let L = 0; L < coreDepth; L++) {
-          layers.push(even(cells.filter(([c, r]) => depthOf(c, r) >= L + 1)));
+          layers.push(cells.filter(([c, r]) => depthOf(c, r) >= L + 1));
         }
       }
     }
@@ -1740,6 +1754,11 @@ export class Game {
         default: return 0;
       }
     };
+
+    // Uctaki bos katmanlari budamak (ornekin cekirdek hucresi olmayan kucuk
+    // tahtalarda en ust katman bos kalabilir) ve ofseti gercek derinlige cek.
+    while (layers.length > 1 && layers[layers.length - 1].length === 0) layers.pop();
+    this.maxLayerIdx = Math.max(0, layers.length - 1);
 
     // Tum yerlesim hucreleri (katmanli + flip).
     const slots: Array<{ c: number; r: number; L: number; flip: number }> = [];
