@@ -4606,6 +4606,67 @@ export class Game {
     return cv;
   }
 
+  /** Açiliş sayfasindaki gibi sade fildisi yuz: yumusak krem degrade + tek
+   *  buyuk renkli sembol. Klasik modda kullanilir. */
+  private paintFaceSplash(m: CanvasRenderingContext2D, kind: string, open: boolean, w: number, h: number): void {
+    const R = Math.max(4, Math.round(w * 0.125));
+    // ---- Krem fildisi taban (splash degrade: 160° sol-ustten sag-alta) ----
+    const bg = m.createLinearGradient(0, 0, w * 0.55, h);
+    bg.addColorStop(0, "#f7efdd");
+    bg.addColorStop(1, "#e6d8b8");
+    m.fillStyle = bg;
+    m.beginPath();
+    m.roundRect(0, 0, w, h, R);
+    m.fill();
+    m.save();
+    m.beginPath();
+    m.roundRect(0, 0, w, h, R);
+    m.clip();
+    // Alt kenar kalinligi (CSS'in inset 0 -4px 0 karstiligi)
+    const edge = m.createLinearGradient(0, h - 7, 0, h);
+    edge.addColorStop(0, "rgba(120,90,40,0)");
+    edge.addColorStop(1, "rgba(120,90,40,0.30)");
+    m.fillStyle = edge;
+    m.fillRect(0, h - 7, w, 7);
+    // Ust parlaklik
+    const topg = m.createLinearGradient(0, 0, 0, 9);
+    topg.addColorStop(0, "rgba(255,255,255,0.55)");
+    topg.addColorStop(1, "rgba(255,255,255,0)");
+    m.fillStyle = topg;
+    m.fillRect(0, 0, w, 9);
+    m.textAlign = "center";
+    m.textBaseline = "middle";
+    if (open) {
+      // ---- Tek buyuk renkli sembol (splash gibi) ----
+      const ch = faceLabel(kind);
+      const color = tileColor(kind);
+      const size = Math.round(w * 0.60);
+      m.font = "700 " + size + "px " + CJK_FONT;
+      // Hafif derinlik golgesi (yuzun uzerine basili hissi)
+      m.fillStyle = "rgba(90,60,20,0.28)";
+      m.fillText(ch, w / 2, h / 2 + 1.6);
+      m.fillStyle = color;
+      m.fillText(ch, w / 2, h / 2);
+    } else {
+      // ---- Arka yuz: sade mat fildisi + ince rozet (karakter yok) ----
+      m.strokeStyle = "rgba(120,90,40,0.40)";
+      m.lineWidth = 1.4;
+      m.beginPath();
+      m.arc(w / 2, h / 2, Math.min(w, h) * 0.27, 0, Math.PI * 2);
+      m.stroke();
+      m.fillStyle = "rgba(120,90,40,0.34)";
+      m.font = "700 " + Math.round(w * 0.34) + "px " + CJK_FONT;
+      m.fillText("中", w / 2, h / 2);
+    }
+    m.restore();
+    // ---- Ince dis cerceve ----
+    m.strokeStyle = "rgba(150,120,60,0.55)";
+    m.lineWidth = 1.4;
+    m.beginPath();
+    m.roundRect(0.7, 0.7, w - 1.4, h - 1.4, R);
+    m.stroke();
+  }
+
   /** El oymasi fildisi yuzu: yagli yuzey + kazinmis sembol + inlay tas. */
   private paintFace(m: CanvasRenderingContext2D, kind: string, open: boolean, w: number, h: number): void {
     if (this.gameMode === "viking") {
@@ -4622,6 +4683,10 @@ export class Game {
     }
     if (this.gameMode === "fantastic") {
       this.paintFaceFantastic(m, kind, open, w, h);
+      return;
+    }
+    if (this.gameMode === "classic") {
+      this.paintFaceSplash(m, kind, open, w, h);
       return;
     }
     const R = Math.max(4, Math.round(w * 0.125));
