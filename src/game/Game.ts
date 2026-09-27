@@ -4685,7 +4685,7 @@ export class Game {
       this.paintFaceFantastic(m, kind, open, w, h);
       return;
     }
-    if (this.gameMode === "classic") {
+    if (this.gameMode === "classic" || this.gameMode === "standard") {
       this.paintFaceSplash(m, kind, open, w, h);
       return;
     }
