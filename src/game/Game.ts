@@ -1662,8 +1662,11 @@ export class Game {
       maxLayersCount = Math.min(flDepth + (deep ? 1 : 0), cap, 6);
     } else {
       const modeMax = this.gameMode === "zen" ? 2 : this.gameMode === "race" ? 2 : this.gameMode === "puzzle" ? 2 : this.gameMode === "steppe" ? 2 : this.gameMode === "egypt" ? 3 : this.gameMode === "endless" ? 3 : 4;
-      const baseLayers = Math.min(modeMax, diff >= 49 ? 4 : diff >= 9 ? 3 : 2);
-      maxLayersCount = deep ? Math.min(baseLayers + 1, modeMax + 1, 6) : baseLayers;
+      // Kademeli derinlik: baslangicta 1 kat, her 6 seviyede +1 kat (mod
+      // tavanina kadar). Deep (10+) ustune +1 bonus. Kat sayisi seviye
+      // ilerledikce artar.
+      const ramp = Math.min(modeMax, 1 + Math.floor(diff / 6));
+      maxLayersCount = deep ? Math.min(ramp + 1, modeMax + 1, 6) : ramp;
     }
     const maxLayerIdx = Math.max(0, maxLayersCount - 1);
     this.maxLayerIdx = maxLayerIdx;
@@ -1778,6 +1781,9 @@ export class Game {
     const slots: Array<{ c: number; r: number; L: number; flip: number }> = [];
     for (let L = 0; L < layers.length; L++)
       for (const [c, r] of layers[L]) slots.push({ c, r, L, flip: flipOf(c, r) });
+    // Havuz limiti (72 cift = 144 tas): derin katmanlarda fazla cikan taslar
+    // en ust katmandan (siralama bozulmadan) budanir.
+    while (slots.length > 144) slots.pop();
     if (slots.length % 2 === 1) slots.pop();
 
     // Yon kurali: her flip degerinin adetleri CIFT olmali (ayni yon eslestirilsin
@@ -1905,6 +1911,8 @@ export class Game {
   private layRow0 = 0;
   private maxLayerIdx = 0;
   private viewS = 0.42;
+  private lastViewW = -1;
+  private viewCheckTimer = 0;
   private resizeTimer: number | null = null;
 
   /** Canvas'ın DOM'daki gercek olcegi (arena genisligi / 720). HTML paneller
@@ -1912,9 +1920,27 @@ export class Game {
   private measureView(): void {
     try {
       const w = this.canvas.getBoundingClientRect().width;
-      if (w > 1) this.viewS = Math.max(0.35, Math.min(0.85, w / CANVAS_W));
+      if (w > 1) {
+        this.viewS = Math.max(0.35, Math.min(0.85, w / CANVAS_W));
+        this.lastViewW = w;
+      }
     } catch {
       /* varsayilan degeri koru */
+    }
+  }
+
+  /** Gokden dusen guvenlik agi: arena buyuklugu window resize tetiklemeksizin
+   *  degisse (orn. mobil tarayicida dvh / adres cubugu degisikligi), olcegi
+   *  yenile ve tahtayi tekrar oturt. Taslar hicbir zaman ekrandan tasmaz. */
+  private checkView(): void {
+    try {
+      const w = this.canvas.getBoundingClientRect().width;
+      if (w > 1 && (this.lastViewW <= 0 || Math.abs(w - this.lastViewW) > 2)) {
+        this.measureView();
+        this.refitBoard();
+      }
+    } catch {
+      /* yok */
     }
   }
 
@@ -2428,6 +2454,12 @@ export class Game {
     if (this.hudTimer >= 0.25) {
       this.hudTimer = 0;
       this.emitHud();
+    }
+    // Gorunum kontrolu (her 0.5sn): arena sessizce degistiyse tahtayi oturt
+    this.viewCheckTimer += dt;
+    if (this.viewCheckTimer >= 0.5) {
+      this.viewCheckTimer = 0;
+      this.checkView();
     }
     if (this.comboTimer > 0) {
       this.comboTimer -= dt;
@@ -4123,9 +4155,11 @@ export class Game {
       if (dk <= 0) continue;
       if (dk < 1) {
         const e = 1 - Math.pow(1 - dk, 3);
+        // Koni mesafesi: tasin ustu guvenli bolgenin ustune hicbir zaman cikmasin
+        const drop = Math.min(46, Math.max(6, (t.sy - this.th / 2) - safe.T));
         c.save();
         c.globalAlpha = e;
-        this.drawTile(c, { ...t, sx: t.sx + windSway, sy: t.sy + bob + lift - (1 - e) * 46 }, open, sel, canT);
+        this.drawTile(c, { ...t, sx: t.sx + windSway, sy: t.sy + bob + lift - (1 - e) * drop }, open, sel, canT);
         c.restore();
       } else {
         this.drawTile(c, { ...t, sx: t.sx + windSway, sy: t.sy + bob + lift }, open, sel, canT);
