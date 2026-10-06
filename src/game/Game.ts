@@ -93,13 +93,13 @@ const MOTTOS = [
 ];
 
 // Taht olcekleme sabitleri (tas genisligi oraninda): bosluk, katman ofseti,
-// SABIT tas genisligi. Tas boyutu hicbir zaman kuculmez; tahtalar bu boyuta
-// sigacak sekilde dizilir. (Guvence: hic sigmayan bir dizim oldugunda butun
-// modlarda asgari 46 korunmak uzere kuculme dongusu sakli kalir.)
+// HEDEF tas genisligi (eski 46px'in iki kati = 92px). Genis tahtalar (ornekin
+// 13 sutunlu kaplumbaga) 92px'i fiziksel olarak siggirmadigi icin o tahta,
+// siggabildigi en buyuk boyutta dizilir; hicbir taht 46px'in altina inmez.
 const TILE_GAP_K = 0.06;
 const LAYER_OFF_X_K = 0.09;
 const LAYER_OFF_Y_K = 0.08;
-const TILE_FIXED = 46;
+const TILE_FIXED = 92;
 
 function tileColor(kind: string): string {
   if (kind[0] === "b") return "#2e8b57";
@@ -1674,8 +1674,8 @@ export class Game {
     const availH = safe.B - safe.T;
     const ar = 100 / 72;
     const gp = (w: number) => Math.max(3, Math.round(w * TILE_GAP_K));
-    // Sabit tas boyutu: hicbir zaman kuculmez. (Guvence: hic sigmayan bir
-    // dizim oldugunda 46'ya inmek uzere kuculme dongusu sakli kalir.)
+    // Hedef tas boyutu (92px = eski boyutun 2 kati). Genis tahtalarda
+    // sigmayacagi icin asagi kuculur; 46px'in altina inmez.
     let tw = TILE_FIXED;
     const fits = (t: number): boolean => {
       const th = Math.round(t * ar);
@@ -1948,7 +1948,7 @@ export class Game {
     const cols = this.layoutCols - 1;
     const rows = this.layoutRows - 1;
     const mli = this.maxLayerIdx;
-    // Sabit tas boyutu (refit hic kucultmez; guvenlik dongusu ayni kalir).
+    // Hedef tas boyutu (92px); refit ayni hedeften baslar.
     let tw = TILE_FIXED;
     const fits = (t: number): boolean => {
       const th = Math.round(t * ar);
@@ -1967,8 +1967,8 @@ export class Game {
     const offY = mli * this.th * LAYER_OFF_Y_K;
     const spanX = cols * (tw + this.gap);
     const spanY = rows * (this.th + this.gap);
-    const sx0 = (safe.L + safe.R) / 2 - offX / 2 - spanX / 2;
-    const sy0 = (safe.T + safe.B) / 2 + offY / 2 - spanY / 2;
+    const sx0 = (safe.L + safe.R) / 2 - (spanX + offX + tw) / 2;
+    const sy0 = (safe.T + safe.B) / 2 - (spanY + offY + this.th) / 2 + offY;
     for (const t of this.tiles) {
       const ox = t.layer * tw * LAYER_OFF_X_K;
       const oy = t.layer * -this.th * LAYER_OFF_Y_K;
@@ -1999,8 +1999,8 @@ export class Game {
     const offY = this.maxLayerIdx * th * LAYER_OFF_Y_K;
     const spanX = Math.max(0, this.layoutCols - 1) * (tw + gap);
     const spanY = Math.max(0, this.layoutRows - 1) * (th + gap);
-    const sx0 = (safe.L + safe.R) / 2 - offX / 2 - spanX / 2;
-    const sy0 = (safe.T + safe.B) / 2 + offY / 2 - spanY / 2;
+    const sx0 = (safe.L + safe.R) / 2 - (spanX + offX + tw) / 2;
+    const sy0 = (safe.T + safe.B) / 2 - (spanY + offY + this.th) / 2 + offY;
     const sx = sx0 + (col - this.layCol0) * (tw + gap) + ox;
     const sy = sy0 + (row - this.layRow0) * (th + gap) + oy;
     return {
