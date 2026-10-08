@@ -127,10 +127,10 @@ function matchKey(kind: string): string {
   return kind;
 }
 
-// Eşleştirme anahtari: ayni sekil VE ayni yon (flip). Ters cevrilmis bir tas,
-// farkli yondeki ayni sembolle eslesmez.
-function matchKeyFull(sym: string, flip: number): string {
-  return matchKey(sym) + "#" + flip;
+// Eşleştirme anahtari: yalnizca sembol. Yon (flip) eslestirme icin onemsiz —
+// ayni sekiller her yonde birbirleriyle eslesir. Flip yalnizca gorsel.
+function matchKeyFull(sym: string, _flip: number): string {
+  return matchKey(sym);
 }
 
 function buildPoolPairs(): Array<[string, string]> {
@@ -1798,18 +1798,6 @@ export class Game {
     while (slots.length > 144) slots.pop();
     if (slots.length % 2 === 1) slots.pop();
 
-    // Yon kurali: her flip degerinin adetleri CIFT olmali (ayni yon eslestirilsin
-    // diye). Tek kalan flip'lerden birinin bir slotunu digerine cevir (minimum degisiklik).
-    {
-      const fc = new Map<number, number>();
-      for (const sl of slots) fc.set(sl.flip, (fc.get(sl.flip) ?? 0) + 1);
-      const odds = [...fc.entries()].filter(([, c]) => c % 2 === 1).map(([f]) => f);
-      for (let i = 0; i + 1 < odds.length; i += 2) {
-        const idx = slots.findIndex((sl) => sl.flip === odds[i]);
-        if (idx >= 0) slots[idx].flip = odds[i + 1];
-      }
-    }
-
     // Sembol atamasi: kaldirma simulasyonu ile cozulebilirlik garantisi.
     const pairsNeeded = Math.floor(slots.length / 2);
     let assigned: string[] | null = null;
@@ -1822,22 +1810,14 @@ export class Game {
       assigned = this.assignSolvable(slots, pool.slice(0, pairsNeeded));
     }
     if (!assigned) {
-      // Son care: ayni yonlu slotlari grupla, grup icinde ikiz cift ata
-      // (eslesme garantili, cozum sirasi garanti degil).
-      const byFlip = new Map<number, number[]>();
-      slots.forEach((sl, idx) => {
-        const arr = byFlip.get(sl.flip) ?? [];
-        arr.push(idx);
-        byFlip.set(sl.flip, arr);
-      });
-      const ordered: number[] = [];
-      for (const idxs of byFlip.values()) ordered.push(...idxs);
+      // Son care: ardisik slot ciftlerine ikiz sembol ata (eslesme garantili,
+      // cozum sirasi garanti degil).
       const pool = buildPoolPairs();
       assigned = new Array<string>(slots.length);
       let pi = 0;
-      for (let i = 0; i + 1 < ordered.length; i += 2) {
-        assigned[ordered[i]] = pool[pi][0];
-        assigned[ordered[i + 1]] = pool[pi][1];
+      for (let i = 0; i + 1 < slots.length; i += 2) {
+        assigned[i] = pool[pi][0];
+        assigned[i + 1] = pool[pi][1];
         pi++;
       }
     }
@@ -1863,7 +1843,7 @@ export class Game {
    *  kaldirir. Basarili olursa donen dizinin her adimi oynanabilir oldugu
    *  icin seviye garantili cozulebilir olur. */
   private assignSolvable(
-    slots: Array<{ c: number; r: number; L: number; flip?: number }>,
+    slots: Array<{ c: number; r: number; L: number }>,
     pool: Array<[string, string]>,
   ): string[] | null {
     const n = slots.length;
@@ -1898,19 +1878,12 @@ export class Game {
       const free: number[] = [];
       for (let i = 0; i < n; i++) if (alive[i] && isFree(i)) free.push(i);
       if (free.length < 2) return null;
-      // Ciftin iki tasindan AYNI yon (flip) olanlari sec (yon kurali).
-      let a = -1;
-      let b = -1;
-      for (let attempt = 0; attempt < 20 && b < 0; attempt++) {
-        const cand = free[Math.floor(Math.random() * free.length)];
-        const cf = slots[cand].flip ?? 0;
-        const partners = free.filter((i) => i !== cand && (slots[i].flip ?? 0) === cf);
-        if (partners.length >= 1) {
-          a = cand;
-          b = partners[Math.floor(Math.random() * partners.length)];
-        }
-      }
-      if (b < 0) return null;
+      // Istegerekli iki acik tas cift olur (yon eslestirme icin onemsiz).
+      const ia = Math.floor(Math.random() * free.length);
+      let ib = Math.floor(Math.random() * (free.length - 1));
+      if (ib >= ia) ib++;
+      const a = free[ia];
+      const b = free[ib];
       alive[a] = false;
       alive[b] = false;
       out[a] = pool[p][0];
@@ -2846,22 +2819,14 @@ export class Game {
   shuffle(): void {
     if ((this.shuffleCount >= this.maxShuffles && this.gameMode !== "zen") || this.won || this.lost) return;
     const remaining = this.tiles.filter((t) => !t.removed);
-    // Sembolleri AYNI yon (flip) grubu icinde karistir: (sembol, yon) cift
-    // sayilari korunur, oyun cozulebilir kalir.
-    const byFlip = new Map<number, Tile[]>();
-    for (const t of remaining) {
-      const arr = byFlip.get(t.flip) ?? [];
-      arr.push(t);
-      byFlip.set(t.flip, arr);
+    // Kalan tasin sembollerini birligine karistir (yon eslestirme icin
+    // onemsiz oldugu icin grup siniri yok; sembol cogunlugu korunur).
+    const syms = remaining.map((t) => t.symbol);
+    for (let i = syms.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [syms[i], syms[j]] = [syms[j], syms[i]];
     }
-    for (const group of byFlip.values()) {
-      const syms = group.map((t) => t.symbol);
-      for (let i = syms.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [syms[i], syms[j]] = [syms[j], syms[i]];
-      }
-      group.forEach((t, i) => (t.symbol = syms[i]));
-    }
+    remaining.forEach((t, i) => (t.symbol = syms[i]));
     this.shuffleCount++;
     this.sfx("shuffle");
     this.hintIds = [];
@@ -2882,7 +2847,7 @@ export class Game {
         return;
       }
     }
-    // Yoksa tahtada ayni sekil+yonda iki acik tasa bak.
+    // Yoksa tahtada ayni sekildeki iki acik tasa bak.
     const seen = new Map<string, Tile>();
     for (const o of this.tiles) {
       if (!usable(o)) continue;

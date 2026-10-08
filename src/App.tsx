@@ -257,7 +257,7 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <div className="menu-tip">🀄 İpucu: Aynı şekil + aynı yöndeki iki serbest taşı eşleştir; haznedeki 3 yuva dolarsa kaybedersin.</div>
+            <div className="menu-tip">🀄 İpucu: Aynı şekilli iki serbest taşı eşleştir (yön önemli değil); haznedeki 3 yuva dolarsa kaybedersin.</div>
           </div>
         )}
         {won && (
