@@ -1553,15 +1553,29 @@ export class Game {
     this.canvas.removeEventListener("pointerdown", this.onDown);
     this.canvas.removeEventListener("pointerleave", this.onLeave);
   }
+  // object-fit:contain ile cizilen 720x1280 icerriginin gercek olesegi;
+  // pointer koordinatlarini bu icerrige donusturur (letterbox offsetli).
+  private canvasCoords(e: PointerEvent): { x: number; y: number } {
+    const r = this.canvas.getBoundingClientRect();
+    const s = Math.min(r.width / CANVAS_W, r.height / CANVAS_H);
+    const cw = CANVAS_W * s;
+    const ch = CANVAS_H * s;
+    const offX = (r.width - cw) / 2;
+    const offY = (r.height - ch) / 2;
+    return {
+      x: ((e.clientX - r.left - offX) / cw) * CANVAS_W,
+      y: ((e.clientY - r.top - offY) / ch) * CANVAS_H,
+    };
+  }
   private onMove = (e: PointerEvent): void => {
     if (this.won || this.lost) {
       this.hoverId = null;
       this.canvas.style.cursor = "default";
       return;
     }
-    const r = this.canvas.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width) * this.canvas.width;
-    const y = ((e.clientY - r.top) / r.height) * this.canvas.height;
+    const p = this.canvasCoords(e);
+    const x = p.x;
+    const y = p.y;
     let hit: number | null = null;
     let best = -1;
     for (const t of this.tiles) {
@@ -1585,10 +1599,8 @@ export class Game {
     this.hoverId = null;
   };
   private onDown = (e: PointerEvent): void => {
-    const r = this.canvas.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width) * this.canvas.width;
-    const y = ((e.clientY - r.top) / r.height) * this.canvas.height;
-    this.click(x, y);
+    const p = this.canvasCoords(e);
+    this.click(p.x, p.y);
   };
 
   // ---- Yerleşim ----
@@ -1833,6 +1845,7 @@ export class Game {
       const sl = slots[i];
       this.tiles.push(this.makeTile(assigned[i], sl.c, sl.r, sl.L, sl.flip));
     }
+    this.centerBoard();
     // Taslarin tahtaya sirayla konma animasyonu (alt katmanlardan baslar).
     this.dealDelay = new Map<number, number>();
     this.tiles.forEach((t, i) => this.dealDelay.set(t.id, i * 0.012));
@@ -1911,33 +1924,39 @@ export class Game {
   private layRow0 = 0;
   private maxLayerIdx = 0;
   private viewS = 0.42;
-  private lastViewW = -1;
+  private lastViewS = -1;
   private viewCheckTimer = 0;
   private resizeTimer: number | null = null;
 
-  /** Canvas'ın DOM'daki gercek olcegi (arena genisligi / 720). HTML paneller
-   *  CSS pikselde oldugu icin canvas koordinatlarina bu olcek ile cevrilir. */
+  /** Canvas icerriginin DOM'daki gercek olcegi. object-fit:contain oldugu
+    *  icin olcek = min(genislik/720, yukseklik/1280). HTML paneller CSS
+    *  pikselde oldugu icin canvas koordinatlarina bu olcek ile cevrilir.
+    *  viewS <= gercek olcek tutularak guvenli bolge her zaman muhafazakar. */
   private measureView(): void {
     try {
-      const w = this.canvas.getBoundingClientRect().width;
-      if (w > 1) {
-        this.viewS = Math.max(0.35, Math.min(0.85, w / CANVAS_W));
-        this.lastViewW = w;
+      const r = this.canvas.getBoundingClientRect();
+      if (r.width > 1 && r.height > 1) {
+        const s = Math.min(r.width / CANVAS_W, r.height / CANVAS_H);
+        this.lastViewS = s;
+        this.viewS = Math.min(0.85, s);
       }
     } catch {
       /* varsayilan degeri koru */
     }
   }
 
-  /** Gokden dusen guvenlik agi: arena buyuklugu window resize tetiklemeksizin
-   *  degisse (orn. mobil tarayicida dvh / adres cubugu degisikligi), olcegi
-   *  yenile ve tahtayi tekrar oturt. Taslar hicbir zaman ekrandan tasmaz. */
+  /** Gokden dusen guvenlik agi: arena boyutu window resize tetiklemeksizin
+    *  degisse (orn. mobil tarayicida dvh / adres cubugu degisikligi, landscape),
+    *  olcegi yenile ve tahtayi tekrar oturt. Taslar hicbir zaman ekrandan tasmaz. */
   private checkView(): void {
     try {
-      const w = this.canvas.getBoundingClientRect().width;
-      if (w > 1 && (this.lastViewW <= 0 || Math.abs(w - this.lastViewW) > 2)) {
-        this.measureView();
-        this.refitBoard();
+      const r = this.canvas.getBoundingClientRect();
+      if (r.width > 1 && r.height > 1) {
+        const s = Math.min(r.width / CANVAS_W, r.height / CANVAS_H);
+        if (this.lastViewS <= 0 || Math.abs(s - this.lastViewS) > 0.004) {
+          this.measureView();
+          this.refitBoard();
+        }
       }
     } catch {
       /* yok */
@@ -2000,6 +2019,34 @@ export class Game {
       const oy = t.layer * -this.th * LAYER_OFF_Y_K;
       t.sx = sx0 + (t.x - this.layCol0) * (tw + this.gap) + ox;
       t.sy = sy0 + (t.y - this.layRow0) * (this.th + this.gap) + oy;
+    }
+    this.centerBoard();
+  }
+
+  /** Taslarin gercek sinir kutusunu (tumu, kaldirilmis dahil) guvenli
+    *  bolgenin ortasina hizalar. fits() korusel en-kotu durumla sigmayi
+    *  garanti ettigi icin bu kaydirma taslari hicbir zaman bolgeden disari
+    *  atamaz; asimetrik sekillerde bile tahta tam ortalanir. */
+  private centerBoard(): void {
+    if (!this.tiles.length) return;
+    const safe = this.boardSafe();
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const t of this.tiles) {
+      const l = t.sx - this.tw / 2;
+      const r = t.sx + this.tw / 2;
+      const tp = t.sy - this.th / 2;
+      const bt = t.sy + this.th / 2;
+      if (l < minX) minX = l;
+      if (r > maxX) maxX = r;
+      if (tp < minY) minY = tp;
+      if (bt > maxY) maxY = bt;
+    }
+    const dx = (safe.L + safe.R) / 2 - (minX + maxX) / 2;
+    const dy = (safe.T + safe.B) / 2 - (minY + maxY) / 2;
+    if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) return;
+    for (const t of this.tiles) {
+      t.sx += dx;
+      t.sy += dy;
     }
   }
 
