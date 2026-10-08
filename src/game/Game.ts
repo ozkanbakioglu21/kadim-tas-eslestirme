@@ -1326,7 +1326,7 @@ export class Game {
   private currentLevel: { name: string; cells: Array<[number, number]>; bg: [string, string]; fl?: FantasticLayout } | null = null;
   private history: Array<{ a: number; b: number }> = [];
   private levelIndex = 0;
-  private tray: Array<{ id: number; symbol: string; flip: number }> = []; // hazneye düşen eşlenen taşlar (max 4)
+  private tray: Array<{ id: number; symbol: string; flip: number }> = []; // hazneye düşen eşlenmemis taser (max 3)
   private motifsCache: HTMLCanvasElement | null = null;
   private shards: Array<{
     x: number;
@@ -1349,7 +1349,7 @@ export class Game {
   private comboTimer = 0;
   private fates: string[] = [];
   private shuffleCount = 0;
-  private maxShuffles = 3;
+  private maxShuffles = 2;
   private hintIds: number[] = [];
   private audio: AudioContext | null = null;
   private tw = TILE_FIXED;
@@ -1426,8 +1426,8 @@ export class Game {
   private showAchievement = "";
   private achievementTimer = 0;
   private gameMode: GameMode = "classic";
-  private raceTimeLeft = 60;
-  private raceDuration = 60;
+  private raceTimeLeft = 50;
+  private raceDuration = 50;
   private endlessRound = 1;
   private validMoveCount = 0;
   private wrongMoves = 0;
@@ -2352,9 +2352,12 @@ export class Game {
       this.sfx("lose");
       this.unlockAchievement("first_loss");
     } else {
+      // Yanlis secim: seri VE kombo bozulur.
       this.sfx("tileclick");
       this.streak = 0;
       this.streakMult = 1;
+      this.combo = 0;
+      this.comboTimer = 0;
     }
 
     // Kazanma (endless modda atla - breakPair'da yenilenir).
@@ -2677,8 +2680,7 @@ export class Game {
     }
   }
 
-  /** Haznedeki 4 taşı parçalara ayırıp patlatır ve hazneyi boşaltır. */
-    /** Haznedeki pairIdx ve lastIdx slotlarindaki iki tasi kirar. */
+  /** Haznedeki pairIdx ve lastIdx slotlarindaki iki tasi kirar. */
   private breakPair(a: number, b: number): void {
     this.sfx("match");
     if (a > b) {
@@ -2719,7 +2721,10 @@ export class Game {
       this.floats.push({ x: (btA!.sx + btB!.sx) / 2, y: (btA!.sy + btB!.sy) / 2 - 10, life: 1.0, max: 1.0, text: "+2", color: "#ffd75e" });
     }
     const shard = (slot: number, sym: string) => {
-      const bx = CANVAS_W / 2 + (slot - 1.5) * 40;
+      const traySlots = this.maxTray();
+      const slotW = 72, gapSlot = 10;
+      const trayW = traySlots * slotW + (traySlots - 1) * gapSlot;
+      const bx = CANVAS_W / 2 - trayW / 2 + slot * (slotW + gapSlot) + slotW / 2;
       for (let k = 0; k < 6; k++) {
         const ang = Math.random() * Math.PI * 2;
         const spd = 60 + Math.random() * 180;
@@ -3010,10 +3015,11 @@ export class Game {
     const bonus = ["alp", "iron", "wolf"];
     const lanet = ["shadow", "limited", "heavy"];
     const out: string[] = [];
-    if (Math.random() < 0.5) {
-      out.push(bonus[Math.floor(Math.random() * bonus.length)]);
-    } else {
+    // Zorluk: lanet sansi aleyhte (65%).
+    if (Math.random() < 0.65) {
       out.push(lanet[Math.floor(Math.random() * lanet.length)]);
+    } else {
+      out.push(bonus[Math.floor(Math.random() * bonus.length)]);
     }
     if (Math.random() < 0.25) {
       const hasBonus = out.every((id) => bonus.includes(id));
@@ -3024,7 +3030,7 @@ export class Game {
   }
 
   private comboDuration(): number {
-    let d = 3;
+    let d = 2.5;
     if (this.fates.includes("alp")) d += 2;
     if (this.fates.includes("shadow")) d -= 2;
     return Math.max(2, d);
@@ -3033,7 +3039,7 @@ export class Game {
   private maxTray(): number {
     if (this.gameMode === "puzzle") return 2;
     if (this.gameMode === "endless") return 5;
-    return 4;
+    return 3;
   }
 
   private scoreMult(): number {

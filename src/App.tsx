@@ -6,7 +6,7 @@ const MODES: Array<{ id: GameMode; name: string; icon: string; desc: string }> =
   { id: "standard", name: "Zor", icon: "🀄", desc: "Klasik kaplumbağa 142, saf mahjong" },
   { id: "classic", name: "Klasik", icon: "🏛️", desc: "Seviyelerle ilerle, derin katmanlar" },
   { id: "zen", name: "Zen", icon: "🧘", desc: "Küçük tahta, sınırsız rahat oyun" },
-  { id: "race", name: "Yarış", icon: "⏱️", desc: "Küçük tahta, 60sn'de max skor" },
+  { id: "race", name: "Yarış", icon: "⏱️", desc: "Küçük tahta, 50sn'de max skor" },
   { id: "puzzle", name: "Bulmaca", icon: "🧩", desc: "Hazır bulmacalar, sadece doğru hamleler" },
   { id: "endless", name: "Kolay", icon: "♾️", desc: "Orta tahta, sınırsız kolay oyun" },
   { id: "viking", name: "Viking", icon: "🛡️", desc: "Geniş tahta, derin katmanlar, zorlu meydan" },
@@ -257,7 +257,7 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <div className="menu-tip">🀄 İpucu: Aynı şekil + aynı yöndeki iki serbest taşı eşleştir; hazne 4 taşı aşırsa kaybedersin.</div>
+            <div className="menu-tip">🀄 İpucu: Aynı şekil + aynı yöndeki iki serbest taşı eşleştir; haznedeki 3 yuva dolarsa kaybedersin.</div>
           </div>
         )}
         {won && (
