@@ -68,11 +68,11 @@ const RUNES = [
   "𐰋", "𐰑", "𐰚", "𐰃", "𐰅", "𐰇", "𐰈", "𐰢",
   "𐰁", "𐰂", "𐰗", "𐰜",
 ];
-// Standart mahjong seti (144 tas):
-//   Sayilar (108): bambu b1-b9, daire c1-c9, karakter w1-w9 (her turunden 4 adet)
-//   Onur (28):     ruzgarlar E/S/W/N, ejderhalar DR/DG/DW (her birinden 4 adet)
-//   Bonus (8):     cicekler (f1, f2) ve mevsimler (s1, s2) — her sembol
-//                  yalnizca ayni sekille eslesir (begeni kurali yok).
+// Rakamsiz klasik sembol seti: sayi (bambu/daire/karakter) taslari yok.
+//   Onur (7 sembol): ruzgarlar E/S/W/N, ejderhalar DR/DG/DW
+//   Bonus (8 sembol): cicekler f1-f4 (梅蘭菊竹), mevsimler s1-s4 (春夏秋冬)
+//   Her sembol 5 cift (10 tas) -> 15 sembol x 5 = 75 cift. Tum modlarda her
+//   sembol tek klasik sekil (CJK / rune / hiyeroglif) olarak cizilir.
 const NUM_CH = ["一", "二", "三", "四", "五", "六", "七", "八", "九"];
 const WIND_CH: Record<string, string> = { E: "東", S: "南", W: "西", N: "北" };
 const DRAGON_CH: Record<string, string> = { DR: "中", DG: "發", DW: "白" };
@@ -134,19 +134,12 @@ function matchKeyFull(sym: string, _flip: number): string {
 }
 
 function buildPoolPairs(): Array<[string, string]> {
+  // Rakamsiz klasik sembol havuzu: ruzgarlar, ejderhalar, cicekler, mevsimler.
+  // Hiçbir sayaç/numara tasi yok; her sembol tum modlarda tek klasik sekil olarak cizilir.
+  // Her sembol 5 cift (10 tas) -> 15 sembol x 5 = 75 cift (144 taslik tahtaya yeter).
+  const CLASSIC_KINDS = ["E", "S", "W", "N", "DR", "DG", "DW", "f1", "f2", "f3", "f4", "s1", "s2", "s3", "s4"];
   const pairs: Array<[string, string]> = [];
-  for (const su of ["b", "c", "w"])
-    for (let n = 1; n <= 9; n++) {
-      const k = su + n;
-      pairs.push([k, k]);
-      pairs.push([k, k]);
-    }
-  for (const k of ["E", "S", "W", "N", "DR", "DG", "DW"]) {
-    pairs.push([k, k]);
-    pairs.push([k, k]);
-  }
-  pairs.push(["f1", "f1"], ["f2", "f2"]);
-  pairs.push(["s1", "s1"], ["s2", "s2"]);
+  for (const k of CLASSIC_KINDS) for (let i = 0; i < 5; i++) pairs.push([k, k]);
   return pairs;
 }
 
@@ -2408,7 +2401,7 @@ export class Game {
       this.victoryStarted = true;
       this.victoryTiles = [];
       this.victoryRays = [];
-      const syms = ["b1","c1","w1","E","S","DR","f1","s1"];
+      const syms = ["E","S","W","N","DR","DG","DW","f1","f2","f3","f4","s1","s2","s3","s4"];
       for (let i = 0; i < 24; i++) {
         const sx = CANVAS_W * 0.2 + Math.random() * CANVAS_W * 0.6;
         const sy = CANVAS_H * 0.3 + Math.random() * CANVAS_H * 0.4;

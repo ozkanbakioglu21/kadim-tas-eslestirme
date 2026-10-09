@@ -43,7 +43,7 @@ const SPLASH_FIGS: Array<{ ch?: string; color?: string; emoji?: string }> = [
   { ch: "梅", color: "#c2185b" }, { ch: "蘭", color: "#c2185b" }, { ch: "菊", color: "#c2185b" }, { ch: "竹", color: "#2e8b57" },
   { ch: "東", color: "#203a63" }, { ch: "南", color: "#203a63" }, { ch: "西", color: "#203a63" }, { ch: "北", color: "#203a63" },
   { ch: "中", color: "#c0392b" }, { ch: "發", color: "#2e8b57" }, { ch: "白", color: "#3b6ea5" },
-  { ch: "一", color: "#1b5faa" }, { ch: "九", color: "#c0392b" }, { ch: "五", color: "#2e8b57" },
+  { ch: "竹", color: "#2e8b57" }, { ch: "發", color: "#2e8b57" }, { ch: "白", color: "#3b6ea5" },
   { emoji: "🀄" }, { emoji: "🐉" }, { emoji: "🏮" }, { emoji: "✨" },
 ];
 
