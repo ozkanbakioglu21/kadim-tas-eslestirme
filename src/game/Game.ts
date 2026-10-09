@@ -639,7 +639,7 @@ const LEVELS: Array<{ name: string; cells: Array<[number, number]>; bg: [string,
     { name: "Halka", cells: ringShape(5, 5), bg: ["#1f3a33", "#2c5448"] },
     { name: "Geniş Alan 2", cells: rowShape(7, 4), bg: ["#3a2030", "#542d45"] },
     { name: "Büyük Kare", cells: rowShape(8, 4), bg: ["#2a1f3f", "#3d2a5c"] },
-    { name: "Klasik 142", cells: turtleShape(), bg: ["#10241c", "#1c4530"] },
+    { name: "Klasik 116", cells: turtleShape(), bg: ["#10241c", "#1c4530"] },
   ];
 
 function rowShape(cols: number, rows: number): Array<[number, number]> {
@@ -1273,21 +1273,21 @@ function tower(): [number, number][] {
 }
 
 function turtleShape(): Array<[number, number]> {
-  // Klasik kaplumbaganin taban katmani (85 tas). Ust katmanlar
-  // (36 + 16 + 4 + 1) buildLayout icinde eklenir; toplam 142 tas.
-  // Orta satirin iki ucu (0,3) ve (14,3) alinir: boylece 15 sutun yerine
-  // 13 sutun kalir ve taht sabit 46px tas boyutunda guvenli bolgeye siger.
+  // Klasik kaplumbaganin taban katmani (59 tas). Ust katmanlar
+  // (36 + 16 + 4 + 1) buildLayout icinde eklenir; toplam 116 tas.
+  // Genislik 9 sutun (c 3..11): taht ~70px tas boyutunda guvenli bolgeye
+  // siger (eski 13 sutunlu form 48px'e sikisiyordu).
   const out: Array<[number, number]> = [];
   const rowSpan = (r: number, c0: number, c1: number) => {
     for (let c = c0; c <= c1; c++) out.push([c, r]);
   };
-  rowSpan(0, 2, 11);
-  rowSpan(1, 1, 13);
-  rowSpan(2, 1, 13);
-  rowSpan(3, 1, 13);
-  rowSpan(4, 1, 13);
-  rowSpan(5, 1, 13);
-  rowSpan(6, 2, 11);
+  rowSpan(0, 4, 10);
+  rowSpan(1, 3, 11);
+  rowSpan(2, 3, 11);
+  rowSpan(3, 3, 11);
+  rowSpan(4, 3, 11);
+  rowSpan(5, 3, 11);
+  rowSpan(6, 4, 10);
   return out;
 }
 
@@ -1604,7 +1604,7 @@ export class Game {
       let name: string;
       let fl: FantasticLayout | undefined;
       if (this.gameMode === "standard") {
-        // Saf mahjong: klasik kaplumbağa (142 tas), her yeni oyunda taze duvar.
+        // Saf mahjong: klasik kaplumbağa (116 tas), her yeni oyunda taze duvar.
         cells = turtleShape();
         name = "Zor";
       } else if (this.gameMode === "puzzle") {
@@ -1637,7 +1637,7 @@ export class Game {
     this.measureView();
     const def = this.level();
     const cells = def.cells;
-    const isTurtle = def.name === "Klasik 142" || this.gameMode === "standard";
+    const isTurtle = def.name === "Klasik 116" || this.gameMode === "standard";
 
     let cLo = Infinity, cHi = 0, rLo = Infinity, rHi = 0;
     for (const [c, r] of cells) {
@@ -1711,9 +1711,9 @@ export class Game {
       };
       let base = cells.slice();
       if (deep) {
-        // 6. katman: tepede 1 tas daha. Toplam 142 (cift) kalsin diye katman
+        // 6. katman: tepede 1 tas daha. Toplam 116 (cift) kalsin diye katman
         // altinda kalmayan taban ucundan 1 tas alinir.
-        base = base.filter(([c, r]) => !(c === 13 && r === 3));
+        base = base.filter(([c, r]) => !(c === 11 && r === 3));
       }
       layers = deep
         ? [base, rect(4, 9, 1, 6), rect(5, 8, 2, 5), rect(6, 7, 3, 4), [[6, 3]], [[6, 3]]]
