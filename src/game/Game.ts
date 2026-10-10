@@ -33,7 +33,7 @@ export interface Tile {
   flip: number; // 0 normal, 1 ters(180°), 2 ayna(sag-sol), 3 yaris(90°)
 }
 
-export type GameMode = "standard" | "classic" | "zen" | "race" | "puzzle" | "endless" | "viking" | "egypt" | "steppe" | "fantastic";
+export type GameMode = "standard" | "classic" | "zen" | "race" | "puzzle" | "endless" | "viking" | "egypt" | "steppe" | "fantastic" | "chin";
 
 export type WeatherType = "rain" | "snow" | "wind" | "storm" | "aurora" | "fireflies";
 
@@ -1143,11 +1143,11 @@ const NAMED_SHAPES: NamedShape[] = [
 // farkli bir dizimden baslar, seviyeyle buyur.
 const MODE_SHAPE_MAX: Record<GameMode, number> = {
   standard: 48, classic: 48, viking: 48, egypt: 40, steppe: 38,
-  endless: 32, puzzle: 24, zen: 22, race: 18, fantastic: 48,
+  endless: 32, puzzle: 24, zen: 22, race: 18, fantastic: 48, chin: 24,
 };
 const MODE_SHAPE_OFFSET: Record<GameMode, number> = {
   standard: 0, classic: 0, viking: 3, egypt: 6, steppe: 4,
-  endless: 1, puzzle: 0, zen: 2, race: 5, fantastic: 0,
+  endless: 1, puzzle: 0, zen: 2, race: 5, fantastic: 0, chin: 0,
 };
 
 const namedShapeCache = new Map<string, { grow: NamedShape[]; cycle: NamedShape[] }>();
@@ -1255,8 +1255,8 @@ export class Game {
   private pops: Array<{ x: number; y: number; life: number; max: number; symbol: string; open: boolean }> = [];
   private time = 0;
   private score = 0;
-  private modeScores: Record<GameMode, number> = { standard: 0, classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0, viking: 0, egypt: 0, steppe: 0, fantastic: 0 };
-  private modeLevels: Record<GameMode, number> = { standard: 0, classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0, viking: 0, egypt: 0, steppe: 0, fantastic: 0 };
+  private modeScores: Record<GameMode, number> = { standard: 0, classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0, viking: 0, egypt: 0, steppe: 0, fantastic: 0, chin: 0 };
+  private modeLevels: Record<GameMode, number> = { standard: 0, classic: 0, zen: 0, race: 0, puzzle: 0, endless: 0, viking: 0, egypt: 0, steppe: 0, fantastic: 0, chin: 0 };
   private combo = 0;
   private comboTimer = 0;
   private fates: string[] = [];

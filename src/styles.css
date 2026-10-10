@@ -1012,3 +1012,157 @@ body,
   letter-spacing: 1px;
   text-align: center;
 }
+
+/* ---- Gercek Cin Mahjongu modu ---- */
+.action-buttons.hidden { display: none; }
+.chin-root {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+.chin-canvas {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.chin-bar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 21%;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 92%;
+  pointer-events: auto;
+  z-index: 25;
+}
+.chin-btn {
+  pointer-events: auto;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  background: linear-gradient(145deg, rgba(40, 32, 24, 0.92), rgba(28, 22, 16, 0.92));
+  color: #e8dcc0;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  transition: transform 0.1s, background 0.15s;
+}
+.chin-btn:hover { transform: translateY(-1px); }
+.chin-btn:active { transform: translateY(1px); }
+.chin-btn.primary {
+  background: linear-gradient(160deg, #ffd75e, #e8a93e);
+  color: #241a08;
+  border-color: #ffd75e;
+}
+.chin-btn.win {
+  background: linear-gradient(160deg, #63d471, #2e8b57);
+  color: #06280f;
+  border-color: #63d471;
+}
+.chin-btn.ghost {
+  background: rgba(20, 16, 12, 0.7);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.chin-hint {
+  color: #9db4c8;
+  font-size: 13px;
+  opacity: 0.8;
+}
+.chin-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 14, 20, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+  pointer-events: auto;
+  padding: 24px;
+}
+.chin-card {
+  width: min(480px, 92%);
+  max-height: 86%;
+  overflow-y: auto;
+  background: linear-gradient(160deg, #0a1a24 0%, #14202e 45%, #1a1430 100%);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 16px;
+  padding: 22px 20px;
+  color: #e8dcc0;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  text-align: center;
+}
+.chin-card-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffd75e;
+  margin-bottom: 6px;
+}
+.chin-card-sub {
+  font-size: 14px;
+  color: #9db4c8;
+  margin-bottom: 12px;
+}
+.chin-fans {
+  text-align: left;
+  margin: 10px 0;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.chin-fan-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 3px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.chin-fan-pts { color: #ffd75e; font-weight: 700; }
+.chin-pay {
+  text-align: left;
+  margin: 10px 0 16px;
+}
+.chin-pay-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  margin: 3px 0;
+  background: rgba(255, 255, 255, 0.05);
+}
+.chin-pay-row.big { font-size: 18px; padding: 8px 12px; margin: 6px 0; }
+.chin-pay-row .pos { color: #63d471; font-weight: 700; }
+.chin-pay-row .neg { color: #ff7b6b; font-weight: 700; }
+.chin-actions-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 14px;
+}
+.chin-rules { text-align: left; }
+.chin-rules li {
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 8px 0 8px 18px;
+  color: #cfd8e3;
+}
+.chin-rules-btn {
+  position: absolute;
+  top: 70px;
+  right: 14px;
+  z-index: 30;
+  pointer-events: auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  background: rgba(20, 16, 12, 0.7);
+  color: #ffd75e;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}

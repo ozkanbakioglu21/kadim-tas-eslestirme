@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, FormEvent } from "react";
 import { Game, HudState, GameMode } from "./game/Game";
 import { QUOTES } from "./quotes";
+import { SoundEngine } from "./game/sound";
+import ChinaMahjongView from "./components/ChinaMahjong";
 
 const MODES: Array<{ id: GameMode; name: string; icon: string; desc: string }> = [
   { id: "standard", name: "Zor", icon: "🀄", desc: "Klasik kaplumbağa 116, saf mahjong" },
@@ -13,6 +15,7 @@ const MODES: Array<{ id: GameMode; name: string; icon: string; desc: string }> =
   { id: "egypt", name: "Mısır", icon: "🏺", desc: "Piramit dizimi, orta derinlik" },
   { id: "steppe", name: "Bozkır", icon: "🐎", desc: "Geniş alçak tahta, rahat oyun" },
   { id: "fantastic", name: "Fantastik", icon: "🐉", desc: "Kale dizimi, ejder & büyülü tahta" },
+  { id: "chin", name: "Çin Mahjong'u", icon: "🎴", desc: "4 oyuncu, 144 taş, gerçek mahjong" },
 ];
 
 type Player = { name: string; pass: string };
@@ -128,6 +131,7 @@ export default function App() {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
       if (stageRef.current !== "menu") return;
+      if (!gameRef.current) return;
       if (e.key === "n" || e.key === "N") game.newGame();
       else if (e.key === "u" || e.key === "U") game.undo();
       else if (e.key === "l" || e.key === "L") game.nextLevel();
@@ -145,18 +149,25 @@ export default function App() {
 
   const selectMode = (selectedMode: GameMode) => {
     setMode(selectedMode);
-    // Oyun durdurulmustu (menu'ye donulduyse) — yeniden olustur
-    if (!gameRef.current) {
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const game = new Game(canvas);
-        game.onHud = setHud;
-        setMuted(game.isMuted());
-        game.start();
-        gameRef.current = game;
+    if (selectedMode === "chin") {
+      // Gercek Cin Mahjong'u: ayri bileşen, soliter oyun durur
+      gameRef.current?.stop();
+      gameRef.current = null;
+      setHud(null);
+    } else {
+      // Oyun durdurulmustu (menu'ye donulduyse) — yeniden olustur
+      if (!gameRef.current) {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const game = new Game(canvas);
+          game.onHud = setHud;
+          setMuted(game.isMuted());
+          game.start();
+          gameRef.current = game;
+        }
       }
+      gameRef.current?.setMode(selectedMode);
     }
-    gameRef.current?.setMode(selectedMode);
     // Rastgele ilham cümlesi (öncekiyle aynı olmasın)
     let idx = Math.floor(Math.random() * QUOTES.length);
     if (QUOTES.length > 1 && idx === lastMotto.current) {
@@ -188,7 +199,7 @@ export default function App() {
             <button className="mode-badge-btn" onClick={() => setShowMenu(true)} title="Menü">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
-            <button className="mode-badge-btn" onClick={() => setMuted(gameRef.current?.toggleMute() ?? false)} title="Ses">
+            <button className="mode-badge-btn" onClick={() => setMuted(gameRef.current ? gameRef.current.toggleMute() : SoundEngine.toggleMute())} title="Ses">
               {muted ? (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
               ) : (
@@ -198,7 +209,7 @@ export default function App() {
           </div>
         </div>
         {/* Alt: yatay butonlar */}
-        <div className="action-buttons">
+        <div className={mode === "chin" ? "action-buttons hidden" : "action-buttons"}>
           <button className="action-btn primary" onClick={() => gameRef.current?.newGame()} title="Yeni Oyun">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           </button>
@@ -225,6 +236,9 @@ export default function App() {
           <div className={`race-timer ${hud.raceTimeLeft <= 10 ? "pulse" : ""}`} style={{ color: hud.raceTimeLeft <= 10 ? "#ff4444" : "#e8dcc0" }}>
             {Math.ceil(hud.raceTimeLeft)}
           </div>
+        )}
+        {mode === "chin" && (
+          <ChinaMahjongView paused={showMenu} onExit={goToMenu} />
         )}
         {stage === "menu" && showMenu && (
           <div className="mode-menu-overlay">
