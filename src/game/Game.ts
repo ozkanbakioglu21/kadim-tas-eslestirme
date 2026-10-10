@@ -68,9 +68,11 @@ const RUNES = [
   "𐰋", "𐰑", "𐰚", "𐰃", "𐰅", "𐰇", "𐰈", "𐰢",
   "𐰁", "𐰂", "𐰗", "𐰜",
 ];
-// Tek sembol seti: tum modlarda tum taslar ayni sekilli (kirmizi ejderha 中).
-// Istisnasiz her tas birkibirine es; her mod sembolu kendi temasinda cizer
-// (classic: 中, viking: mjolnir, egypt: ankh, steppe: orkhon, fantastic: orb).
+// Rakamsiz klasik sembol seti: sayi (bambu/daire/karakter) taslari yok.
+//   Onur (7 sembol): ruzgarlar E/S/W/N, ejderhalar DR/DG/DW
+//   Bonus (8 sembol): cicekler f1-f4 (梅蘭菊竹), mevsimler s1-s4 (春夏秋冬)
+//   Her sembol 5 cift (10 tas) -> 15 sembol x 5 = 75 cift. Tum modlarda her
+//   sembol tek klasik sekil (CJK / rune / hiyeroglif) olarak cizilir.
 const NUM_CH = ["一", "二", "三", "四", "五", "六", "七", "八", "九"];
 const WIND_CH: Record<string, string> = { E: "東", S: "南", W: "西", N: "北" };
 const DRAGON_CH: Record<string, string> = { DR: "中", DG: "發", DW: "白" };
@@ -132,13 +134,12 @@ function matchKeyFull(sym: string, _flip: number): string {
 }
 
 function buildPoolPairs(): Array<[string, string]> {
-  // Tum modlarda tum taslar ISTISNASIZ ayni (eş) sekil: tek sembol, kirmizi
-  // ejderha (中). Boylece her modda herhangi iki tas her zaman eslesir.
-  // Her mod onu kendi temasinda cizer (classic: 中, viking: mjolnir, ...).
-  // 75 cift = 144 taslik en buyuk tahtaya yeter.
-  const SINGLE_KIND = "DR";
+  // Rakamsiz klasik sembol havuzu: ruzgarlar, ejderhalar, cicekler, mevsimler.
+  // Hiçbir sayaç/numara tasi yok; her sembol tum modlarda tek klasik sekil olarak cizilir.
+  // Her sembol 5 cift (10 tas) -> 15 sembol x 5 = 75 cift (144 taslik tahtaya yeter).
+  const CLASSIC_KINDS = ["E", "S", "W", "N", "DR", "DG", "DW", "f1", "f2", "f3", "f4", "s1", "s2", "s3", "s4"];
   const pairs: Array<[string, string]> = [];
-  for (let i = 0; i < 75; i++) pairs.push([SINGLE_KIND, SINGLE_KIND]);
+  for (const k of CLASSIC_KINDS) for (let i = 0; i < 5; i++) pairs.push([k, k]);
   return pairs;
 }
 
