@@ -1018,7 +1018,7 @@ body,
 .chin-root {
   position: absolute;
   inset: 0;
-  z-index: 20;
+  z-index: 5;
   pointer-events: none;
 }
 .chin-canvas {
