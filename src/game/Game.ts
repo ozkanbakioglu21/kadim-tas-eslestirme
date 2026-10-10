@@ -1087,153 +1087,94 @@ function fantasticLayoutForLevel(level: number): FantasticLayout {
 }
 
 
-// Deterministik (seeded) rastgele sayı üretici: aynı seviye her zaman
-// aynı dizim üretir, böylece "yeniden oyna" seviyeyi değiştirmez.
-function mulberry32(seed: number): () => number {
-  let s = seed >>> 0;
-  return function () {
-    s |= 0;
-    s = (s + 0x6d2b79f5) | 0;
-    let t = Math.imul(s ^ (s >>> 15), 1 | s);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+// Adli tahta dizimleri: her mod + seviye benzersiz bir siluete donusur.
+// Buyukluge gore siralani; seviye arttikca daha buyuk (ve katmanli) dizimler
+// secilir. Ayni seviye her zaman ayni dizimi verir (deterministik), ama
+// seviyeler arasi her zaman farkli bir isim + sekil gorulur.
+type NamedShape = { name: string; cells: Array<[number, number]> };
 
-// Seviye ilerledikçe rastgele yeni bir dizim üretir: birkaç bitişik blok
-// (adacık) rastgele yerleştirilir. Her bloğun hücre sayısı çifttir (2x2, 2x3,
-// 3x2, 3x3), toplam çift sayıya yuvarlanır, böylece her dizim çözülebilir ve
-// rün havuzunu (16 rün = 32 hücre) aşmaz. Deterministik (seeded): aynı seviye
-// her zaman aynı dizimi üretir.
-function randomShape(levelIndex: number, seedOffset = 0): Array<[number, number]> {
-  const rng = mulberry32(levelIndex * 104729 + 13 + seedOffset);
-  const cols = 8;
-  const rows = 6;
-  const MAX_CELLS = 40;
-  const grid = new Set<string>();
-  // Karmaşık taş dizimleri: dikdörtgen, L, T, artı, basamak ve kule şekilleri.
-  const shapes = [
-    { w: 3, h: 3, cells: rect(3, 3) },
-    { w: 2, h: 3, cells: rect(2, 3) },
-    { w: 4, h: 2, cells: rect(4, 2) },
-    { w: 3, h: 3, cells: lShape() },
-    { w: 3, h: 3, cells: tShape() },
-    { w: 3, h: 3, cells: plusShape() },
-    { w: 3, h: 3, cells: stair() },
-    { w: 3, h: 4, cells: tower() },
-  ];
-  const blocks = 6 + (levelIndex % 7);
-  for (let i = 0; i < blocks && grid.size < MAX_CELLS; i++) {
-    const sh = shapes[Math.floor(rng() * shapes.length)];
-    const cx = Math.floor(rng() * (cols - sh.w + 1));
-    const cy = Math.floor(rng() * (rows - sh.h + 1));
-    for (const pt of sh.cells) {
-      grid.add((cx + pt[0]) + "," + (cy + pt[1]));
-      if (grid.size >= MAX_CELLS) break;
+function uniqCells(cells: Array<[number, number]>): Array<[number, number]> {
+  const seen = new Set<string>();
+  const out: Array<[number, number]> = [];
+  for (const [c, r] of cells) {
+    const k = c + "," + r;
+    if (!seen.has(k)) {
+      seen.add(k);
+      out.push([c, r]);
     }
   }
-  const cells = [...grid].map((s) => {
-    const p = s.split(",").map(Number);
-    return [p[0], p[1]] as [number, number];
-  });
-  // Çift hücre garantisi (çözülebilirlik).
-  if (cells.length % 2 !== 0) cells.pop();
-  return cells;
+  return out;
 }
 
-/** Moda gore rastgele taht sekli olusturur. */
-function modeRandomShape(mode: GameMode, levelIndex: number, seedOffset = 0): Array<[number, number]> {
-  const rng = mulberry32(levelIndex * 7919 + 31 + seedOffset);
-  let cols: number, rows: number, maxCells: number, maxBlocks: number;
-  let shapes: Array<{ w: number; h: number; cells: [number, number][] }>;
-  switch (mode) {
-    case "zen":
-      cols = 6; rows = 5; maxCells = 24; maxBlocks = 4;
-      shapes = [
-        { w: 2, h: 2, cells: rect(2, 2) },
-        { w: 3, h: 2, cells: rect(3, 2) },
-        { w: 2, h: 3, cells: rect(2, 3) },
-        { w: 3, h: 3, cells: plusShape() },
-      ];
-      break;
-    case "race":
-      cols = 5; rows = 4; maxCells = 20; maxBlocks = 3;
-      shapes = [
-        { w: 2, h: 2, cells: rect(2, 2) },
-        { w: 3, h: 2, cells: rect(3, 2) },
-        { w: 2, h: 3, cells: rect(2, 3) },
-      ];
-      break;
-    case "puzzle":
-      cols = 5; rows = 4; maxCells = 16; maxBlocks = 3;
-      shapes = [
-        { w: 2, h: 2, cells: rect(2, 2) },
-        { w: 3, h: 2, cells: rect(3, 2) },
-        { w: 3, h: 3, cells: tShape() },
-      ];
-      break;
-    case "endless":
-      cols = 6; rows = 5; maxCells = 30; maxBlocks = 5;
-      shapes = [
-        { w: 2, h: 2, cells: rect(2, 2) },
-        { w: 3, h: 2, cells: rect(3, 2) },
-        { w: 2, h: 3, cells: rect(2, 3) },
-        { w: 3, h: 3, cells: lShape() },
-        { w: 3, h: 3, cells: plusShape() },
-      ];
-      break;
-    case "viking":
-      cols = 8; rows = 6; maxCells = 40; maxBlocks = 6;
-      shapes = [
-        { w: 2, h: 2, cells: rect(2, 2) },
-        { w: 3, h: 2, cells: rect(3, 2) },
-        { w: 2, h: 3, cells: rect(2, 3) },
-        { w: 3, h: 3, cells: plusShape() },
-        { w: 3, h: 3, cells: lShape() },
-        { w: 4, h: 3, cells: uShape(4, 3) },
-      ];
-      break;
-    case "egypt":
-      cols = 7; rows = 6; maxCells = 30; maxBlocks = 4;
-      shapes = [
-        { w: 2, h: 2, cells: rect(2, 2) },
-        { w: 3, h: 2, cells: rect(3, 2) },
-        { w: 3, h: 3, cells: tShape() },
-        { w: 4, h: 2, cells: rect(4, 2) },
-      ];
-      break;
-    case "steppe":
-      cols = 9; rows = 5; maxCells = 32; maxBlocks = 5;
-      shapes = [
-        { w: 2, h: 2, cells: rect(2, 2) },
-        { w: 3, h: 2, cells: rect(3, 2) },
-        { w: 4, h: 2, cells: rect(4, 2) },
-        { w: 2, h: 3, cells: rect(2, 3) },
-        { w: 4, h: 3, cells: tShape() },
-      ];
-      break;
-    case "fantastic":
-      return fantasticLayoutForLevel(levelIndex).cells;
-    default:
-      return randomShape(levelIndex, seedOffset);
-  }
-  const grid = new Set<string>();
-  const blocks = 3 + Math.min(maxBlocks, levelIndex % (maxBlocks + 1));
-  for (let i = 0; i < blocks && grid.size < maxCells; i++) {
-    const sh = shapes[Math.floor(rng() * shapes.length)];
-    const cx = Math.floor(rng() * (cols - sh.w + 1));
-    const cy = Math.floor(rng() * (rows - sh.h + 1));
-    for (const pt of sh.cells) {
-      grid.add((cx + pt[0]) + "," + (cy + pt[1]));
-      if (grid.size >= maxCells) break;
+const NAMED_SHAPES: NamedShape[] = [
+  { name: "Kelebek", cells: uniqCells(bowtieLayout()) },
+  { name: "İkiz Elmas", cells: uniqCells(doubleDiamondLayout()) },
+  { name: "Ok", cells: uniqCells(arrowLayout()) },
+  { name: "Pusula", cells: uniqCells(compassLayout()) },
+  { name: "Anahtar", cells: uniqCells(bigKeyLayout()) },
+  { name: "Dalga", cells: uniqCells(waveLayout()) },
+  { name: "Kar Tanesi", cells: uniqCells(snowflakeLayout()) },
+  { name: "Kum Saati", cells: uniqCells(hourglassLayout()) },
+  { name: "Gemi", cells: uniqCells(boatLayout()) },
+  { name: "Kılıç", cells: uniqCells(swordLayout()) },
+  { name: "Sarmal", cells: uniqCells(spiralLayout()) },
+  { name: "Yıldız", cells: uniqCells(starLayout()) },
+  { name: "Elmas", cells: uniqCells(gemLayout()) },
+  { name: "Şimşek", cells: uniqCells(lightningLayout()) },
+  { name: "Taç", cells: uniqCells(crownLayout()) },
+  { name: "Büyü Haçı", cells: uniqCells(crossLayout()) },
+  { name: "Yaşam Ağacı", cells: uniqCells(treeLayout()) },
+  { name: "Cadı Şapkası", cells: uniqCells(hatLayout()) },
+  { name: "Büyü Kupası", cells: uniqCells(chaliceLayout()) },
+  { name: "Aşk Kalbi", cells: uniqCells(heartLayout()) },
+  { name: "Piramit", cells: uniqCells(pyramidShape(8)) },
+  { name: "Kiremit Çerçeve", cells: uniqCells(frameShape(8, 4)) },
+  { name: "Portal", cells: uniqCells(portalLayout()) },
+  { name: "Yüzen Ada", cells: uniqCells(islandLayout()) },
+  { name: "Halka", cells: uniqCells(ringShape(5, 5)) },
+  { name: "Büyü Dairesi", cells: uniqCells(runeRingLayout()) },
+  { name: "Çift Çerçeve", cells: uniqCells(nestedSquareLayout()) },
+  { name: "Büyük Kare", cells: uniqCells(rowShape(8, 4)) },
+  { name: "Üç Kule", cells: uniqCells(spiresLayout()) },
+  { name: "Kale", cells: uniqCells(fantasticShape()) },
+].sort((a, b) => a.cells.length - b.cells.length);
+
+// Mod bazinda dizim tavanlari (max hucre) ve baslangic kaymasi: her mod
+// farkli bir dizimden baslar, seviyeyle buyur.
+const MODE_SHAPE_MAX: Record<GameMode, number> = {
+  standard: 48, classic: 48, viking: 48, egypt: 40, steppe: 38,
+  endless: 32, puzzle: 24, zen: 22, race: 18, fantastic: 48,
+};
+const MODE_SHAPE_OFFSET: Record<GameMode, number> = {
+  standard: 0, classic: 0, viking: 3, egypt: 6, steppe: 4,
+  endless: 1, puzzle: 0, zen: 2, race: 5, fantastic: 0,
+};
+
+const namedShapeCache = new Map<string, { grow: NamedShape[]; cycle: NamedShape[] }>();
+function namedShapeFor(mode: GameMode, diff: number): NamedShape {
+  const maxCells = MODE_SHAPE_MAX[mode] ?? 48;
+  const off = MODE_SHAPE_OFFSET[mode] ?? 0;
+  const key = mode + "#" + maxCells + "#" + off;
+  let entry = namedShapeCache.get(key);
+  if (!entry) {
+    const eligible = NAMED_SHAPES.filter((s) => s.cells.length <= maxCells);
+    const rot = off % Math.max(1, eligible.length);
+    const grow = [...eligible.slice(rot), ...eligible.slice(0, rot)];
+    let seed = (0x9e3779b9 ^ Math.imul(maxCells, 2654435761) ^ Math.imul(off, 131)) >>> 0;
+    const cycle = [...grow];
+    for (let i = cycle.length - 1; i > 0; i--) {
+      seed = (Math.imul(seed, 1103515245) + 12345) & 0x7fffffff;
+      const j = seed % (i + 1);
+      const t = cycle[i];
+      cycle[i] = cycle[j];
+      cycle[j] = t;
     }
+    entry = { grow, cycle };
+    namedShapeCache.set(key, entry);
   }
-  const cells = [...grid].map((s) => {
-    const p = s.split(",").map(Number);
-    return [p[0], p[1]] as [number, number];
-  });
-  if (cells.length % 2 !== 0) cells.pop();
-  return cells;
+  // Buyume fazi: seviye ilerledikce buyuk dizimler; sonra karisik dongu.
+  if (diff < entry.grow.length) return entry.grow[diff];
+  return entry.cycle[diff % entry.cycle.length];
 }
 
 /** Bulmaca modu icin on tanimli sabit duvar sekilleri. */
@@ -1249,27 +1190,6 @@ const PUZZLE_LAYOUTS: Array<{ name: string; cells: Array<[number, number]> }> = 
   { name: "Kaynak", cells: [[2,0],[1,1],[2,1],[3,1],[0,2],[1,2],[2,2],[3,2],[4,2],[1,3],[2,3],[3,3],[0,4],[1,4],[2,4],[3,4],[4,4],[2,5]] },
   { name: "Delta", cells: [[3,0],[2,1],[3,1],[4,1],[1,2],[2,2],[3,2],[4,2],[5,2],[0,3],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[0,4],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4]] },
 ];
-
-function rect(w: number, h: number): [number, number][] {
-  const out: [number, number][] = [];
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) out.push([x, y]);
-  return out;
-}
-function lShape(): [number, number][] {
-  return [[0, 0], [1, 0], [2, 0], [0, 1], [0, 2]];
-}
-function tShape(): [number, number][] {
-  return [[0, 0], [1, 0], [2, 0], [1, 1], [1, 2]];
-}
-function plusShape(): [number, number][] {
-  return [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]];
-}
-function stair(): [number, number][] {
-  return [[0, 2], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]];
-}
-function tower(): [number, number][] {
-  return [[1, 0], [0, 1], [1, 1], [2, 1], [0, 2], [1, 2], [2, 2], [1, 3]];
-}
 
 function turtleShape(): Array<[number, number]> {
   // Klasik kaplumbaganin taban katmani (59 tas). Ust katmanlar
@@ -1417,6 +1337,11 @@ export class Game {
   private achievements: Set<string> = new Set();
   private showAchievement = "";
   private achievementTimer = 0;
+  // Seviye giris banneri (adli dizim tanitimi) + kombo milleti halkalari
+  private introTimer = 0;
+  private introTitle = "";
+  private introSub = "";
+  private ringPulses: Array<{ x: number; y: number; r: number; life: number; max: number; color: string }> = [];
   private gameMode: GameMode = "classic";
   private raceTimeLeft = 50;
   private raceDuration = 50;
@@ -1610,18 +1535,17 @@ export class Game {
         const layout = PUZZLE_LAYOUTS[diff % PUZZLE_LAYOUTS.length];
         cells = layout.cells;
         name = layout.name;
-      } else if (this.gameMode === "classic") {
-        cells = randomShape(diff, Math.floor(Math.random() * 100000) + 1);
-        name = diff < LEVELS.length ? LEVELS[diff].name : `Rastgele #${diff + 1}`;
       } else if (this.gameMode === "fantastic") {
         const layout = fantasticLayoutForLevel(diff);
         fl = layout;
         cells = layout.cells;
         name = `${layout.name} #${diff + 1}`;
       } else {
-        cells = modeRandomShape(this.gameMode, diff, Math.floor(Math.random() * 100000) + 1);
-        const modeNames: Record<string, string> = { zen: "Zen", race: "Yarış", endless: "Kolay", viking: "Viking", egypt: "Mısır", steppe: "Bozkır", fantastic: "Fantastik" };
-        name = `${modeNames[this.gameMode] ?? this.gameMode} #${diff + 1}`;
+        // Adli dizim rotasyonu: her seviyede farkli bir isim + sekil,
+        // seviye arttikca daha buyuk (ve katmanli) dizimler.
+        const named = namedShapeFor(this.gameMode, diff);
+        cells = named.cells;
+        name = named.name;
       }
       const special = this.specialArt();
       const mixedBg = ["#2f3b1c", "#4a5b2a"] as [string, string];
@@ -1665,11 +1589,14 @@ export class Game {
       const cap = Math.max(2, Math.floor(240 / Math.max(1, cells.length)) - 1 + (deep ? 1 : 0));
       maxLayersCount = Math.min(flDepth + (deep ? 1 : 0), cap, 6);
     } else {
-      const modeMax = this.gameMode === "zen" ? 2 : this.gameMode === "race" ? 2 : this.gameMode === "puzzle" ? 2 : this.gameMode === "steppe" ? 2 : this.gameMode === "egypt" ? 3 : this.gameMode === "endless" ? 3 : 4;
-      // Kademeli derinlik: baslangicta 1 kat, her 6 seviyede +1 kat (mod
-      // tavanina kadar). Deep (10+) ustune +1 bonus. Kat sayisi seviye
-      // ilerledikce artar.
-      const ramp = Math.min(modeMax, 1 + Math.floor(diff / 6));
+      // Mod tavani: hizi modlar 2 kat, orta modlar 3-4, klasik/viking 5.
+      const modeMax = this.gameMode === "zen" || this.gameMode === "race" || this.gameMode === "puzzle" ? 2
+        : this.gameMode === "steppe" ? 3
+        : this.gameMode === "egypt" || this.gameMode === "endless" ? 4
+        : 5;
+      // Kademeli derinlik: her 3 seviyede +1 katman (mod tavanina kadar),
+      // deep (10+) ustune +1 bonus. Seviye arttikca tahta daha katmanli.
+      const ramp = Math.min(modeMax, 1 + Math.floor(diff / 3));
       maxLayersCount = deep ? Math.min(ramp + 1, modeMax + 1, 6) : ramp;
     }
     const maxLayerIdx = Math.max(0, maxLayersCount - 1);
@@ -1735,26 +1662,17 @@ export class Game {
           layers.push(cells.filter(([c, r]) => depthOf(c, r) >= L + 1));
         }
       } else {
-        // Katman derinligi ustte hesaplandi (modMax + seviye ilerlemesi +
-        // 10. seviyeden sonraki derin bonus).
+        // Konsantrik piramit: merkeze dogru derin (maxLayersCount kata
+        // kadar), kenarlarda ince. Her katman altinin alt kumesi (usttasin
+        // alti her zaman dolu); ciftlik slots.pop() ile saglanir, boylece
+        // havada tas olmaz.
         const coreDepth = maxLayersCount;
-        // Deep (10+ seviye) tahtalarda cekirdek merkez yarisi kadar genisler,
-        // boylece ek katman rasgele dizimde de gorunur kalir.
-        const coreX0 = deep ? Math.floor(W / 4) : Math.floor(W / 3);
-        const coreX1 = deep ? Math.floor(W / 4) : Math.floor(W / 3) + 1;
-        const coreY0 = deep ? Math.floor(H / 4) : Math.floor(H / 3);
-        const coreY1 = deep ? Math.floor(H / 4) : Math.floor(H / 3) + 1;
-        const cCoreMn = cLo + coreX0;
-        const cCoreMx = cHi - coreX1;
-        const rCoreMn = rLo + coreY0;
-        const rCoreMx = rHi - coreY1;
-        const isCore = (c: number, r: number) => c >= cCoreMn && c <= cCoreMx && r >= rCoreMn && r <= rCoreMx;
-        const isRing = (c: number, r: number) => c === cLo || r === rLo || c === cHi || r === rHi;
-        const midCount = cells.filter(([c, r]) => !isRing(c, r)).length;
+        const cx = (cLo + cHi) / 2, cy = (rLo + rHi) / 2;
+        const maxD = Math.max(1, Math.max(cHi - cx, cy - rLo));
         const depthOf = (c: number, r: number) => {
-          if (isCore(c, r)) return coreDepth;
-          if (isRing(c, r) && midCount >= 4) return 1;
-          return 2;
+          const d = Math.max(Math.abs(c - cx), Math.abs(r - cy));
+          const t = d / maxD;
+          return Math.max(1, Math.round(coreDepth - t * (coreDepth - 1)));
         };
         layers = [];
         for (let L = 0; L < coreDepth; L++) {
@@ -2126,6 +2044,16 @@ export class Game {
     this.maxWrongMoves = this.gameMode === "endless" ? 5 : 0;
     this.buildLayout();
     this.magicRingActive = this.gameMode === "fantastic" && (this.level().fl?.ring ?? false);
+    // Seviye giris banneri: dizimin adini buyuk afis olarak goster.
+    {
+      const lvDef = this.level();
+      const modeNames: Record<string, string> = { standard: "Zor", classic: "Klasik", zen: "Zen", race: "Yarış", puzzle: "Bulmaca", endless: "Kolay", viking: "Viking", egypt: "Mısır", steppe: "Bozkır", fantastic: "Fantastik" };
+      const lvDiff = this.gameMode === "classic" ? this.levelIndex : this.modeLevels[this.gameMode];
+      this.introTitle = this.gameMode === "standard" ? "Klasik Kaplumbağa" : lvDef.name;
+      this.introSub = `${modeNames[this.gameMode] ?? this.gameMode} · Seviye ${lvDiff + 1}`;
+      this.introTimer = 2.6;
+      this.ringPulses = [];
+    }
     this.emitHud();
   }
 
@@ -2364,12 +2292,15 @@ export class Game {
       this.sfx("lose");
       this.unlockAchievement("first_loss");
     } else {
-      // Yanlis secim: seri VE kombo bozulur.
+      // Yanlis secim (dolu hazneye uyesiz tas almak): seri VE kombo bozulur.
+      // Boş hazneye ilk tas almak yanlis sayilmaz (kombosu bozmadan).
       this.sfx("tileclick");
-      this.streak = 0;
-      this.streakMult = 1;
-      this.combo = 0;
-      this.comboTimer = 0;
+      if (this.tray.length > 1) {
+        this.streak = 0;
+        this.streakMult = 1;
+        this.combo = 0;
+        this.comboTimer = 0;
+      }
     }
 
     // Kazanma (endless modda atla - breakPair'da yenilenir).
@@ -2685,6 +2616,13 @@ export class Game {
     for (const mp of this.mistParticles) { mp.alpha -= dt * 0.5; mp.x += mp.vx * dt; mp.y -= 15 * dt; }
     this.mistParticles = this.mistParticles.filter((mp) => mp.alpha > 0);
     if (this.showAchievement) { this.achievementTimer -= dt; if (this.achievementTimer <= 0) this.showAchievement = ""; }
+    if (this.introTimer > 0) this.introTimer -= dt;
+    for (let i = this.ringPulses.length - 1; i >= 0; i--) {
+      const rp = this.ringPulses[i];
+      rp.life -= dt;
+      rp.r += 420 * dt;
+      if (rp.life <= 0) this.ringPulses.splice(i, 1);
+    }
     // Eslesme huzme animasyonu
     if (this.matchFx) {
       this.matchFx.timer -= dt;
@@ -2702,9 +2640,11 @@ export class Game {
     }
     const eA = this.tray[a];
     const eB = this.tray[b];
+    let matchX = CANVAS_W / 2, matchY = CANVAS_H / 2 - 80;
     if (eA && eB) {
       const btA = this.tiles.find((tt) => tt.id === eA.id);
       const btB = this.tiles.find((tt) => tt.id === eB.id);
+      if (btA && btB) { matchX = (btA.sx + btB.sx) / 2; matchY = (btA.sy + btB.sy) / 2; }
       for (const bt of [btA, btB]) {
         if (!bt) continue;
         for (let k = 0; k < 18; k++) {
@@ -2761,6 +2701,20 @@ export class Game {
     this.combo++;
     if (this.combo >= 2) this.sfx("combo");
     if (this.combo >= 3) this.flash = Math.min(0.6, 0.25 + this.combo * 0.05);
+    // Kombo milleti (5/10/15/...): halka dalgasi + isik patlamasi + yazı.
+    if (this.combo >= 5 && this.combo % 5 === 0) {
+      const col = this.combo >= 20 ? "#ff4466" : this.combo >= 10 ? "#ffaa22" : "#ffd75e";
+      this.ringPulses.push({ x: matchX, y: matchY, r: 24, life: 0.9, max: 0.9, color: col });
+      this.ringPulses.push({ x: matchX, y: matchY, r: 8, life: 1.2, max: 1.2, color: "#ffffff" });
+      this.flash = Math.max(this.flash, this.combo >= 15 ? 0.55 : 0.4);
+      this.sfx("combo");
+      for (let k = 0; k < 30; k++) {
+        const ang = (k / 30) * Math.PI * 2;
+        const spd = 160 + Math.random() * 240;
+        this.bursts.push({ x: matchX, y: matchY, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, life: 0.8, max: 1, color: k % 2 ? col : "#ffffff", r: 3 + Math.random() * 5 });
+      }
+      this.floats.push({ x: matchX, y: matchY - 30, life: 1.4, max: 1.4, text: this.combo + " KOMBO!", color: col });
+    }
     // Yaris modu: kombo basina +2sn bonus
     if (this.gameMode === "race" && this.combo >= 2) {
       this.raceTimeLeft = Math.min(this.raceDuration, this.raceTimeLeft + 2);
@@ -4370,6 +4324,60 @@ export class Game {
     for (const sr of this.starRain) { c.save(); c.globalAlpha = Math.max(0, sr.alpha); c.translate(sr.x, sr.y); c.rotate(sr.rot); c.fillStyle = sr.color; c.beginPath(); for (let i = 0; i < 4; i++) { const ang = (i / 4) * Math.PI * 2; c.lineTo(Math.cos(ang) * sr.size, Math.sin(ang) * sr.size); c.lineTo(Math.cos(ang + Math.PI / 4) * sr.size * 0.35, Math.sin(ang + Math.PI / 4) * sr.size * 0.35); } c.closePath(); c.fill(); c.restore(); }
     for (const mp of this.mistParticles) { c.save(); c.globalAlpha = Math.max(0, mp.alpha); const mg = c.createRadialGradient(mp.x, mp.y, 0, mp.x, mp.y, mp.r); mg.addColorStop(0, "rgba(180,200,220,0.4)"); mg.addColorStop(1, "rgba(180,200,220,0)"); c.fillStyle = mg; c.beginPath(); c.arc(mp.x, mp.y, mp.r, 0, Math.PI * 2); c.fill(); c.restore(); }
     if (this.showAchievement) { c.save(); const achA = Math.min(1, this.achievementTimer / 0.3); c.globalAlpha = achA; c.fillStyle = "rgba(20,12,5,0.85)"; c.beginPath(); c.roundRect(CANVAS_W / 2 - 140, 140, 280, 50, 12); c.fill(); c.strokeStyle = "#ffd75e"; c.lineWidth = 2; c.beginPath(); c.roundRect(CANVAS_W / 2 - 140, 140, 280, 50, 12); c.stroke(); c.fillStyle = "#ffd75e"; c.font = "bold 16px Georgia"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("Basari: " + this.showAchievement, CANVAS_W / 2, 165); c.restore(); }
+
+    // Kombo milleti halkalari (genisleyen isik halkalari)
+    if (this.ringPulses.length) {
+      c.save();
+      c.globalCompositeOperation = "lighter";
+      for (const rp of this.ringPulses) {
+        const a = Math.max(0, rp.life / rp.max);
+        c.globalAlpha = a * 0.8;
+        c.strokeStyle = rp.color;
+        c.lineWidth = 3 + 6 * a;
+        c.beginPath();
+        c.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+        c.stroke();
+      }
+      c.restore();
+    }
+
+    // Seviye giris banneri: dizim adli + mod/seviye alt bilgisi.
+    if (this.introTimer > 0 && !this.won && !this.lost) {
+      const total = 2.6;
+      const t = total - this.introTimer;
+      const aIn = Math.min(1, t / 0.35);
+      const aOut = Math.min(1, this.introTimer / 0.5);
+      const a = Math.min(aIn, aOut);
+      const ease = 1 - Math.pow(1 - aIn, 3);
+      const ix = CANVAS_W / 2, iy = 380;
+      c.save();
+      const glow = c.createRadialGradient(ix, iy, 20, ix, iy, 380);
+      glow.addColorStop(0, "rgba(255,215,94," + (0.3 * a).toFixed(3) + ")");
+      glow.addColorStop(1, "rgba(255,215,94,0)");
+      c.fillStyle = glow;
+      c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      c.globalAlpha = a;
+      const sc = 0.82 + 0.18 * ease;
+      c.translate(ix, iy);
+      c.scale(sc, sc);
+      c.translate(-ix, -iy);
+      const bw = 540, bh = 136, bx = ix - bw / 2, by = iy - bh / 2;
+      c.fillStyle = "rgba(16,10,4,0.92)";
+      c.beginPath(); c.roundRect(bx, by, bw, bh, 18); c.fill();
+      c.strokeStyle = "#ffd75e"; c.lineWidth = 3;
+      c.beginPath(); c.roundRect(bx, by, bw, bh, 18); c.stroke();
+      c.strokeStyle = "rgba(255,215,94,0.4)"; c.lineWidth = 1;
+      c.beginPath(); c.roundRect(bx + 8, by + 8, bw - 16, bh - 16, 12); c.stroke();
+      c.fillStyle = "#ffd75e"; c.textAlign = "center"; c.textBaseline = "middle";
+      c.font = "600 18px Georgia";
+      c.fillText(this.introSub, ix, by + 34);
+      c.fillStyle = "#ffffff";
+      c.font = "700 46px Georgia";
+      c.fillText(this.introTitle, ix, by + 86);
+      c.strokeStyle = "rgba(255,215,94,0.6)"; c.lineWidth = 1.5;
+      c.beginPath(); c.moveTo(ix - 180, by + 60); c.lineTo(ix - 70, by + 60); c.moveTo(ix + 70, by + 60); c.lineTo(ix + 180, by + 60); c.stroke();
+      c.restore();
+    }
     // ---- Kayip ekrani ----
     if (this.lost) {
       c.fillStyle = "rgba(30,5,5,0.55)";
