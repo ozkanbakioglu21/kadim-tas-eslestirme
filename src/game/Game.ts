@@ -509,7 +509,7 @@ function paintWolfFigure(m: CanvasRenderingContext2D, cx: number, cy: number, s:
   m.save();
   m.lineJoin = "round";
   m.lineCap = "round";
-  m.lineWidth = Math.max(1, s * 0.09);
+  m.lineWidth = Math.max(1.2, s * 0.11);
   if (shadow) {
     trace(m, m.lineWidth * 0.9, m.lineWidth * 1.25);
     m.strokeStyle = shadow;
@@ -531,7 +531,7 @@ function paintWolfFigure(m: CanvasRenderingContext2D, cx: number, cy: number, s:
   m.fill();
   // kulak icleri + yanak yulu cizgileri
   m.strokeStyle = color;
-  m.lineWidth = Math.max(0.8, s * 0.05);
+  m.lineWidth = Math.max(1, s * 0.06);
   const ln = (pts: number[][]) => {
     m.beginPath();
     pts.forEach(([lx, ly], i) => (i ? m.lineTo(cx + lx * s, cy + ly * s) : m.moveTo(cx + lx * s, cy + ly * s)));
@@ -666,7 +666,7 @@ function paintSteppeFigure(m: CanvasRenderingContext2D, fig: SteppeFigure, cx: n
     }
   };
   m.save();
-  const lw = Math.max(1, s * 0.12);
+  const lw = Math.max(1.2, s * 0.15);
   if (shadow) paint(m, lw * 0.8, lw * 1.1, lw, shadow, shadow);
   paint(m, 0, 0, lw, color, color);
   m.restore();
@@ -5210,9 +5210,9 @@ export class Game {
   /** Kabartma (3D relief) ikonu: ust-soldan isik — koyu siluet alt-sagda
    *  (kalinlik), parlak rim ust-solda, asil renkli yuz en ustte. */
   private paintHonorIconEmboss(m: CanvasRenderingContext2D, kind: string, cx: number, cy: number, s: number): void {
-    const d = Math.max(1, s * 0.055);
-    this.paintHonorIcon(m, kind, cx + d, cy + d * 1.25, s, "rgba(74,48,20,0.50)");
-    this.paintHonorIcon(m, kind, cx - d * 0.55, cy - d * 0.7, s, "rgba(255,252,240,0.45)");
+    const d = Math.max(1.2, s * 0.07);
+    this.paintHonorIcon(m, kind, cx + d, cy + d * 1.3, s, "rgba(58,36,12,0.62)");
+    this.paintHonorIcon(m, kind, cx - d * 0.55, cy - d * 0.7, s, "rgba(255,252,240,0.6)");
     this.paintHonorIcon(m, kind, cx, cy, s, null);
   }
 
@@ -5222,27 +5222,27 @@ export class Game {
    *  karakter (wan) — geleneksel renk ve dizilislerle. */
   private paintClassicSuit(m: CanvasRenderingContext2D, kind: string, w: number, h: number): void {
     const n = Number(kind.slice(1));
-    const cx = w / 2, cy = h / 2, s = Math.min(w, h) * 0.34;
+    const cx = w / 2, cy = h / 2, s = Math.min(w, h) * 0.37;
     const BLUE = "#1c4f9c", GREEN = "#2e8b57", RED = "#c0392b";
     const X = (lx: number) => cx + lx * s, Y = (ly: number) => cy + ly * s;
     const dot = (lx: number, ly: number, r: number, color: string) => {
       m.fillStyle = color;
       m.beginPath(); m.arc(X(lx), Y(ly), r * s, 0, Math.PI * 2); m.fill();
-      m.strokeStyle = "rgba(20,30,50,0.55)"; m.lineWidth = Math.max(0.8, s * 0.03);
+      m.strokeStyle = "rgba(15,25,45,0.7)"; m.lineWidth = Math.max(1.2, s * 0.045);
       m.stroke();
-      m.fillStyle = "rgba(255,255,255,0.5)";
+      m.fillStyle = "rgba(255,255,255,0.6)";
       m.beginPath(); m.arc(X(lx) - r * s * 0.3, Y(ly) - r * s * 0.3, r * s * 0.28, 0, Math.PI * 2); m.fill();
     };
     const stick = (lx: number, ly: number, color: string) => {
-      const sw = 0.075 * s, sh = 0.155 * s;
+      const sw = 0.08 * s, sh = 0.16 * s;
       m.fillStyle = color;
       m.beginPath();
       m.roundRect(X(lx) - sw, Y(ly) - sh, sw * 2, sh * 2, sw * 0.8);
       m.fill();
-      m.strokeStyle = "rgba(20,40,25,0.6)"; m.lineWidth = Math.max(0.7, s * 0.025);
+      m.strokeStyle = "rgba(15,35,20,0.75)"; m.lineWidth = Math.max(1.1, s * 0.04);
       m.stroke();
       // oluk cizgileri (ipe bagli tasi temsil eder)
-      m.strokeStyle = "rgba(255,255,255,0.55)"; m.lineWidth = Math.max(0.6, s * 0.02);
+      m.strokeStyle = "rgba(255,255,255,0.7)"; m.lineWidth = Math.max(0.9, s * 0.03);
       m.beginPath();
       m.moveTo(X(lx) - sw * 0.8, Y(ly) - sh * 0.35); m.lineTo(X(lx) + sw * 0.8, Y(ly) - sh * 0.35);
       m.moveTo(X(lx) - sw * 0.8, Y(ly) + sh * 0.35); m.lineTo(X(lx) + sw * 0.8, Y(ly) + sh * 0.35);
@@ -5348,8 +5348,8 @@ export class Game {
       // Karakter (wan): ustte mavi Cinese rakam, altta kirmizi 萬
       const numCh = n === 5 ? "伍" : NUM_CH[n - 1];
       m.textAlign = "center"; m.textBaseline = "middle";
-      m.font = "700 " + Math.round(s * 1.15) + "px " + CJK_FONT;
-      m.fillStyle = "rgba(90,60,20,0.25)";
+      m.font = "700 " + Math.round(s * 1.28) + "px " + CJK_FONT;
+      m.fillStyle = "rgba(80,50,15,0.4)";
       m.fillText(numCh, cx, cy - s * 0.52 + 1.4);
       m.fillText("萬", cx, cy + s * 0.56 + 1.4);
       m.fillStyle = "#173a6e";
@@ -5396,7 +5396,7 @@ export class Game {
           || kind === "E" || kind === "S" || kind === "W" || kind === "N";
         if (isHonor) {
           // ---- Yazisiz vektorel ikon (ruzgar/ejderha/cicek/mevsim) ----
-          const size = Math.min(w, h) * 0.78;
+          const size = Math.min(w, h) * 0.84;
           this.paintHonorIconEmboss(m, kind, w / 2, h / 2, size);
         } else {
           // ---- Tek buyuk renkli sembol (splash gibi) ----
@@ -5546,12 +5546,12 @@ export class Game {
       m.textAlign = "center";
       m.textBaseline = "middle";
       // Derin golge (kazimanin ic kismi)
-      m.strokeStyle = "rgba(0,0,0,0.55)";
-      m.lineWidth = Math.max(2.5, size * 0.07);
+      m.strokeStyle = "rgba(0,0,0,0.6)";
+      m.lineWidth = Math.max(3.5, size * 0.1);
       m.lineJoin = "round";
       m.strokeText(ch, cx, cy + 1);
       // Alt kenar isigi (kazimanin ust kenyasi)
-      m.fillStyle = "rgba(255,252,240,0.75)";
+      m.fillStyle = "rgba(255,252,240,0.9)";
       m.fillText(ch, cx, cy - 0.8);
       // Ana sembol (kazima ici)
       m.fillStyle = color;
@@ -5760,9 +5760,9 @@ export class Game {
     // ---- Rune cizim helper'i ----
     const carveRune = (glyphId: string, cx: number, cy: number, size: number, color: string) => {
       // Derin golge (kazimanin ic kismi)
-      strokeRune(m, glyphId, cx + 1, cy + 1.4, size, Math.max(3.4, size * 0.22), "rgba(0,0,0,0.6)");
+      strokeRune(m, glyphId, cx + 1, cy + 1.4, size, Math.max(4.4, size * 0.28), "rgba(0,0,0,0.65)");
       // Ana rune
-      strokeRune(m, glyphId, cx, cy, size, Math.max(2.2, size * 0.16), color);
+      strokeRune(m, glyphId, cx, cy, size, Math.max(3, size * 0.21), color);
     };
 
     if (!open) {
@@ -5873,8 +5873,8 @@ export class Game {
 
     // ---- Hiyeroglif cizim helper'i (kazima: sol-ust parlama + ana renk) ----
     const carveGlyph = (gid: string, gx: number, gy: number, size: number, color: string) => {
-      strokeEgyptian(m, gid, gx - 0.8, gy - 1, size, Math.max(3, size * 0.22), "rgba(255,250,232,0.42)");
-      strokeEgyptian(m, gid, gx, gy, size, Math.max(2.2, size * 0.16), color);
+      strokeEgyptian(m, gid, gx - 0.8, gy - 1, size, Math.max(4, size * 0.28), "rgba(255,250,232,0.55)");
+      strokeEgyptian(m, gid, gx, gy, size, Math.max(3, size * 0.21), color);
     };
 
     if (!open) {
@@ -5977,8 +5977,8 @@ export class Game {
 
     // ---- GoekTurk cizim helper'i (kazima: golge + ana) ----
     const carve = (gid: string, gx: number, gy: number, size: number, color: string) => {
-      strokeSteppe(m, gid, gx + 1, gy + 1.4, size, Math.max(3.4, size * 0.22), "rgba(0,0,0,0.55)");
-      strokeSteppe(m, gid, gx, gy, size, Math.max(2.2, size * 0.16), color);
+      strokeSteppe(m, gid, gx + 1, gy + 1.4, size, Math.max(4.4, size * 0.28), "rgba(0,0,0,0.6)");
+      strokeSteppe(m, gid, gx, gy, size, Math.max(3.2, size * 0.22), color);
     };
 
     if (!open) {
@@ -6083,9 +6083,9 @@ export class Game {
     // ---- Buyu cizim helper'i (parlama + ana) ----
     const carve = (gid: string, gx: number, gy: number, size: number, color: string) => {
       m.save();
-      m.shadowColor = "rgba(170,130,255,0.7)";
-      m.shadowBlur = 7;
-      strokeFantastic(m, gid, gx, gy, size, Math.max(2.2, size * 0.16), color);
+      m.shadowColor = "rgba(170,130,255,0.8)";
+      m.shadowBlur = 10;
+      strokeFantastic(m, gid, gx, gy, size, Math.max(3, size * 0.21), color);
       m.restore();
     };
 
