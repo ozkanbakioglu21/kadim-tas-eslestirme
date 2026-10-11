@@ -18,7 +18,7 @@ const MODES: Array<{ id: GameMode; name: string; icon: string; desc: string }> =
   { id: "chin", name: "Çin Mahjong'u", icon: "🎴", desc: "4 oyuncu, 144 taş, gerçek mahjong" },
 ];
 
-type Player = { name: string; pass: string };
+type Player = { name: string };
 const PLAYER_KEY = "kadm_player_v1";
 
 function loadPlayer(): Player | null {
@@ -26,17 +26,11 @@ function loadPlayer(): Player | null {
     const raw = localStorage.getItem(PLAYER_KEY);
     if (!raw) return null;
     const p = JSON.parse(raw);
-    if (p && typeof p.name === "string" && typeof p.pass === "string" && p.name.length >= 2) return p;
+    if (p && typeof p.name === "string" && p.name.trim().length >= 2) return { name: p.name };
     return null;
   } catch {
     return null;
   }
-}
-
-function hashPass(p: string): string {
-  let h = 5381;
-  for (let i = 0; i < p.length; i++) h = ((h << 5) + h + p.charCodeAt(i)) >>> 0;
-  return "h" + h.toString(16);
 }
 
 // Acilis sayfasinda dolasan oyun figurleri: mevsimler, cicekler, ruzgarlar,
@@ -64,7 +58,6 @@ export default function App() {
   }, [stage]);
   const [player, setPlayer] = useState<Player | null>(() => loadPlayer());
   const [name, setName] = useState("");
-  const [pass, setPass] = useState("");
   const [formErr, setFormErr] = useState("");
   const [mottoText, setMottoText] = useState("");
   const splashDone = useRef(false);
@@ -103,11 +96,7 @@ export default function App() {
       setFormErr("Oyuncu adı en az 2 karakter olmalı.");
       return;
     }
-    if (pass.length < 4) {
-      setFormErr("Şifre en az 4 karakter olmalı.");
-      return;
-    }
-    const p: Player = { name: n, pass: hashPass(pass) };
+    const p: Player = { name: n };
     try {
       localStorage.setItem(PLAYER_KEY, JSON.stringify(p));
     } catch {
@@ -343,7 +332,7 @@ export default function App() {
           <div className="register-overlay">
             <div className="register-card">
               <div className="register-title">Oyuncu Oluştur</div>
-              <div className="register-sub">Oyuna başlamak için adını ve şifreni belirle.</div>
+              <div className="register-sub">Oyuna başlamak için adını belirle.</div>
               <form onSubmit={submitRegister}>
                 <label className="register-label" htmlFor="reg-name">Oyuncu Adı</label>
                 <input
@@ -355,16 +344,6 @@ export default function App() {
                   maxLength={20}
                   autoComplete="off"
                   autoFocus
-                />
-                <label className="register-label" htmlFor="reg-pass">Şifre</label>
-                <input
-                  id="reg-pass"
-                  className="register-input"
-                  type="password"
-                  value={pass}
-                  onChange={(e) => setPass(e.target.value)}
-                  placeholder="En az 4 karakter"
-                  maxLength={40}
                 />
                 <div className="register-err">{formErr}</div>
                 <button className="register-btn" type="submit">Oyuna Başla</button>
