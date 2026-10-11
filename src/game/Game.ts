@@ -2895,10 +2895,8 @@ export class Game {
       this.floats.push({ x: (btA!.sx + btB!.sx) / 2, y: (btA!.sy + btB!.sy) / 2 - 10, life: 1.0, max: 1.0, text: "+2", color: "#ffd75e" });
     }
     const shard = (slot: number, sym: string) => {
-      const traySlots = this.maxTray();
-      const slotW = 72, gapSlot = 10;
-      const trayW = traySlots * slotW + (traySlots - 1) * gapSlot;
-      const bx = CANVAS_W / 2 - trayW / 2 + slot * (slotW + gapSlot) + slotW / 2;
+      const tg = this.trayGeom();
+      const bx = CANVAS_W / 2 - tg.trayW / 2 + slot * (tg.slotW + tg.gapSlot) + tg.slotW / 2;
       for (let k = 0; k < 6; k++) {
         const ang = Math.random() * Math.PI * 2;
         const spd = 60 + Math.random() * 180;
@@ -3220,6 +3218,25 @@ export class Game {
     if (this.gameMode === "puzzle") return 2;
     if (this.gameMode === "endless") return 5;
     return 3;
+  }
+
+  /** Hazne geometrisi (3x buyutulmus); ekran genisligine sigmadiginda
+   *  once bosluklar, sonra yuva genisligi daraltilir. */
+  private trayGeom(): { trayY: number; slotW: number; gapSlot: number; trayW: number; slotH: number; padX: number; fh: number } {
+    const trayY = 60;
+    const slots = this.maxTray();
+    let slotW = 216, gapSlot = 30, padX = 42;
+    const maxW = CANVAS_W - 16;
+    const total = () => slots * slotW + (slots - 1) * gapSlot + padX * 2;
+    if (total() > maxW) {
+      gapSlot = 12;
+      if (total() > maxW) padX = 12;
+      if (total() > maxW) slotW = Math.floor((maxW - padX * 2 - (slots - 1) * gapSlot) / slots);
+    }
+    const slotH = 108;
+    let fh = 114;
+    if (fh * (100 / 72) > slotW - 10) fh = Math.floor((slotW - 10) * 72 / 100);
+    return { trayY, slotW, gapSlot, trayW: slots * slotW + (slots - 1) * gapSlot, slotH, padX, fh };
   }
 
   private scoreMult(): number {
@@ -4501,39 +4518,36 @@ export class Game {
     }
     c.globalAlpha = 1;
 
-    // ---- Hazne (maxTray slotlu yuva) — ust kisim ----
-    const trayY = 60;
+    // ---- Hazne (maxTray slotlu yuva, 3x boyut) — ust kisim ----
+    const tg = this.trayGeom();
+    const trayY = tg.trayY, slotW = tg.slotW, gapSlot = tg.gapSlot, trayW = tg.trayW;
+    const slotH = tg.slotH, padX = tg.padX, fh = tg.fh;
     const trayCx = CANVAS_W / 2;
-    const slotW = 72;
-    const gapSlot = 10;
-    const traySlots = this.maxTray();
-    const trayW = traySlots * slotW + (traySlots - 1) * gapSlot;
     c.fillStyle = "rgba(10,20,30,0.35)";
     c.beginPath();
-    c.roundRect(trayCx - trayW / 2 - 14, trayY - 20, trayW + 28, 52, 14);
+    c.roundRect(trayCx - trayW / 2 - padX, trayY - 72, trayW + padX * 2, 156, 42);
     c.fill();
     c.strokeStyle = "rgba(255,255,255,0.25)";
-    c.lineWidth = 1.5;
+    c.lineWidth = 2.5;
     c.stroke();
-    for (let i = 0; i < traySlots; i++) {
+    for (let i = 0; i < this.maxTray(); i++) {
       const sx = trayCx - trayW / 2 + i * (slotW + gapSlot);
       c.fillStyle = "rgba(255,255,255,0.06)";
       c.beginPath();
-      c.roundRect(sx, trayY - 12, slotW, 36, 10);
+      c.roundRect(sx, trayY - 48, slotW, slotH, 30);
       c.fill();
       c.strokeStyle = "rgba(255,255,255,0.18)";
-      c.lineWidth = 1;
+      c.lineWidth = 1.5;
       c.stroke();
       if (i < this.tray.length) {
         const tt = this.tray[i];
-        const fh = 38;
         const fw = fh * (this.tw / this.th);
         const fx0 = sx + slotW / 2 - fw / 2;
-        const fy0 = trayY - 12 + (36 - fh) / 2;
+        const fy0 = trayY + 6 - fh / 2;
         c.save();
         c.shadowColor = "rgba(0,0,0,0.55)";
-        c.shadowBlur = 7;
-        c.shadowOffsetY = 2;
+        c.shadowBlur = 12;
+        c.shadowOffsetY = 4;
         c.drawImage(this.getFaceCanvas(tt.symbol, true), fx0, fy0, fw, fh);
         c.restore();
       }
