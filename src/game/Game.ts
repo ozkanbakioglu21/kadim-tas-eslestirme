@@ -2600,8 +2600,54 @@ export class Game {
     this.raf = requestAnimationFrame(this.loop);
   };
   private hudTimer = 0;
+  /** Es garantisi: her tasin (tahta + hazne birlikte) en az bir esittesi
+   *  olmalidir. Her sembolun toplam tas sayisi cift kalmalidir; tek kalansa
+   *  (orn. joker veya sure dolan tek tas alinindan sonra) o sembolden bir
+   *  tas — tercihen acik olan — sessizce kaldirilir. Haznede ayni sembolden
+   *  iki tas bir araya gelirse cift kikirilir. */
+  private enforcePairInvariant(): void {
+    if (this.won || this.lost || !this.tiles.length) return;
+    const bySym = new Map<string, Tile[]>();
+    const put = (k: string, t: Tile) => {
+      const arr = bySym.get(k);
+      if (arr) arr.push(t);
+      else bySym.set(k, [t]);
+    };
+    for (const t of this.tiles) if (!t.removed) put(matchKey(t.symbol), t);
+    for (const it of this.tray) {
+      const t = this.tiles.find((tt) => tt.id === it.id);
+      if (t) put(matchKey(it.symbol), t);
+    }
+    for (const arr of bySym.values()) {
+      if (arr.length % 2 !== 1) continue;
+      const victim =
+        arr.find((t) => !t.removed && this.isOpen(t) && this.sideFree(t)) ??
+        arr.find((t) => !t.removed) ??
+        arr[arr.length - 1];
+      if (!victim) continue;
+      victim.removed = true;
+      if (this.selectedId === victim.id) this.selectedId = null;
+      if (this.hoverId === victim.id) this.hoverId = null;
+      this.lifts.delete(victim.id);
+      this.countdownTiles.delete(victim.id);
+      const ti = this.tray.findIndex((it) => it.id === victim.id);
+      if (ti !== -1) this.tray.splice(ti, 1);
+      this.floats.push({ x: victim.sx, y: victim.sy, life: 1, max: 1, text: "Eşsiz kaldı", color: "#ff9955" });
+      this.sfx("tileclick");
+    }
+    // Hazneden tas kaldirilirsa geride ayni sembolden ikisi kaldiysa kirla.
+    outer: for (let i = 0; i < this.tray.length; i++)
+      for (let j = i + 1; j < this.tray.length; j++) {
+        if (matchKeyFull(this.tray[i].symbol, this.tray[i].flip) === matchKeyFull(this.tray[j].symbol, this.tray[j].flip)) {
+          this.breakPair(i, j);
+          break outer;
+        }
+      }
+  }
+
   private update(dt: number): void {
     this.time += dt;
+    this.enforcePairInvariant();
     // Fantastik cerceve acisini hedefe yumusak yaklastir.
     if (this.magicRingActive) {
       this.magicRingAngle += (this.magicRingTarget - this.magicRingAngle) * Math.min(1, dt * 7);
