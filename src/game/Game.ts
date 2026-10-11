@@ -68,11 +68,11 @@ const RUNES = [
   "𐰋", "𐰑", "𐰚", "𐰃", "𐰅", "𐰇", "𐰈", "𐰢",
   "𐰁", "𐰂", "𐰗", "𐰜",
 ];
-// Rakamsiz klasik sembol seti: sayi (bambu/daire/karakter) taslari yok.
-//   Onur (7 sembol): ruzgarlar E/S/W/N, ejderhalar DR/DG/DW
-//   Bonus (8 sembol): cicekler f1-f4 (梅蘭菊竹), mevsimler s1-s4 (春夏秋冬)
-//   Her sembol 5 cift (10 tas) -> 15 sembol x 5 = 75 cift. Tum modlarda her
-//   sembol tek klasik sekil (CJK / rune / hiyeroglif) olarak cizilir.
+// Sembol seti:
+//   Klasik/Standard mod: GERCEK klasik mahjong seti (34 tur x 4 + 8 bonus,
+//     daire c1-c9, bambu b1-b9, karakter w1-w9, ruzgarlar, ejderhalar,
+//     cicekler f1-f4 (梅蘭菊竹), mevsimler s1-s4 (春夏秋冬)).
+//   Diger modlar: 15 sembol x 5 cift = 75 cift (tema ikonlariyla cizilir).
 const NUM_CH = ["一", "二", "三", "四", "五", "六", "七", "八", "九"];
 const WIND_CH: Record<string, string> = { E: "東", S: "南", W: "西", N: "北" };
 const DRAGON_CH: Record<string, string> = { DR: "中", DG: "發", DW: "白" };
@@ -114,8 +114,9 @@ function tileColor(kind: string): string {
 }
 
 function faceLabel(kind: string): string {
-  if (kind[0] === "b" || kind[0] === "c") return kind.slice(1);
-  if (kind[0] === "w") return NUM_CH[Number(kind.slice(1)) - 1];
+  if (kind[0] === "c") return kind.slice(1) + "筒";
+  if (kind[0] === "b") return kind.slice(1) + "索";
+  if (kind[0] === "w") return NUM_CH[Number(kind.slice(1)) - 1] + "萬";
   if (kind in DRAGON_CH) return DRAGON_CH[kind];
   if (kind[0] === "f") return FLOWER_CH[Number(kind.slice(1)) - 1];
   if (kind[0] === "s") return SEASON_CH[Number(kind.slice(1)) - 1];
@@ -133,10 +134,27 @@ function matchKeyFull(sym: string, _flip: number): string {
   return matchKey(sym);
 }
 
-function buildPoolPairs(): Array<[string, string]> {
-  // Rakamsiz klasik sembol havuzu: ruzgarlar, ejderhalar, cicekler, mevsimler.
-  // Hiçbir sayaç/numara tasi yok; her sembol tum modlarda tek klasik sekil olarak cizilir.
-  // Her sembol 5 cift (10 tas) -> 15 sembol x 5 = 75 cift (144 taslik tahtaya yeter).
+function buildPoolPairs(mode: GameMode): Array<[string, string]> {
+  if (mode === "classic" || mode === "standard") {
+    // Gercek klasik mahjong seti (Wikipedia: "Mahjong tiles"):
+    //   34 temel tur x 4 adet = 136 tas:
+    //     Daire (tong) 1-9, Bambu (suo) 1-9, Karakter (wan) 1-9,
+    //     Ruzgarlar E/S/W/N, Ejderhalar DR(中)/DG(發)/DW(白)
+    //   + 8 bonus tas: Cicekler f1-f4 (梅蘭菊竹), Mevsimler s1-s4 (春夏秋冬)
+    // Her tur 4 kopya -> 2 es cift; bonuslar 2 kopya -> 1 cift. Toplam 76 cift.
+    const kinds: string[] = [];
+    for (const p of ["c", "b", "w"]) for (let n = 1; n <= 9; n++) kinds.push(p + n);
+    kinds.push("E", "S", "W", "N", "DR", "DG", "DW");
+    kinds.push("f1", "f2", "f3", "f4", "s1", "s2", "s3", "s4");
+    const pairs: Array<[string, string]> = [];
+    for (const k of kinds) {
+      const copies = k[0] === "f" || k[0] === "s" ? 2 : 4;
+      for (let i = 0; i < copies / 2; i++) pairs.push([k, k]);
+    }
+    return pairs;
+  }
+  // Diger modlar: rakamsiz klasik sembol havuzu (tema ikonlariyla).
+  // Her sembol 5 cift (10 tas) -> 15 sembol x 5 = 75 cift.
   const CLASSIC_KINDS = ["E", "S", "W", "N", "DR", "DG", "DW", "f1", "f2", "f3", "f4", "s1", "s2", "s3", "s4"];
   const pairs: Array<[string, string]> = [];
   for (const k of CLASSIC_KINDS) for (let i = 0; i < 5; i++) pairs.push([k, k]);
@@ -1934,7 +1952,7 @@ export class Game {
     const pairsNeeded = Math.floor(slots.length / 2);
     let assigned: string[] | null = null;
     for (let attempt = 0; attempt < 60 && !assigned; attempt++) {
-      const pool = buildPoolPairs();
+      const pool = buildPoolPairs(this.gameMode);
       for (let i = pool.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -1944,7 +1962,7 @@ export class Game {
     if (!assigned) {
       // Son care: ardisik slot ciftlerine ikiz sembol ata (eslesme garantili,
       // cozum sirasi garanti degil).
-      const pool = buildPoolPairs();
+      const pool = buildPoolPairs(this.gameMode);
       assigned = new Array<string>(slots.length);
       let pi = 0;
       for (let i = 0; i + 1 < slots.length; i += 2) {
@@ -5200,6 +5218,147 @@ export class Game {
 
   /** Açiliş sayfasindaki gibi sade fildisi yuz: yumusak krem degrade + tek
    *  buyuk renkli sembol. Klasik modda kullanilir. */
+  /** Gercek klasik mahjong sayaç taslari: daire (tong), bambu (suo),
+   *  karakter (wan) — geleneksel renk ve dizilislerle. */
+  private paintClassicSuit(m: CanvasRenderingContext2D, kind: string, w: number, h: number): void {
+    const n = Number(kind.slice(1));
+    const cx = w / 2, cy = h / 2, s = Math.min(w, h) * 0.34;
+    const BLUE = "#1c4f9c", GREEN = "#2e8b57", RED = "#c0392b";
+    const X = (lx: number) => cx + lx * s, Y = (ly: number) => cy + ly * s;
+    const dot = (lx: number, ly: number, r: number, color: string) => {
+      m.fillStyle = color;
+      m.beginPath(); m.arc(X(lx), Y(ly), r * s, 0, Math.PI * 2); m.fill();
+      m.strokeStyle = "rgba(20,30,50,0.55)"; m.lineWidth = Math.max(0.8, s * 0.03);
+      m.stroke();
+      m.fillStyle = "rgba(255,255,255,0.5)";
+      m.beginPath(); m.arc(X(lx) - r * s * 0.3, Y(ly) - r * s * 0.3, r * s * 0.28, 0, Math.PI * 2); m.fill();
+    };
+    const stick = (lx: number, ly: number, color: string) => {
+      const sw = 0.075 * s, sh = 0.155 * s;
+      m.fillStyle = color;
+      m.beginPath();
+      m.roundRect(X(lx) - sw, Y(ly) - sh, sw * 2, sh * 2, sw * 0.8);
+      m.fill();
+      m.strokeStyle = "rgba(20,40,25,0.6)"; m.lineWidth = Math.max(0.7, s * 0.025);
+      m.stroke();
+      // oluk cizgileri (ipe bagli tasi temsil eder)
+      m.strokeStyle = "rgba(255,255,255,0.55)"; m.lineWidth = Math.max(0.6, s * 0.02);
+      m.beginPath();
+      m.moveTo(X(lx) - sw * 0.8, Y(ly) - sh * 0.35); m.lineTo(X(lx) + sw * 0.8, Y(ly) - sh * 0.35);
+      m.moveTo(X(lx) - sw * 0.8, Y(ly) + sh * 0.35); m.lineTo(X(lx) + sw * 0.8, Y(ly) + sh * 0.35);
+      m.stroke();
+    };
+    if (kind[0] === "c") {
+      if (n === 1) {
+        // Buyuk cok renkli para (da bing)
+        dot(0, 0, 0.62, RED);
+        dot(0, 0, 0.40, BLUE);
+        dot(0, 0, 0.17, GREEN);
+      } else if (n === 2) {
+        dot(0, -0.34, 0.27, GREEN); dot(0, 0.34, 0.27, BLUE);
+      } else if (n === 3) {
+        dot(-0.32, -0.32, 0.21, GREEN); dot(0, 0, 0.21, RED); dot(0.32, 0.32, 0.21, BLUE);
+      } else if (n === 4) {
+        const d = 0.32, r = 0.19;
+        dot(-d, -d, r, BLUE); dot(d, d, r, BLUE);
+        dot(d, -d, r, GREEN); dot(-d, d, r, GREEN);
+      } else if (n === 5) {
+        const d = 0.3, r = 0.17;
+        dot(-d, -d, r, BLUE); dot(d, d, r, BLUE);
+        dot(d, -d, r, GREEN); dot(-d, d, r, GREEN);
+        dot(0, 0, r, RED);
+      } else if (n === 6) {
+        const d = 0.28, r = 0.15;
+        dot(-d, -0.36, r, GREEN); dot(d, -0.36, r, GREEN);
+        dot(-d, 0, r, RED); dot(d, 0, r, RED);
+        dot(-d, 0.36, r, RED); dot(d, 0.36, r, RED);
+      } else if (n === 7) {
+        const r = 0.14;
+        dot(-0.32, -0.4, r, GREEN); dot(0, -0.4, r, GREEN); dot(0.32, -0.4, r, GREEN);
+        dot(-0.28, 0, r, RED); dot(0.28, 0, r, RED);
+        dot(-0.28, 0.38, r, RED); dot(0.28, 0.38, r, RED);
+      } else if (n === 8) {
+        const d = 0.28, r = 0.13;
+        for (const ly of [-0.42, -0.14, 0.14, 0.42]) { dot(-d, ly, r, BLUE); dot(d, ly, r, BLUE); }
+      } else {
+        const r = 0.13;
+        for (const lx of [-0.32, 0, 0.32]) { dot(lx, -0.34, r, GREEN); dot(lx, 0, r, RED); dot(lx, 0.34, r, BLUE); }
+      }
+    } else if (kind[0] === "b") {
+      if (n === 1) {
+        // Saka kus (1 bambu geleneksel kus figuru)
+        m.strokeStyle = "#7a5230"; m.lineWidth = Math.max(1.2, s * 0.06); m.lineCap = "round";
+        m.beginPath(); m.moveTo(X(-0.55), Y(0.6)); m.lineTo(X(0.55), Y(0.6)); m.stroke(); // dal
+        // kuyruk
+        m.strokeStyle = BLUE; m.lineWidth = Math.max(1, s * 0.05);
+        m.beginPath();
+        m.moveTo(X(-0.2), Y(0.05)); m.lineTo(X(-0.62), Y(-0.12));
+        m.moveTo(X(-0.2), Y(0.12)); m.lineTo(X(-0.66), Y(0.1));
+        m.moveTo(X(-0.2), Y(0.19)); m.lineTo(X(-0.6), Y(0.34));
+        m.stroke();
+        // bacaklar
+        m.strokeStyle = "#7a5230"; m.lineWidth = Math.max(0.8, s * 0.035);
+        m.beginPath();
+        m.moveTo(X(0.02), Y(0.3)); m.lineTo(X(0.02), Y(0.6));
+        m.moveTo(X(0.14), Y(0.3)); m.lineTo(X(0.14), Y(0.6));
+        m.stroke();
+        // gorpus
+        m.fillStyle = GREEN;
+        m.beginPath(); m.ellipse(X(-0.02), Y(0.1), 0.32 * s, 0.24 * s, -0.15, 0, Math.PI * 2); m.fill();
+        m.strokeStyle = "rgba(20,40,25,0.6)"; m.lineWidth = Math.max(0.8, s * 0.028); m.stroke();
+        // kanat
+        m.fillStyle = BLUE;
+        m.beginPath(); m.ellipse(X(-0.06), Y(0.06), 0.19 * s, 0.11 * s, -0.35, 0, Math.PI * 2); m.fill();
+        // kafa + gaga
+        m.fillStyle = GREEN;
+        m.beginPath(); m.arc(X(0.3), Y(-0.2), 0.15 * s, 0, Math.PI * 2); m.fill();
+        m.stroke();
+        m.fillStyle = "#e8922a";
+        m.beginPath();
+        m.moveTo(X(0.42), Y(-0.24)); m.lineTo(X(0.58), Y(-0.19)); m.lineTo(X(0.42), Y(-0.14));
+        m.closePath(); m.fill();
+        m.fillStyle = "#1a1a1a";
+        m.beginPath(); m.arc(X(0.34), Y(-0.24), 0.028 * s, 0, Math.PI * 2); m.fill();
+      } else if (n === 2) {
+        stick(0, -0.36, GREEN); stick(0, 0.36, GREEN);
+      } else if (n === 3) {
+        stick(0, -0.38, GREEN); stick(-0.28, 0.36, GREEN); stick(0.28, 0.36, GREEN);
+      } else if (n === 4) {
+        const d = 0.28;
+        stick(-d, -0.36, GREEN); stick(d, -0.36, GREEN);
+        stick(-d, 0.36, GREEN); stick(d, 0.36, GREEN);
+      } else if (n === 5) {
+        const d = 0.3;
+        stick(-d, -0.36, GREEN); stick(d, -0.36, GREEN);
+        stick(-d, 0.36, GREEN); stick(d, 0.36, GREEN);
+        stick(0, 0, RED);
+      } else if (n === 6) {
+        const d = 0.28;
+        for (const ly of [-0.4, 0, 0.4]) { stick(-d, ly, GREEN); stick(d, ly, GREEN); }
+      } else if (n === 7) {
+        stick(0, -0.42, RED);
+        for (const ly of [-0.06, 0.38]) for (const lx of [-0.32, 0, 0.32]) stick(lx, ly, GREEN);
+      } else if (n === 8) {
+        const d = 0.28;
+        for (const ly of [-0.44, -0.15, 0.15, 0.44]) { stick(-d, ly, GREEN); stick(d, ly, GREEN); }
+      } else {
+        for (const lx of [-0.32, 0, 0.32]) for (const ly of [-0.38, 0, 0.38]) stick(lx, ly, lx === 0 ? RED : GREEN);
+      }
+    } else {
+      // Karakter (wan): ustte mavi Cinese rakam, altta kirmizi 萬
+      const numCh = n === 5 ? "伍" : NUM_CH[n - 1];
+      m.textAlign = "center"; m.textBaseline = "middle";
+      m.font = "700 " + Math.round(s * 1.15) + "px " + CJK_FONT;
+      m.fillStyle = "rgba(90,60,20,0.25)";
+      m.fillText(numCh, cx, cy - s * 0.52 + 1.4);
+      m.fillText("萬", cx, cy + s * 0.56 + 1.4);
+      m.fillStyle = "#173a6e";
+      m.fillText(numCh, cx, cy - s * 0.52);
+      m.fillStyle = RED;
+      m.fillText("萬", cx, cy + s * 0.56);
+    }
+  }
+
   private paintFaceSplash(m: CanvasRenderingContext2D, kind: string, open: boolean, w: number, h: number): void {
     const R = Math.max(4, Math.round(w * 0.125));
     // ---- Krem fildisi taban (splash degrade: 160° sol-ustten sag-alta) ----
@@ -5229,23 +5388,28 @@ export class Game {
     m.textAlign = "center";
     m.textBaseline = "middle";
     if (open) {
-      const isHonor = kind[0] === "f" || kind[0] === "s" || kind === "DR" || kind === "DG" || kind === "DW"
-        || kind === "E" || kind === "S" || kind === "W" || kind === "N";
-      if (isHonor) {
-        // ---- Yazisiz vektorel ikon (ruzgar/ejderha/cicek/mevsim) ----
-        const size = Math.min(w, h) * 0.78;
-        this.paintHonorIconEmboss(m, kind, w / 2, h / 2, size);
+      if (kind[0] === "c" || kind[0] === "b" || kind[0] === "w") {
+        // ---- Gercek klasik mahjong sayaç taslari (daire/bambu/karakter) ----
+        this.paintClassicSuit(m, kind, w, h);
       } else {
-        // ---- Tek buyuk renkli sembol (splash gibi) ----
-        const ch = faceLabel(kind);
-        const color = tileColor(kind);
-        const size = Math.round(w * 0.60);
-        m.font = "700 " + size + "px " + CJK_FONT;
-        // Hafif derinlik golgesi (yuzun uzerine basili hissi)
-        m.fillStyle = "rgba(90,60,20,0.28)";
-        m.fillText(ch, w / 2, h / 2 + 1.6);
-        m.fillStyle = color;
-        m.fillText(ch, w / 2, h / 2);
+        const isHonor = kind[0] === "f" || kind[0] === "s" || kind === "DR" || kind === "DG" || kind === "DW"
+          || kind === "E" || kind === "S" || kind === "W" || kind === "N";
+        if (isHonor) {
+          // ---- Yazisiz vektorel ikon (ruzgar/ejderha/cicek/mevsim) ----
+          const size = Math.min(w, h) * 0.78;
+          this.paintHonorIconEmboss(m, kind, w / 2, h / 2, size);
+        } else {
+          // ---- Tek buyuk renkli sembol (splash gibi) ----
+          const ch = faceLabel(kind);
+          const color = tileColor(kind);
+          const size = Math.round(w * 0.60);
+          m.font = "700 " + size + "px " + CJK_FONT;
+          // Hafif derinlik golgesi (yuzun uzerine basili hissi)
+          m.fillStyle = "rgba(90,60,20,0.28)";
+          m.fillText(ch, w / 2, h / 2 + 1.6);
+          m.fillStyle = color;
+          m.fillText(ch, w / 2, h / 2);
+        }
       }
     } else {
       // ---- Arka yuz: sade mat fildisi + ince rozet (karakter yok) ----
