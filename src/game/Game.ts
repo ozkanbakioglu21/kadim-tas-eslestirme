@@ -526,6 +526,145 @@ function paintWolfFigure(m: CanvasRenderingContext2D, cx: number, cy: number, s:
   m.restore();
 }
 
+// Bozkir figurleri (tas yuzu alt kismi): agac, uluyan kurt, alag, kaplumbaga.
+// s = yarim yukseklik; -1..1 normalize kutu; kazima stili (golge + ana).
+type SteppeFigure = "tree" | "wolf" | "deer" | "turtle";
+function paintSteppeFigure(m: CanvasRenderingContext2D, fig: SteppeFigure, cx: number, cy: number, s: number, color: string, shadow: string | null = "rgba(30,18,8,0.55)"): void {
+  const paint = (g: CanvasRenderingContext2D, ox: number, oy: number, lw: number, sc: string, fc: string) => {
+    const X = (lx: number) => cx + ox + lx * s;
+    const Y = (ly: number) => cy + oy + ly * s;
+    g.lineCap = "round";
+    g.lineJoin = "round";
+    g.lineWidth = lw;
+    g.strokeStyle = sc;
+    g.fillStyle = fc;
+    const P = (pts: number[][]) => { g.beginPath(); pts.forEach(([lx, ly], i) => (i ? g.lineTo(X(lx), Y(ly)) : g.moveTo(X(lx), Y(ly)))); g.stroke(); };
+    if (fig === "tree") {
+      // govde + dallar
+      P([[-0.16, 0.95], [-0.2, 0.5], [-0.1, 0.2], [-0.04, -0.05]]);
+      P([[-0.04, -0.02], [0.3, -0.3]]);
+      P([[-0.06, 0.05], [-0.38, -0.22]]);
+      P([[-0.02, 0.3], [-0.4, 0.42]]);
+      // tepe (ortusan uc halka)
+      g.beginPath(); g.arc(X(0), Y(-0.42), 0.42 * s, 0, Math.PI * 2); g.stroke();
+      g.beginPath(); g.arc(X(-0.4), Y(-0.1), 0.3 * s, 0, Math.PI * 2); g.stroke();
+      g.beginPath(); g.arc(X(0.42), Y(-0.08), 0.3 * s, 0, Math.PI * 2); g.stroke();
+      // zemin
+      P([[-0.8, 0.95], [0.8, 0.95]]);
+    } else if (fig === "wolf") {
+      // uluyan kurt (kapali gorunum, sag bakisli)
+      g.beginPath();
+      g.moveTo(X(-0.98), Y(0.62));
+      g.quadraticCurveTo(X(-0.78), Y(0.5), X(-0.62), Y(0.34));
+      g.quadraticCurveTo(X(-0.3), Y(0.02), X(0.12), Y(0.08));
+      g.quadraticCurveTo(X(0.38), Y(0.02), X(0.46), Y(-0.3));
+      g.lineTo(X(0.5), Y(-0.62));
+      g.quadraticCurveTo(X(0.52), Y(-0.85), X(0.56), Y(-0.95));
+      g.quadraticCurveTo(X(0.62), Y(-0.78), X(0.66), Y(-0.68));
+      g.lineTo(X(0.72), Y(-0.72));
+      g.quadraticCurveTo(X(0.76), Y(-0.88), X(0.8), Y(-0.92));
+      g.quadraticCurveTo(X(0.84), Y(-0.75), X(0.86), Y(-0.62));
+      g.quadraticCurveTo(X(0.98), Y(-0.78), X(0.99), Y(-0.88));
+      g.quadraticCurveTo(X(0.9), Y(-0.78), X(0.8), Y(-0.55));
+      g.quadraticCurveTo(X(0.66), Y(-0.35), X(0.52), Y(-0.02));
+      g.lineTo(X(0.44), Y(0.05));
+      g.lineTo(X(0.5), Y(0.16));
+      g.lineTo(X(0.42), Y(0.22));
+      g.lineTo(X(0.4), Y(0.5));
+      g.lineTo(X(0.38), Y(0.92));
+      g.lineTo(X(0.3), Y(0.92));
+      g.lineTo(X(0.3), Y(0.42));
+      g.quadraticCurveTo(X(0.05), Y(0.6), X(-0.2), Y(0.55));
+      g.lineTo(X(-0.36), Y(0.5));
+      g.lineTo(X(-0.42), Y(0.92));
+      g.lineTo(X(-0.52), Y(0.92));
+      g.lineTo(X(-0.52), Y(0.4));
+      g.quadraticCurveTo(X(-0.72), Y(0.42), X(-0.82), Y(0.5));
+      g.quadraticCurveTo(X(-0.95), Y(0.55), X(-0.98), Y(0.62));
+      g.closePath();
+      g.stroke();
+      // goz + kulak ici + boyun yulu
+      P([[0.62, -0.58], [0.7, -0.6]]);
+      P([[0.56, -0.72], [0.58, -0.85]]);
+      P([[0.44, -0.2], [0.5, -0.12]]);
+    } else if (fig === "deer") {
+      // Alag (ayakta, boynuzlu, sag bakisli)
+      g.beginPath();
+      g.moveTo(X(-0.82), Y(-0.02));
+      g.quadraticCurveTo(X(-0.7), Y(-0.12), X(-0.5), Y(-0.16));
+      g.quadraticCurveTo(X(-0.1), Y(-0.26), X(0.28), Y(-0.24));
+      g.quadraticCurveTo(X(0.42), Y(-0.3), X(0.5), Y(-0.45));
+      g.lineTo(X(0.55), Y(-0.58));
+      g.quadraticCurveTo(X(0.75), Y(-0.62), X(0.88), Y(-0.52));
+      g.quadraticCurveTo(X(0.78), Y(-0.42), X(0.62), Y(-0.4));
+      g.quadraticCurveTo(X(0.5), Y(-0.25), X(0.44), Y(0.0));
+      g.lineTo(X(0.4), Y(0.45));
+      g.lineTo(X(0.38), Y(0.92));
+      g.lineTo(X(0.32), Y(0.92));
+      g.lineTo(X(0.3), Y(0.4));
+      g.quadraticCurveTo(X(0.05), Y(0.52), X(-0.2), Y(0.5));
+      g.lineTo(X(-0.38), Y(0.44));
+      g.lineTo(X(-0.44), Y(0.92));
+      g.lineTo(X(-0.52), Y(0.92));
+      g.lineTo(X(-0.5), Y(0.38));
+      g.quadraticCurveTo(X(-0.68), Y(0.3), X(-0.76), Y(0.1));
+      g.closePath();
+      g.stroke();
+      // boynuzlar (dallanmis)
+      P([[0.58, -0.6], [0.48, -0.8], [0.4, -0.98]]);
+      P([[0.48, -0.8], [0.36, -0.84]]);
+      P([[0.64, -0.6], [0.74, -0.8], [0.84, -0.9]]);
+      P([[0.74, -0.8], [0.84, -0.78]]);
+      // kulak + goz + boynuz alt yulu
+      P([[0.52, -0.56], [0.42, -0.5]]);
+      P([[0.66, -0.5], [0.72, -0.5]]);
+      P([[0.5, -0.35], [0.46, -0.28]]);
+    } else {
+      // Kaplumbaga
+      g.beginPath();
+      g.moveTo(X(-0.66), Y(0.08));
+      g.quadraticCurveTo(X(-0.5), Y(-0.6), X(0), Y(-0.62));
+      g.quadraticCurveTo(X(0.5), Y(-0.6), X(0.66), Y(0.08));
+      g.closePath();
+      g.stroke();
+      // kurek deseni
+      P([[-0.32, -0.52], [-0.4], [0.06]]);
+      P([[0.32, -0.52], [0.4], [0.06]]);
+      P([[-0.58, -0.25], [0, -0.32], [0.58, -0.25]]);
+      // kafa + boyun
+      g.beginPath();
+      g.moveTo(X(0.66), Y(0.02));
+      g.quadraticCurveTo(X(0.82), Y(-0.02), X(0.84), Y(-0.14));
+      g.quadraticCurveTo(X(0.92), Y(-0.3), X(0.98), Y(-0.18));
+      g.quadraticCurveTo(X(1.0), Y(-0.05), X(0.9), Y(0.0));
+      g.quadraticCurveTo(X(0.8), Y(0.06), X(0.68), Y(0.1));
+      g.stroke();
+      // bacaklar + kuyruk
+      P([[0.3, 0.1], [0.36, 0.3], [0.42, 0.55], [0.28, 0.55], [0.24, 0.1]]);
+      P([[-0.42, 0.1], [-0.36, 0.3], [-0.3, 0.55], [-0.44, 0.55], [-0.5, 0.1]]);
+      P([[-0.66, 0.12], [-0.78, 0.22]]);
+      // goz
+      g.beginPath(); g.arc(X(0.9), Y(-0.16), 0.04 * s, 0, Math.PI * 2); g.fill();
+    }
+  };
+  m.save();
+  const lw = Math.max(1, s * 0.12);
+  if (shadow) paint(m, lw * 0.8, lw * 1.1, lw, shadow, shadow);
+  paint(m, 0, 0, lw, color, color);
+  m.restore();
+}
+
+// Her tas turu icin alt kismdaki figuru (agac/kurt/alag/kaplumbaga, dengeli).
+function steppeFigureFor(kind: string): SteppeFigure {
+  const map: Record<string, SteppeFigure> = {
+    E: "wolf", S: "deer", W: "turtle", N: "tree",
+    DR: "tree", DG: "wolf", DW: "deer",
+    f1: "turtle", f2: "tree", f3: "wolf", f4: "deer",
+    s1: "deer", s2: "wolf", s3: "turtle", s4: "tree",
+  };
+  return map[kind] ?? "wolf";
+}
+
 // Bozkir modu icin mahjong sembolu -> GoekTurk/kurt/geyik spesifikasyonu.
 type SteppeSpec =
   | { type: "count"; suit: "c" | "b" | "w"; n: number }
@@ -5641,8 +5780,9 @@ export class Game {
         m.fillText(num, cx, cy + h * 0.1);
       }
     } else {
-      // Tek buyuk sembol (harf / kurt / geyik)
-      carve(spec.glyph, cx, cy, h * 0.3, spec.color);
+      // GoekTurk harfi (orta) + altta figur (agac/kurt/alag/kaplumbaga)
+      carve(spec.glyph, cx, h * 0.42, h * 0.26, spec.color);
+      paintSteppeFigure(m, steppeFigureFor(kind), cx, h * 0.815, h * 0.105, spec.color);
       // Cornel grup isareti (cicek/mevsim)
       if (spec.marker) {
         const mx = px + pw - 12, my = py + 12, mr = 6;
