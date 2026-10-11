@@ -410,20 +410,23 @@ const STEPPE_GLYPHS: Record<string, SteppeGlyph> = {
     polys: [[[-0.45, 0.5], [-0.5, -0.15], [-0.3, -0.5], [0.1, -0.48], [0.8, -0.15], [0.45, 0.0], [0.3, 0.2], [0.1, 0.5], [-0.2, 0.55], [-0.45, 0.5]]],
     discs: [[0.18, -0.25, 0.05]],
   },
-  // Orkhon harfleri (dikey ana hat + aciklica dallar)
-  orkhon_1: { lines: [[[0, -1], [0, 1]], [[0, -0.55], [0.6, -0.2]]] },
-  orkhon_2: { lines: [[[0, -1], [0, 1]], [[0, -0.5], [-0.6, -0.15]], [[0, 0.35], [-0.6, 0.7]]] },
-  orkhon_3: { lines: [[[0, -1], [0, 1]], [[0, -0.6], [0.6, -0.25]], [[0, 0.15], [0.6, 0.5]]] },
-  orkhon_4: { lines: [[[0, -1], [0, 1]], [[0, -0.75], [0.6, -0.4]], [[0, -0.1], [0.6, 0.25]], [[0, 0.55], [0.6, 0.9]]] },
-  orkhon_5: { lines: [[[0, -1], [0, 1]], [[0, -0.55], [0.6, -0.2]], [[0, 0.45], [-0.6, 0.8]]] },
-  orkhon_6: { lines: [[[0, -1], [0, 1]], [[-0.6, -0.7], [0, -0.35], [0.6, -0.7]]] },
-  orkhon_7: { lines: [[[0, -1], [0, 1]], [[0, -0.5], [0.6, -0.5]], [[0, 0.25], [0.6, 0.25]]] },
-  orkhon_8: { lines: [[[0, -1], [0, 1]], [[0, -0.7], [0.6, -0.35], [-0.6, 0.35], [0.6, 0.7]]] },
-  orkhon_9: { lines: [[[-0.55, -0.75], [0.55, -0.75]], [[0, -0.75], [0, 1]], [[0, 0.35], [0.55, 0.75]]] },
-  orkhon_10: { lines: [[[0, -1], [0, 1]], [[0, -0.5], [-0.6, -0.15]], [[0, 0.25], [0.6, 0.6]]] },
-  orkhon_11: { lines: [[[0, -1], [0, 1]], [[-0.6, -0.75], [-0.15, -0.35]], [[0.6, -0.75], [0.15, -0.35]], [[-0.5, 0.5], [0, 0.95], [0.5, 0.5]]] },
-  orkhon_12: { lines: [[[0, -1], [0, 1]], [[0, -0.6], [0.6, -0.25]], [[0, 0.3], [-0.6, 0.65]]] },
-  orkhon_13: { lines: [[[0, -1], [0, 1]], [[0, -0.85], [0.6, -0.85]], [[0, 0.6], [0.6, 0.6]]] },
+  // GoekTurk (Orkhon) alfabesi — gercek harf serebetleri: dikey ana hat +
+  // her harfe ozgu tumeler (Orhon yazitlarindan, dikey yazim sistemi).
+  orkhon_y: { lines: [[[0, -1], [0, 1]], [[0, -0.7], [0.62, -0.35]], [[0, 0.3], [-0.62, 0.65]]] },
+  orkhon_e: { lines: [[[0, -1], [0, 1]], [[0, -0.62], [-0.55, -0.8]], [[0, 0.42], [0.62, 0.72]]] },
+  orkhon_l: { lines: [[[0, -1], [0, 1]], [[0, -1], [-0.5, -0.62]], [[0, 0.5], [0.6, 0.82]]] },
+  orkhon_t: { lines: [[[0, -1], [0, 1]], [[-0.62, -0.78], [0, -0.42]], [[0, -0.42], [0.62, -0.78]]] },
+  orkhon_a: { lines: [[[0, -1], [0, 1]], [[0, 0.62], [0.6, 0.95]]] },
+  orkhon_ng: { lines: [[[0, -1], [0, 1]], [[0, -0.55], [0.62, -0.2]], [[0, 0.45], [-0.62, 0.8]]] },
+  orkhon_r: { lines: [[[0, -1], [0, 1]], [[0, -0.75], [-0.5, -0.9]], [[0, 0.3], [0.62, 0.72]]] },
+  orkhon_b: { lines: [[[0, -1], [0, 1]], [[0, 0.55], [-0.62, 0.9]]] },
+  orkhon_u: { lines: [[[0, -1], [0, 1]], [[0, -0.62], [0.62, -0.28]], [[0, 0.42], [0.62, 0.75]]] },
+  orkhon_g: { lines: [[[0, -1], [0, 1]], [[0, -0.7], [-0.6, -0.35]], [[0, 0.4], [0.62, 0.75]]] },
+  orkhon_j: { lines: [[[0, -1], [0, 1]], [[0, -0.6], [0.62, -0.25]], [[0, 0.5], [-0.62, 0.85]]] },
+  orkhon_i: { lines: [[[0, -0.75], [0, 1]], [[0, -0.75], [-0.5, -0.55]]] },
+  orkhon_s: { lines: [[[0, -1], [0, 1]], [[-0.55, -0.75], [0.55, -0.05]], [[0.55, -0.05], [-0.55, 0.65]]] },
+  orkhon_n: { lines: [[[0, -1], [0, 1]], [[0, -0.68], [-0.62, -0.3]], [[0, 0.35], [0.62, 0.72]]] },
+  orkhon_m: { lines: [[[0, -1], [0, 1]], [[0, 0.5], [0.6, 0.8]], [[0, 0.72], [-0.6, 1.0]]] },
   // Sayi birimleri
   sun_small: { discs: [[0, 0, 0.5]] },
   grass: { lines: [[[0, 0.95], [-0.02, 0.1], [-0.4, -0.9]], [[0, 0.95], [0.05, -0.1]], [[0, 0.95], [0.05, 0.0], [0.5, -0.85]]] },
@@ -448,6 +451,81 @@ function strokeSteppe(m: CanvasRenderingContext2D, glyphId: string, cx: number, 
   m.restore();
 }
 
+// Gercekci kurt (profil kafa): keskin kulaklar, burun kirkimi, cene/boyun
+// yulu tuplari, goz ve burun detaylari. s = yarim yukseklik olcegi.
+function paintWolfFigure(m: CanvasRenderingContext2D, cx: number, cy: number, s: number, color: string, shadow: string | null = "rgba(30,18,8,0.55)"): void {
+  const trace = (g: CanvasRenderingContext2D, ox: number, oy: number) => {
+    const X = (lx: number) => cx + ox + lx * s;
+    const Y = (ly: number) => cy + oy + ly * s;
+    g.beginPath();
+    g.moveTo(X(-0.95), Y(0.85)); // boyun arkasi
+    g.quadraticCurveTo(X(-0.85), Y(0.1), X(-0.72), Y(-0.28));
+    // arka kulak
+    g.lineTo(X(-0.66), Y(-0.3));
+    g.quadraticCurveTo(X(-0.6), Y(-0.75), X(-0.48), Y(-1.0));
+    g.quadraticCurveTo(X(-0.4), Y(-0.62), X(-0.32), Y(-0.44));
+    // kulak arasi
+    g.quadraticCurveTo(X(-0.24), Y(-0.5), X(-0.16), Y(-0.46));
+    // on kulak
+    g.quadraticCurveTo(X(-0.12), Y(-0.8), X(-0.02), Y(-0.98));
+    g.quadraticCurveTo(X(0.04), Y(-0.6), X(0.1), Y(-0.42));
+    // alin + burun kirkimi
+    g.quadraticCurveTo(X(0.3), Y(-0.38), X(0.55), Y(-0.2));
+    g.quadraticCurveTo(X(0.82), Y(0.0), X(0.98), Y(0.08));
+    // burun ucu
+    g.quadraticCurveTo(X(0.99), Y(0.16), X(0.9), Y(0.2));
+    // ağız + cene
+    g.quadraticCurveTo(X(0.62), Y(0.26), X(0.42), Y(0.28));
+    g.quadraticCurveTo(X(0.26), Y(0.4), X(0.16), Y(0.52));
+    g.quadraticCurveTo(X(0.1), Y(0.68), X(0.04), Y(0.8));
+    // boyun yulu tuplari (on -> geri)
+    g.lineTo(X(-0.12), Y(0.7));
+    g.lineTo(X(-0.2), Y(0.98));
+    g.lineTo(X(-0.34), Y(0.68));
+    g.lineTo(X(-0.44), Y(1.0));
+    g.lineTo(X(-0.58), Y(0.7));
+    g.lineTo(X(-0.68), Y(0.98));
+    g.lineTo(X(-0.82), Y(0.72));
+    g.closePath();
+  };
+  m.save();
+  m.lineJoin = "round";
+  m.lineCap = "round";
+  m.lineWidth = Math.max(1, s * 0.09);
+  if (shadow) {
+    trace(m, m.lineWidth * 0.9, m.lineWidth * 1.25);
+    m.strokeStyle = shadow;
+    m.stroke();
+  }
+  trace(m, 0, 0);
+  m.strokeStyle = color;
+  m.stroke();
+  // goz (badem, koyu)
+  m.fillStyle = shadow ?? color;
+  m.beginPath();
+  m.ellipse(cx - 0.16 * s, cy - 0.26 * s, 0.11 * s, 0.055 * s, -0.3, 0, Math.PI * 2);
+  m.fill();
+  // burun (koyu)
+  m.beginPath();
+  m.moveTo(cx + 0.95 * s, cy + 0.07 * s);
+  m.quadraticCurveTo(cx + 0.99 * s, cy + 0.15 * s, cx + 0.87 * s, cy + 0.19 * s);
+  m.quadraticCurveTo(cx + 0.9 * s, cy + 0.1 * s, cx + 0.95 * s, cy + 0.07 * s);
+  m.fill();
+  // kulak icleri + yanak yulu cizgileri
+  m.strokeStyle = color;
+  m.lineWidth = Math.max(0.8, s * 0.05);
+  const ln = (pts: number[][]) => {
+    m.beginPath();
+    pts.forEach(([lx, ly], i) => (i ? m.lineTo(cx + lx * s, cy + ly * s) : m.moveTo(cx + lx * s, cy + ly * s)));
+    m.stroke();
+  };
+  ln([[ -0.56, -0.35], [-0.5, -0.62]]); // arka kulak ici
+  ln([[ -0.05, -0.45], [0.0, -0.7]]); // on kulak ici
+  ln([[ 0.3, 0.18], [0.12, 0.3]]); // cene yulu
+  ln([[ 0.1, 0.42], [-0.04, 0.55]]); // yanak yulu
+  m.restore();
+}
+
 // Bozkir modu icin mahjong sembolu -> GoekTurk/kurt/geyik spesifikasyonu.
 type SteppeSpec =
   | { type: "count"; suit: "c" | "b" | "w"; n: number }
@@ -457,22 +535,26 @@ function steppeFaceSpec(kind: string): SteppeSpec {
   if (kind[0] === "c") return { type: "count", suit: "c", n: Number(kind.slice(1)) };
   if (kind[0] === "b") return { type: "count", suit: "b", n: Number(kind.slice(1)) };
   if (kind[0] === "w") return { type: "count", suit: "w", n: Number(kind.slice(1)) };
-  if (kind === "E") return { type: "glyph", glyph: "kurt", color: ink };
-  if (kind === "S") return { type: "glyph", glyph: "geyik", color: ink };
-  if (kind === "W") return { type: "glyph", glyph: "orkhon_1", color: ink };
-  if (kind === "N") return { type: "glyph", glyph: "orkhon_2", color: ink };
-  if (kind === "DR") return { type: "glyph", glyph: "orkhon_3", color: ink };
-  if (kind === "DG") return { type: "glyph", glyph: "orkhon_4", color: ink };
-  if (kind === "DW") return { type: "glyph", glyph: "orkhon_5", color: ink };
+  // Ruzgarlar: "yel" (rüzgar) + "tangri" (tängri) harfleri
+  if (kind === "E") return { type: "glyph", glyph: "orkhon_y", color: ink };
+  if (kind === "S") return { type: "glyph", glyph: "orkhon_e", color: ink };
+  if (kind === "W") return { type: "glyph", glyph: "orkhon_l", color: ink };
+  if (kind === "N") return { type: "glyph", glyph: "orkhon_t", color: ink };
+  // Ejderhalar: "tängri" (t-a-ŋ-r)
+  if (kind === "DR") return { type: "glyph", glyph: "orkhon_a", color: ink };
+  if (kind === "DG") return { type: "glyph", glyph: "orkhon_ng", color: ink };
+  if (kind === "DW") return { type: "glyph", glyph: "orkhon_r", color: ink };
+  // Cicekler: "böög" (çiçek) + "ul" (nur)
   if (kind[0] === "f") {
-    const f = { 1: "orkhon_6", 2: "orkhon_7", 3: "orkhon_8", 4: "orkhon_9" }[Number(kind.slice(1))] ?? "orkhon_6";
+    const f = { 1: "orkhon_b", 2: "orkhon_u", 3: "orkhon_g", 4: "orkhon_j" }[Number(kind.slice(1))] ?? "orkhon_b";
     return { type: "glyph", glyph: f, color: ink, marker: "flower" };
   }
+  // Mevsimler: "yılsı" (yıl/mevsim)
   if (kind[0] === "s") {
-    const s = { 1: "orkhon_10", 2: "orkhon_11", 3: "orkhon_12", 4: "orkhon_13" }[Number(kind.slice(1))] ?? "orkhon_10";
+    const s = { 1: "orkhon_i", 2: "orkhon_s", 3: "orkhon_n", 4: "orkhon_m" }[Number(kind.slice(1))] ?? "orkhon_i";
     return { type: "glyph", glyph: s, color: ink, marker: "season" };
   }
-  return { type: "glyph", glyph: "kurt", color: ink };
+  return { type: "glyph", glyph: "orkhon_t", color: ink };
 }
 
 // ---- Fantastik: ejder, kilic, suru, buyulu esyalar (vektorel, font bagimli degil) ----
@@ -3650,6 +3732,14 @@ export class Game {
     yurt(CANVAS_W * 0.68, hy + 60, 1.1);
     yurt(CANVAS_W * 0.8, hy + 84, 0.85);
 
+    // Kurt figurleri (gercekci profil, cayir ustunde)
+    paintWolfFigure(c, CANVAS_W * 0.63, hy + 58, 46, "rgba(232,216,184,0.22)", "rgba(40,26,12,0.16)");
+    paintWolfFigure(c, CANVAS_W * 0.31, hy + 30, 24, "rgba(232,216,184,0.13)", null);
+
+    // Orkhon yazit bandi ("tangri" + "i")
+    const yazit = ["orkhon_t", "orkhon_a", "orkhon_ng", "orkhon_r", "orkhon_i"];
+    yazit.forEach((g, i) => strokeSteppe(c, g, CANVAS_W * 0.5 + (i - 2) * 44, CANVAS_H * 0.87, 20, 2, "rgba(226,206,168,0.16)"));
+
     // On planda bozkir otu (incel cizgiler)
     c.strokeStyle = "rgba(150,170,110,0.16)";
     c.lineWidth = 1.4;
@@ -5519,8 +5609,8 @@ export class Game {
     };
 
     if (!open) {
-      // Kapali tas: merkezde kucuk kurt
-      carve("kurt", w / 2, h / 2, h * 0.15, "rgba(220,200,160,0.5)");
+      // Kapali tas: merkezde gercekci kurt
+      paintWolfFigure(m, w / 2, h / 2 + 1, h * 0.19, "rgba(225,205,170,0.55)", "rgba(0,0,0,0.55)");
       return;
     }
 
@@ -5540,8 +5630,8 @@ export class Game {
         const sz = n === 1 ? fy * 0.6 : fy * 0.4;
         for (const [dx, dy] of DOT_POS[n]) carve("grass", cx + dx * fx, cy + dy * fy, sz, "#8fb060");
       } else {
-        // Karakter: buyuk sayi + ustte kurt (kirmizi)
-        carve("kurt", cx, py + ph * 0.16, h * 0.075, "#d8604a");
+        // Karakter: buyuk sayi + ustte gercekci kurt (kirmizi)
+        paintWolfFigure(m, cx, py + ph * 0.15, h * 0.08, "#d8604a", "rgba(0,0,0,0.5)");
         const num = String(spec.n);
         m.font = "bold " + Math.round(h * 0.5) + "px Georgia";
         m.textAlign = "center"; m.textBaseline = "middle";
