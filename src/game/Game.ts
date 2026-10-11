@@ -1848,9 +1848,9 @@ export class Game {
     const availH = safe.B - safe.T;
     const ar = 100 / 72;
     const gp = (w: number) => Math.max(3, Math.round(w * TILE_GAP_K));
-    // Hedef tas boyutu (92px = eski boyutun 2 kati). Genis tahtalarda
-    // sigmayacagi icin asagi kuculur; 46px'in altina inmez.
-    let tw = TILE_FIXED;
+    // Hedef tas boyutu (klasik modda 2x). Genis tahtalarda sigmayacagi
+    // icin asagi kuculur; 46px'in altina inmez.
+    let tw = this.targetTileW();
     const fits = (t: number): boolean => {
       const th = Math.round(t * ar);
       const g = gp(t);
@@ -2104,6 +2104,12 @@ export class Game {
     return { L: 10, R: CANVAS_W - 10, T: top, B: Math.max(top + 300, bottom) };
   }
 
+  /** Hedef tas genisligi: klasik modda 2x (tahta sigmayacak darligte
+   *  uyumlasirma otomatik daraltir). */
+  private targetTileW(): number {
+    return this.gameMode === "classic" ? TILE_FIXED * 2 : TILE_FIXED;
+  }
+
   /** Ekranda/panellerde degisiklik oldugunda mevcut tahtayi (ortadan kaldirma,
    *  semboller, katmanlar korunarak) yeni olcege yeniden siktir. */
   private refitBoard(): void {
@@ -2116,8 +2122,8 @@ export class Game {
     const cols = this.layoutCols - 1;
     const rows = this.layoutRows - 1;
     const mli = this.maxLayerIdx;
-    // Hedef tas boyutu (92px); refit ayni hedeften baslar.
-    let tw = TILE_FIXED;
+    // Hedef tas boyutu (klasik modda 2x); refit ayni hedeften baslar.
+    let tw = this.targetTileW();
     const fits = (t: number): boolean => {
       const th = Math.round(t * ar);
       const g = gp(t);
