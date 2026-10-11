@@ -4659,6 +4659,235 @@ export class Game {
     return cv;
   }
 
+  /** Yazisiz vektorel onur ikonu: ruzgar pusulas, ejderha (gunes/yaprak/cevre),
+   *  cicek cizimleri (erik/orkide/kasnot/bambu), mevsim simgeolari. */
+  private paintHonorIcon(m: CanvasRenderingContext2D, kind: string, cx: number, cy: number, s: number): void {
+    const TAU = Math.PI * 2;
+    m.save();
+    m.lineCap = "round";
+    m.lineJoin = "round";
+    const leaf = (lx: number, ly: number, ls: number, ang: number, color: string) => {
+      m.save();
+      m.translate(lx, ly);
+      m.rotate(ang);
+      m.fillStyle = color;
+      m.beginPath();
+      m.moveTo(0, -ls);
+      m.quadraticCurveTo(ls * 0.6, -ls * 0.3, 0, ls);
+      m.quadraticCurveTo(-ls * 0.6, -ls * 0.3, 0, -ls);
+      m.fill();
+      m.restore();
+    };
+    const petal = (px: number, py: number, ang: number, pr: number, pw: number, color: string) => {
+      m.save();
+      m.translate(px, py);
+      m.rotate(ang);
+      m.scale(pw / pr, 1);
+      m.fillStyle = color;
+      m.beginPath();
+      m.arc(0, 0, pr, 0, TAU);
+      m.fill();
+      m.restore();
+    };
+    if (kind === "E" || kind === "S" || kind === "W" || kind === "N") {
+      // Pusula: halka + 4 kose noktas + yon oku.
+      const col = "#203a63";
+      const dir = kind === "E" ? 0 : kind === "S" ? Math.PI / 2 : kind === "W" ? Math.PI : -Math.PI / 2;
+      m.strokeStyle = col;
+      m.lineWidth = Math.max(1.5, s * 0.07);
+      m.beginPath();
+      m.arc(cx, cy, s * 0.44, 0, TAU);
+      m.stroke();
+      m.fillStyle = "rgba(32,58,99,0.35)";
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * TAU - Math.PI / 2;
+        m.beginPath();
+        m.arc(cx + Math.cos(a) * s * 0.44, cy + Math.sin(a) * s * 0.44, Math.max(1, s * 0.05), 0, TAU);
+        m.fill();
+      }
+      m.translate(cx, cy);
+      m.rotate(dir);
+      m.fillStyle = col;
+      m.beginPath();
+      m.moveTo(s * 0.34, 0);
+      m.lineTo(s * 0.06, -s * 0.17);
+      m.lineTo(s * 0.06, s * 0.17);
+      m.closePath();
+      m.fill();
+      m.lineWidth = Math.max(1.5, s * 0.1);
+      m.beginPath();
+      m.moveTo(-s * 0.3, 0);
+      m.lineTo(s * 0.05, 0);
+      m.stroke();
+    } else if (kind === "DR") {
+      // Kirmizi ejderha: gulecen kirmizi gunes.
+      const col = "#c0392b";
+      m.fillStyle = col;
+      for (let i = 0; i < 8; i++) {
+        m.save();
+        m.translate(cx, cy);
+        m.rotate((i / 8) * TAU);
+        m.beginPath();
+        m.moveTo(s * 0.34, 0);
+        m.lineTo(s * 0.22, -s * 0.07);
+        m.lineTo(s * 0.22, s * 0.07);
+        m.closePath();
+        m.fill();
+        m.restore();
+      }
+      m.beginPath();
+      m.arc(cx, cy, s * 0.24, 0, TAU);
+      m.fill();
+      m.fillStyle = "#f7efdd";
+      m.beginPath();
+      m.arc(cx, cy, s * 0.09, 0, TAU);
+      m.fill();
+    } else if (kind === "DG") {
+      // Yashil ejderha: canli yon yapragi.
+      const col = "#2e8b57";
+      leaf(cx, cy, s * 0.46, 0, col);
+      m.strokeStyle = "rgba(255,255,255,0.55)";
+      m.lineWidth = Math.max(1, s * 0.04);
+      m.beginPath();
+      m.moveTo(cx, cy - s * 0.38);
+      m.lineTo(cx, cy + s * 0.34);
+      m.moveTo(cx, cy - s * 0.1);
+      m.lineTo(cx + s * 0.12, cy - s * 0.2);
+      m.moveTo(cx, cy + s * 0.08);
+      m.lineTo(cx - s * 0.12, cy - s * 0.02);
+      m.stroke();
+    } else if (kind === "DW") {
+      // Bembeyaz ejderha: mavi cift cerceve (klasik "ak ejderha" yuzu).
+      const col = "#3b6ea5";
+      m.strokeStyle = col;
+      m.lineWidth = Math.max(2, s * 0.09);
+      m.beginPath();
+      m.roundRect(cx - s * 0.3, cy - s * 0.4, s * 0.6, s * 0.8, s * 0.06);
+      m.stroke();
+      m.lineWidth = Math.max(1, s * 0.04);
+      m.beginPath();
+      m.roundRect(cx - s * 0.2, cy - s * 0.29, s * 0.4, s * 0.58, s * 0.04);
+      m.stroke();
+    } else if (kind === "f1") {
+      // Erik cicegi: 5 yuvarlak yaprak + altin merkez.
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * TAU - Math.PI / 2;
+        petal(cx + Math.cos(a) * s * 0.2, cy + Math.sin(a) * s * 0.2, a, s * 0.17, 1, "#c2185b");
+      }
+      m.fillStyle = "#ffd75e";
+      m.beginPath();
+      m.arc(cx, cy, s * 0.1, 0, TAU);
+      m.fill();
+    } else if (kind === "f2") {
+      // Orkide: 3 ust yaprak + genis dudak yaprak.
+      const col = "#c2185b";
+      petal(cx, cy - s * 0.2, 0, s * 0.2, 0.55, col);
+      petal(cx - s * 0.18, cy - s * 0.08, -0.9, s * 0.19, 0.5, col);
+      petal(cx + s * 0.18, cy - s * 0.08, 0.9, s * 0.19, 0.5, col);
+      petal(cx, cy + s * 0.2, 0, s * 0.22, 1.15, "#e0447a");
+      m.fillStyle = "#ffd75e";
+      m.beginPath();
+      m.arc(cx, cy, s * 0.07, 0, TAU);
+      m.fill();
+    } else if (kind === "f3") {
+      // Kasnot: 12 ince yaprak + altin gozuk.
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * TAU;
+        petal(cx + Math.cos(a) * s * 0.24, cy + Math.sin(a) * s * 0.24, a, s * 0.2, 0.32, "#e85468");
+      }
+      m.fillStyle = "#ffd75e";
+      m.beginPath();
+      m.arc(cx, cy, s * 0.11, 0, TAU);
+      m.fill();
+    } else if (kind === "f4") {
+      // Bambu: iki bolmeli sap + uc yaprak.
+      const col = "#2e8b57";
+      m.strokeStyle = col;
+      m.lineWidth = Math.max(2, s * 0.09);
+      m.beginPath();
+      m.moveTo(cx - s * 0.14, cy + s * 0.42);
+      m.lineTo(cx - s * 0.14, cy - s * 0.42);
+      m.moveTo(cx + s * 0.14, cy + s * 0.42);
+      m.lineTo(cx + s * 0.14, cy - s * 0.42);
+      m.stroke();
+      m.lineWidth = Math.max(1, s * 0.045);
+      m.beginPath();
+      m.moveTo(cx - s * 0.22, cy);
+      m.lineTo(cx - s * 0.06, cy);
+      m.moveTo(cx + s * 0.06, cy - s * 0.14);
+      m.lineTo(cx + s * 0.22, cy - s * 0.14);
+      m.stroke();
+      leaf(cx + s * 0.2, cy - s * 0.3, s * 0.16, 0.7, "#3f9d68");
+      leaf(cx + s * 0.26, cy - s * 0.14, s * 0.14, 1.2, "#3f9d68");
+      leaf(cx - s * 0.22, cy - s * 0.24, s * 0.13, -1.1, "#3f9d68");
+    } else if (kind === "s1") {
+      // Ilkbahar: tomurcuk filiz (sap + iki yaprak).
+      const col = "#4a8a3a";
+      m.strokeStyle = col;
+      m.lineWidth = Math.max(1.5, s * 0.07);
+      m.beginPath();
+      m.moveTo(cx, cy + s * 0.42);
+      m.quadraticCurveTo(cx + s * 0.05, cy + s * 0.1, cx, cy - s * 0.16);
+      m.stroke();
+      leaf(cx - s * 0.16, cy - s * 0.24, s * 0.24, -0.7, col);
+      leaf(cx + s * 0.16, cy - s * 0.24, s * 0.24, 0.7, col);
+    } else if (kind === "s2") {
+      // Yaz: turuncu gunes.
+      const col = "#e8842a";
+      m.fillStyle = col;
+      m.beginPath();
+      m.arc(cx, cy, s * 0.24, 0, TAU);
+      m.fill();
+      m.strokeStyle = col;
+      m.lineWidth = Math.max(1.5, s * 0.07);
+      m.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * TAU;
+        m.moveTo(cx + Math.cos(a) * s * 0.32, cy + Math.sin(a) * s * 0.32);
+        m.lineTo(cx + Math.cos(a) * s * 0.46, cy + Math.sin(a) * s * 0.46);
+      }
+      m.stroke();
+    } else if (kind === "s3") {
+      // Sonbahar: dusen kirli yaprak + sap.
+      const col = "#c05a28";
+      m.strokeStyle = col;
+      m.lineWidth = Math.max(1.5, s * 0.06);
+      m.beginPath();
+      m.moveTo(cx, cy + s * 0.44);
+      m.lineTo(cx, cy + s * 0.16);
+      m.stroke();
+      leaf(cx, cy - s * 0.06, s * 0.44, 0.35, col);
+      m.strokeStyle = "rgba(255,255,255,0.5)";
+      m.lineWidth = Math.max(1, s * 0.035);
+      m.beginPath();
+      m.moveTo(cx - s * 0.1, cy + s * 0.14);
+      m.lineTo(cx + s * 0.12, cy - s * 0.3);
+      m.stroke();
+    } else if (kind === "s4") {
+      // Kis: alti kollu kars kristali.
+      const col = "#7fb2d8";
+      m.strokeStyle = col;
+      m.lineWidth = Math.max(1.5, s * 0.06);
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * TAU - Math.PI / 2;
+        const ex = cx + Math.cos(a) * s * 0.44;
+        const ey = cy + Math.sin(a) * s * 0.44;
+        m.beginPath();
+        m.moveTo(cx, cy);
+        m.lineTo(ex, ey);
+        m.moveTo(ex - Math.cos(a - 0.6) * s * 0.14, ey - Math.sin(a - 0.6) * s * 0.14);
+        m.lineTo(ex, ey);
+        m.lineTo(ex - Math.cos(a + 0.6) * s * 0.14, ey - Math.sin(a + 0.6) * s * 0.14);
+        m.stroke();
+      }
+      m.fillStyle = col;
+      m.beginPath();
+      m.arc(cx, cy, Math.max(1.2, s * 0.06), 0, TAU);
+      m.fill();
+    }
+    m.restore();
+  }
+
   /** Açiliş sayfasindaki gibi sade fildisi yuz: yumusak krem degrade + tek
    *  buyuk renkli sembol. Klasik modda kullanilir. */
   private paintFaceSplash(m: CanvasRenderingContext2D, kind: string, open: boolean, w: number, h: number): void {
@@ -4690,16 +4919,24 @@ export class Game {
     m.textAlign = "center";
     m.textBaseline = "middle";
     if (open) {
-      // ---- Tek buyuk renkli sembol (splash gibi) ----
-      const ch = faceLabel(kind);
-      const color = tileColor(kind);
-      const size = Math.round(w * 0.60);
-      m.font = "700 " + size + "px " + CJK_FONT;
-      // Hafif derinlik golgesi (yuzun uzerine basili hissi)
-      m.fillStyle = "rgba(90,60,20,0.28)";
-      m.fillText(ch, w / 2, h / 2 + 1.6);
-      m.fillStyle = color;
-      m.fillText(ch, w / 2, h / 2);
+      const isHonor = kind[0] === "f" || kind[0] === "s" || kind === "DR" || kind === "DG" || kind === "DW"
+        || kind === "E" || kind === "S" || kind === "W" || kind === "N";
+      if (isHonor) {
+        // ---- Yazisiz vektorel ikon (ruzgar/ejderha/cicek/mevsim) ----
+        const size = Math.min(w, h) * 0.78;
+        this.paintHonorIcon(m, kind, w / 2, h / 2, size);
+      } else {
+        // ---- Tek buyuk renkli sembol (splash gibi) ----
+        const ch = faceLabel(kind);
+        const color = tileColor(kind);
+        const size = Math.round(w * 0.60);
+        m.font = "700 " + size + "px " + CJK_FONT;
+        // Hafif derinlik golgesi (yuzun uzerine basili hissi)
+        m.fillStyle = "rgba(90,60,20,0.28)";
+        m.fillText(ch, w / 2, h / 2 + 1.6);
+        m.fillStyle = color;
+        m.fillText(ch, w / 2, h / 2);
+      }
     } else {
       // ---- Arka yuz: sade mat fildisi + ince rozet (karakter yok) ----
       m.strokeStyle = "rgba(120,90,40,0.40)";
@@ -4973,11 +5210,11 @@ export class Game {
       m.strokeStyle = "rgba(22,12,5,0.65)";
       m.lineWidth = 1;
       m.strokeRect(px + 2.5, py + 2.5, pw - 5, ph - 5);
-      carve(WIND_CH[kind], w / 2, h / 2, h * 0.52, "#ffe0a0");
+      this.paintHonorIcon(m, kind, w / 2, h / 2, h * 0.52);
     } else if (kind === "DR") {
-      carve("中", w / 2, h / 2, h * 0.56, "#e8442a");
+      this.paintHonorIcon(m, kind, w / 2, h / 2, h * 0.56);
     } else if (kind === "DG") {
-      carve("發", w / 2, h / 2, h * 0.56, "#44cc88");
+      this.paintHonorIcon(m, kind, w / 2, h / 2, h * 0.56);
     } else if (kind === "DW") {
       // Beyaz ejderha: oyulmus cift cerceve + merkez tamga.
       m.strokeStyle = "rgba(22,12,5,0.80)";
@@ -4988,37 +5225,14 @@ export class Game {
       m.strokeRect(px + w * 0.16, py + h * 0.18, pw - w * 0.32, ph - h * 0.36);
       tamga(w / 2, h / 2, h * 0.09, 1);
     } else if (kind[0] === "f") {
-      carve(FLOWER_CH[Number(kind.slice(1)) - 1], w / 2, h / 2 - h * 0.04, h * 0.44, "#e85468");
-      carve(kind.slice(1), w / 2, h / 2 + h * 0.27, h * 0.18, "#dab050");
+      this.paintHonorIcon(m, kind, w / 2, h / 2, h * 0.52);
       tamga(w / 2 - w * 0.3, h / 2 - h * 0.28, h * 0.04, 2);
       tamga(w / 2 + w * 0.3, h / 2 - h * 0.28, h * 0.04, 2);
     } else if (kind[0] === "s") {
-      // Mevsim: harf + Gokturk boynuz burme cifti (sonbahar isi / kis yildizi).
-      const n = Number(kind.slice(1));
-      carve(SEASON_CH[n - 1], w / 2, h / 2 - h * 0.05, h * 0.38, "#dab050");
+      // Mevsim: vektorel ikon + Gokturk boynuz burme cifti.
+      this.paintHonorIcon(m, kind, w / 2, h / 2, h * 0.5);
       this.hornSpiral(m, w * 0.26, h * 0.3, h * 0.09, 1, 0.60);
       this.hornSpiral(m, w * 0.74, h * 0.3, h * 0.09, -1, 0.60);
-      if (n === 3) {
-        m.fillStyle = "rgba(150,60,28,0.92)";
-        m.save();
-        m.translate(w / 2, h * 0.72);
-        m.rotate(Math.PI / 4);
-        m.fillRect(-2.5, -2.5, 5, 5);
-        m.restore();
-      } else if (n === 4) {
-        m.strokeStyle = "rgba(216,203,178,0.80)";
-        m.lineWidth = 1;
-        m.beginPath();
-        for (let i = 0; i < 8; i++) {
-          const a = (i / 8) * Math.PI * 2;
-          m.moveTo(w / 2, h * 0.72);
-          m.lineTo(w / 2 + Math.cos(a) * 6, h * 0.72 + Math.sin(a) * 6);
-        }
-        m.stroke();
-      } else {
-        tamga(w / 2, h * 0.72, h * 0.045, n === 1 ? 0 : 1);
-      }
-      carve(kind.slice(1), w / 2, h / 2 + h * 0.3, h * 0.15, "#b89040");
     }
   }
 
