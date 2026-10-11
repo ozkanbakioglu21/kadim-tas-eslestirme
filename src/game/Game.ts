@@ -3266,23 +3266,33 @@ export class Game {
     return 3;
   }
 
-  /** Hazne geometrisi (orijinalin 1.5x); ekran genisligine sigmadiginda
-   *  once bosluklar, sonra yuva genisligi daraltilir. */
-  private trayGeom(): { trayY: number; slotW: number; gapSlot: number; trayW: number; slotH: number; padX: number; fh: number } {
+  /** Hazne geometrisi (orijinalin 1.5x; Kolay/sonsuz modda 0.5x ek cekme =
+   *  orijinalin 0.75x); ekran genisligine sigmadiginda once bosluklar,
+   *  sonra yuva genisligi daraltilir. */
+  private trayGeom(): {
+    trayY: number; slotW: number; gapSlot: number; trayW: number; slotH: number; padX: number; fh: number;
+    bgH: number; bgR: number; slotR: number; bgYoff: number; slotYoff: number;
+    lwBg: number; lwSlot: number; shadowBlur: number; shadowOff: number;
+  } {
+    const sc = this.gameMode === "endless" ? 0.5 : 1; // Kolay mod: hazne 0.5 kat kucuk
     const trayY = 60;
     const slots = this.maxTray();
-    let slotW = 108, gapSlot = 15, padX = 21;
+    let slotW = 108 * sc, gapSlot = 15 * sc, padX = 21 * sc;
     const maxW = CANVAS_W - 16;
     const total = () => slots * slotW + (slots - 1) * gapSlot + padX * 2;
     if (total() > maxW) {
-      gapSlot = 12;
-      if (total() > maxW) padX = 12;
+      gapSlot = Math.min(gapSlot, 12 * sc);
+      if (total() > maxW) padX = Math.min(padX, 12 * sc);
       if (total() > maxW) slotW = Math.floor((maxW - padX * 2 - (slots - 1) * gapSlot) / slots);
     }
-    const slotH = 54;
-    let fh = 57;
-    if (fh * (100 / 72) > slotW - 10) fh = Math.floor((slotW - 10) * 72 / 100);
-    return { trayY, slotW, gapSlot, trayW: slots * slotW + (slots - 1) * gapSlot, slotH, padX, fh };
+    const slotH = 54 * sc;
+    let fh = 57 * sc;
+    if (fh * (100 / 72) > slotW - 10 * sc) fh = Math.floor((slotW - 10 * sc) * 72 / 100);
+    return {
+      trayY, slotW, gapSlot, trayW: slots * slotW + (slots - 1) * gapSlot, slotH, padX, fh,
+      bgH: 78 * sc, bgR: 21 * sc, slotR: 15 * sc, bgYoff: 33 * sc, slotYoff: 21 * sc,
+      lwBg: Math.max(1, 2 * sc), lwSlot: Math.max(1, 1 * sc), shadowBlur: 7 * sc, shadowOff: 2 * sc,
+    };
   }
 
   private scoreMult(): number {
@@ -4564,26 +4574,26 @@ export class Game {
     }
     c.globalAlpha = 1;
 
-    // ---- Hazne (maxTray slotlu yuva, orijinalin 1.5x) — ust kisim ----
+    // ---- Hazne (maxTray slotlu yuva; Kolay modda 0.5 kat kucuk) — ust kisim ----
     const tg = this.trayGeom();
     const trayY = tg.trayY, slotW = tg.slotW, gapSlot = tg.gapSlot, trayW = tg.trayW;
     const slotH = tg.slotH, padX = tg.padX, fh = tg.fh;
     const trayCx = CANVAS_W / 2;
     c.fillStyle = "rgba(10,20,30,0.35)";
     c.beginPath();
-    c.roundRect(trayCx - trayW / 2 - padX, trayY - 33, trayW + padX * 2, 78, 21);
+    c.roundRect(trayCx - trayW / 2 - padX, trayY - tg.bgYoff, trayW + padX * 2, tg.bgH, tg.bgR);
     c.fill();
     c.strokeStyle = "rgba(255,255,255,0.25)";
-    c.lineWidth = 2;
+    c.lineWidth = tg.lwBg;
     c.stroke();
     for (let i = 0; i < this.maxTray(); i++) {
       const sx = trayCx - trayW / 2 + i * (slotW + gapSlot);
       c.fillStyle = "rgba(255,255,255,0.06)";
       c.beginPath();
-      c.roundRect(sx, trayY - 21, slotW, slotH, 15);
+      c.roundRect(sx, trayY - tg.slotYoff, slotW, slotH, tg.slotR);
       c.fill();
       c.strokeStyle = "rgba(255,255,255,0.18)";
-      c.lineWidth = 1;
+      c.lineWidth = tg.lwSlot;
       c.stroke();
       if (i < this.tray.length) {
         const tt = this.tray[i];
@@ -4592,8 +4602,8 @@ export class Game {
         const fy0 = trayY + 6 - fh / 2;
         c.save();
         c.shadowColor = "rgba(0,0,0,0.55)";
-        c.shadowBlur = 7;
-        c.shadowOffsetY = 2;
+        c.shadowBlur = tg.shadowBlur;
+        c.shadowOffsetY = tg.shadowOff;
         c.drawImage(this.getFaceCanvas(tt.symbol, true), fx0, fy0, fw, fh);
         c.restore();
       }
