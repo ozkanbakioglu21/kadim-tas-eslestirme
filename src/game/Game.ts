@@ -3220,12 +3220,12 @@ export class Game {
     return 3;
   }
 
-  /** Hazne geometrisi (3x buyutulmus); ekran genisligine sigmadiginda
+  /** Hazne geometrisi (orijinalin 1.5x); ekran genisligine sigmadiginda
    *  once bosluklar, sonra yuva genisligi daraltilir. */
   private trayGeom(): { trayY: number; slotW: number; gapSlot: number; trayW: number; slotH: number; padX: number; fh: number } {
     const trayY = 60;
     const slots = this.maxTray();
-    let slotW = 216, gapSlot = 30, padX = 42;
+    let slotW = 108, gapSlot = 15, padX = 21;
     const maxW = CANVAS_W - 16;
     const total = () => slots * slotW + (slots - 1) * gapSlot + padX * 2;
     if (total() > maxW) {
@@ -3233,8 +3233,8 @@ export class Game {
       if (total() > maxW) padX = 12;
       if (total() > maxW) slotW = Math.floor((maxW - padX * 2 - (slots - 1) * gapSlot) / slots);
     }
-    const slotH = 108;
-    let fh = 114;
+    const slotH = 54;
+    let fh = 57;
     if (fh * (100 / 72) > slotW - 10) fh = Math.floor((slotW - 10) * 72 / 100);
     return { trayY, slotW, gapSlot, trayW: slots * slotW + (slots - 1) * gapSlot, slotH, padX, fh };
   }
@@ -4518,26 +4518,26 @@ export class Game {
     }
     c.globalAlpha = 1;
 
-    // ---- Hazne (maxTray slotlu yuva, 3x boyut) — ust kisim ----
+    // ---- Hazne (maxTray slotlu yuva, orijinalin 1.5x) — ust kisim ----
     const tg = this.trayGeom();
     const trayY = tg.trayY, slotW = tg.slotW, gapSlot = tg.gapSlot, trayW = tg.trayW;
     const slotH = tg.slotH, padX = tg.padX, fh = tg.fh;
     const trayCx = CANVAS_W / 2;
     c.fillStyle = "rgba(10,20,30,0.35)";
     c.beginPath();
-    c.roundRect(trayCx - trayW / 2 - padX, trayY - 72, trayW + padX * 2, 156, 42);
+    c.roundRect(trayCx - trayW / 2 - padX, trayY - 33, trayW + padX * 2, 78, 21);
     c.fill();
     c.strokeStyle = "rgba(255,255,255,0.25)";
-    c.lineWidth = 2.5;
+    c.lineWidth = 2;
     c.stroke();
     for (let i = 0; i < this.maxTray(); i++) {
       const sx = trayCx - trayW / 2 + i * (slotW + gapSlot);
       c.fillStyle = "rgba(255,255,255,0.06)";
       c.beginPath();
-      c.roundRect(sx, trayY - 48, slotW, slotH, 30);
+      c.roundRect(sx, trayY - 21, slotW, slotH, 15);
       c.fill();
       c.strokeStyle = "rgba(255,255,255,0.18)";
-      c.lineWidth = 1.5;
+      c.lineWidth = 1;
       c.stroke();
       if (i < this.tray.length) {
         const tt = this.tray[i];
@@ -4546,8 +4546,8 @@ export class Game {
         const fy0 = trayY + 6 - fh / 2;
         c.save();
         c.shadowColor = "rgba(0,0,0,0.55)";
-        c.shadowBlur = 12;
-        c.shadowOffsetY = 4;
+        c.shadowBlur = 7;
+        c.shadowOffsetY = 2;
         c.drawImage(this.getFaceCanvas(tt.symbol, true), fx0, fy0, fw, fh);
         c.restore();
       }
